@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: false, // <--- TO JEST KLUCZOWE DLA THREE.JS
 };
 
 export default nextConfig;
