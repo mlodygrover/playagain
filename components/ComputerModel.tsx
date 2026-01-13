@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { useGLTF } from "@react-three/drei";
-import { ThreeEvent } from "@react-three/fiber";
+import { useGLTF, Center } from "@react-three/drei";
+import { useThree } from "@react-three/fiber"; // Importujemy useThree
 import * as THREE from "three";
 
 interface ModelProps {
@@ -13,10 +13,20 @@ interface ModelProps {
 
 export function ComputerModel({ onPartSelect, selectedPart, ...props }: ModelProps) {
   const { nodes, materials } = useGLTF("/gaming-pc.glb") as any;
-  
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
 
-  // --- 1. KONFIGURACJA GRUP ---
+  // --- 1. DYNAMICZNE SKALOWANIE (Fix na Mobile) ---
+  const { viewport } = useThree();
+  
+  // Wzór: viewport.width to szerokość ekranu w jednostkach 3D.
+  // Dzielimy ją przez liczbę (np. 5), która reprezentuje "szerokość modelu + margines".
+  // Math.min(1, ...) zapewnia, że na dużych ekranach model nie powiększy się ponad 100%.
+  
+  // Zwiększ liczbę '4.2', jeśli nadal przycina (np. na 5.0).
+  // Zmniejsz, jeśli model jest za mały.
+  const responsiveScale = Math.min(1, viewport.width / 4.2);
+
+  // --- 2. KONFIGURACJA GRUP ---
   const PART_MAPPING: Record<string, string> = {
     // Chłodzenie procesora
     "Cube009": "Chłodzenie CPU",
@@ -56,7 +66,7 @@ export function ComputerModel({ onPartSelect, selectedPart, ...props }: ModelPro
     "Cube016": "Obudowa PC",
   };
 
-  // --- 2. Logika materiałów ---
+  // --- 3. Logika materiałów ---
   const getMaterial = (originalMaterial: THREE.Material, componentName: string) => {
     if (!originalMaterial) return undefined;
     const mat = originalMaterial.clone();
@@ -66,10 +76,8 @@ export function ComputerModel({ onPartSelect, selectedPart, ...props }: ModelPro
     const isAnythingHovered = hoveredGroup !== null;
 
     if (isSelected) {
-      // === STAN 1: WYBRANO CZĘŚĆ (Solidny Niebieski) ===
       mat.transparent = false;
       mat.opacity = 1.0;
-      
       // @ts-ignore
       mat.color.set("#2563EB"); 
       // @ts-ignore
@@ -78,10 +86,8 @@ export function ComputerModel({ onPartSelect, selectedPart, ...props }: ModelPro
       mat.emissiveIntensity = 0.5;
 
     } else if (isHovered) {
-      // === STAN 2: NAJECHANO MYSZKĄ (Solidny Błękit) ===
       mat.transparent = false;
       mat.opacity = 1.0;
-      
       // @ts-ignore
       mat.color.set("#60A5FA"); 
       // @ts-ignore
@@ -90,63 +96,63 @@ export function ComputerModel({ onPartSelect, selectedPart, ...props }: ModelPro
       mat.emissiveIntensity = 0.4;
 
     } else if (isAnythingHovered) {
-      // === STAN 3: TŁO (Mleczne szkło) ===
-      // Tutaj zmieniliśmy wartości:
       mat.transparent = true;
-      mat.opacity = 0.40;     // Zwiększono z 0.15 na 0.40 (są bardziej widoczne)
+      mat.opacity = 0.40;
       mat.depthWrite = false;
-      
-      // Zmieniono kolor na jasnoszary (na czarnym tle będzie lepiej widać kształty)
       // @ts-ignore
       mat.color.set("#999999"); 
       // @ts-ignore
       mat.emissive.set("#000000"); 
-
     } 
-    // === STAN 4: DOMYŚLNY (Bez zmian) ===
-    
     return mat;
   };
 
   return (
-    <group {...props} dispose={null}>
-      
-      {Object.entries(nodes).map(([meshName, node]: [string, any]) => {
-        if (!node.geometry) return null;
-        if (meshName === "Plane019" || meshName === "Plane002") return null;
+    // Center centruje model. Dodatkowo upewniamy się, że obrót jest wyzerowany na grupie nadrzędnej.
+    <Center>
+      <group 
+        {...props} 
+        dispose={null} 
+        scale={responsiveScale}
+      >
+        
+        {Object.entries(nodes).map(([meshName, node]: [string, any]) => {
+          if (!node.geometry) return null;
+          if (meshName === "Plane019" || meshName === "Plane002") return null;
 
-        const friendlyName = PART_MAPPING[meshName];
+          const friendlyName = PART_MAPPING[meshName];
 
-        return (
-          <mesh
-            key={meshName}
-            name={meshName}
-            position={node.position}
-            rotation={node.rotation}
-            scale={node.scale}
-            castShadow
-            receiveShadow
-            geometry={node.geometry}
-            
-            material={getMaterial(node.material, friendlyName)}
-            
-            onPointerOver={(e) => { 
-              e.stopPropagation(); 
-              setHoveredGroup(friendlyName || meshName); 
-            }}
-            
-            onPointerOut={(e) => setHoveredGroup(null)}
-            
-            onClick={(e) => {
-              e.stopPropagation();
-              if (friendlyName) {
-                if (onPartSelect) onPartSelect(friendlyName);
-              }
-            }}
-          />
-        );
-      })}
-    </group>
+          return (
+            <mesh
+              key={meshName}
+              name={meshName}
+              position={node.position}
+              rotation={node.rotation}
+              scale={node.scale}
+              castShadow
+              receiveShadow
+              geometry={node.geometry}
+              
+              material={getMaterial(node.material, friendlyName)}
+              
+              onPointerOver={(e) => { 
+                e.stopPropagation(); 
+                setHoveredGroup(friendlyName || meshName); 
+              }}
+              
+              onPointerOut={(e) => setHoveredGroup(null)}
+              
+              onClick={(e) => {
+                e.stopPropagation();
+                if (friendlyName) {
+                  if (onPartSelect) onPartSelect(friendlyName);
+                }
+              }}
+            />
+          );
+        })}
+      </group>
+    </Center>
   );
 }
 

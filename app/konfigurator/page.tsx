@@ -14,7 +14,7 @@ import {
   ShoppingBag, 
   PackageOpen, 
   Plus, 
-  Minus, // Dodano ikonę minusa
+  Minus,
   ChevronDown,
   ChevronUp,
   Info
@@ -84,7 +84,7 @@ const CATEGORIES = [
 
 // --- 3. KOMPONENTY UI ---
 
-// Karta Produktu - Zmodyfikowana: Szybki przycisk akcji w nagłówku
+// Karta Produktu
 const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }: any) => (
   <div 
     className={`
@@ -97,10 +97,8 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
       onClick={onToggleExpand}
       className="flex items-center justify-between p-4 cursor-pointer gap-3 sm:gap-4"
     >
-      {/* Pasek statusu po lewej */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors ${isSelected ? "bg-blue-600" : "bg-transparent group-hover:bg-zinc-700"}`} />
 
-      {/* Nazwa i Badge */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 pl-2 flex-grow min-w-0">
         <h3 className={`text-sm font-medium truncate ${isSelected ? "text-blue-400" : "text-zinc-300"}`}>
           {item.name}
@@ -112,17 +110,16 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
         )}
       </div>
 
-      {/* --- QUICK ACTION BUTTON (NOWOŚĆ) --- */}
       <button
         onClick={(e) => {
-          e.stopPropagation(); // Ważne: zapobiega rozwijaniu akordeonu
+          e.stopPropagation();
           onSelect();
         }}
         className={`
           flex-shrink-0 w-8 h-8 flex items-center justify-center border transition-all duration-200 z-10
           ${isSelected 
-            ? "bg-blue-600 border-blue-600 text-white hover:bg-red-600 hover:border-red-600" // Wybrany: Niebieski -> Czerwony po najechaniu
-            : "border-zinc-700 text-zinc-500 hover:border-blue-500 hover:text-blue-500 hover:bg-zinc-800" // Niewybrany: Szary -> Niebieski
+            ? "bg-blue-600 border-blue-600 text-white hover:bg-red-600 hover:border-red-600" 
+            : "border-zinc-700 text-zinc-500 hover:border-blue-500 hover:text-blue-500 hover:bg-zinc-800" 
           }
         `}
         title={isSelected ? "Usuń z zestawu" : "Dodaj do zestawu"}
@@ -130,24 +127,21 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
         {isSelected ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
       </button>
 
-      {/* Cena */}
       <div className="text-right min-w-[70px]">
         <span className="text-sm font-mono text-zinc-400">
           {item.price} zł
         </span>
       </div>
 
-      {/* Ikona rozwijania */}
       <div className="text-zinc-600 pl-2 border-l border-zinc-800">
         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
       </div>
     </div>
 
-    {/* SZCZEGÓŁY (Rozwijane) */}
+    {/* SZCZEGÓŁY */}
     {isExpanded && (
       <div className="p-4 pt-0 pl-6 pr-4 border-t border-zinc-800/50 bg-zinc-900/50 animate-in slide-in-from-top-1 fade-in duration-200">
         <div className="flex flex-col sm:flex-row gap-4 mt-4">
-          
           <div className="w-24 h-24 bg-black border border-zinc-800 flex items-center justify-center flex-shrink-0">
              {item.image ? (
                <img src={item.image} alt={item.name} className="object-cover w-full h-full opacity-90" />
@@ -155,7 +149,6 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
                <PackageOpen className="w-8 h-8 text-zinc-700" />
              )}
           </div>
-
           <div className="flex-grow space-y-3">
             <div className="flex flex-wrap gap-2">
               {item.specs.map((spec: string, i: number) => (
@@ -164,7 +157,6 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
                 </span>
               ))}
             </div>
-            
             <p className="text-xs text-zinc-500 leading-relaxed max-w-md">
               Profesjonalnie odnowiony komponent. Przeszedł 24-godzinne testy obciążeniowe. 
               Stan wizualny: Klasa A+.
@@ -259,14 +251,22 @@ function ConfiguratorContent() {
     return total;
   }, [selections]);
 
+  // --- ZMIANA TUTAJ: ANIMACJA SHAKE ---
   const handle3DClick = (friendlyName: string) => {
     const category = CATEGORIES.find(c => c.name === friendlyName);
+    
     if (category) {
       const element = document.getElementById(`section-${category.id}`);
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "start" });
-        element.classList.add("bg-zinc-900");
-        setTimeout(() => element.classList.remove("bg-zinc-900"), 500);
+        
+        // Dodajemy klasy: tło ORAZ shake
+        element.classList.add("bg-zinc-900", "animate-shake");
+        
+        // Po sekundzie usuwamy obie klasy
+        setTimeout(() => {
+          element.classList.remove("bg-zinc-900", "animate-shake");
+        }, 1000);
       }
     }
   };
@@ -310,7 +310,7 @@ function ConfiguratorContent() {
           <section 
             key={category.id} 
             id={`section-${category.id}`}
-            className="scroll-mt-24 transition-colors duration-500"
+            className="scroll-mt-24 transition-colors duration-300" // transition potrzebne do płynnej zmiany tła
           >
             <div className="flex items-center gap-3 mb-0 bg-zinc-950 border border-zinc-800 border-b-0 p-3 sticky top-[4rem] z-10">
               <div className={`p-1.5 ${selections[category.id] ? "text-blue-500" : "text-zinc-600"}`}>
@@ -334,11 +334,7 @@ function ConfiguratorContent() {
                   item={item}
                   isSelected={selections[category.id] === item.id}
                   isExpanded={expandedItemId === item.id}
-                  
-                  // Kliknięcie w nagłówek = ROZWIŃ
                   onToggleExpand={() => setExpandedItemId(prev => prev === item.id ? null : item.id)}
-                  
-                  // Kliknięcie w przycisk = WYBIERZ
                   onSelect={() => updateSelection(category.id, item.id)}
                 />
               ))}
