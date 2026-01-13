@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { CartProvider } from "@/context/CartContext"; // <--- IMPORT
+import { AuthProvider } from "@/context/AuthContext";
 
-// Ładujemy czcionki: Inter dla tekstów, Mono dla cyfr/detali technicznych
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
-
 // --- SEO START ---
 export const metadata: Metadata = {
   title: "PlayAgain.tech | Konfigurator PC Refurbished",
@@ -19,7 +20,6 @@ export const metadata: Metadata = {
     // images: ['/og-image.jpg'], // W przyszłości dodasz tu obrazek do social media
   },
 };
-// --- SEO END ---
 
 export default function RootLayout({
   children,
@@ -28,15 +28,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pl" className={`${inter.variable} ${mono.variable}`}>
-      <body className="bg-black text-zinc-100 antialiased selection:bg-blue-600 selection:text-white">
-        
-        {/* Navbar jest tutaj, więc będzie widoczny NA KAŻDEJ podstronie */}
-        <Navbar />
-        
-        {/* To jest miejsce, gdzie wstrzykiwana jest treść strony (np. Landing Page lub Konfigurator) */}
-        {children}
+      <body className="bg-black text-zinc-100 antialiased flex flex-col min-h-screen">
 
+        {/* OWIJAMY WSZYSTKO W CART PROVIDER */}
+        <AuthProvider>
+          <CartProvider>
+            <Navbar />
+            <div className="flex-grow">
+              {children}
+            </div>
+            <Footer />
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );
-}
+} 

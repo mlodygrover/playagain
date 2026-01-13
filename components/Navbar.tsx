@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Zap, ShoppingBag, Menu, X, ArrowRight } from "lucide-react"; // Dodałem X i ArrowRight
+import { ShoppingBag, Menu, X, ArrowRight, User as UserIcon, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { items } = useCart();
+  const { user, logout } = useAuth();
 
-  // Funkcja zamykająca menu po kliknięciu w link
   const closeMenu = () => setIsMobileMenuOpen(false);
 
   return (
@@ -15,7 +18,7 @@ export function Navbar() {
       <nav className="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-xl border-b border-zinc-800 h-16">
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 h-full flex items-center justify-between">
           
-          {/* --- LOGO --- */}
+          {/* LOGO */}
           <Link href="/" className="flex items-center gap-3 group z-50" onClick={closeMenu}>
             <div className="w-8 h-8 bg-blue-600 flex items-center justify-center font-black italic text-black group-hover:bg-white transition-colors">
               P
@@ -25,22 +28,62 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* --- DESKTOP MENU (Hidden on Mobile) --- */}
+          {/* DESKTOP MENU */}
           <div className="hidden md:flex items-center gap-8">
             <NavLink href="/konfigurator">Konfigurator 3D</NavLink>
             <NavLink href="/czesci">Podzespoły</NavLink>
             <NavLink href="/o-nas">O Nas</NavLink>
           </div>
 
-          {/* --- ACTIONS (Cart & CTA) --- */}
+          {/* ACTION ICONS */}
           <div className="flex items-center gap-4 z-50">
-             {/* Koszyk (Widoczny zawsze) */}
-             <button className="flex text-xs font-mono text-zinc-400 hover:text-white uppercase transition items-center gap-2">
-               <ShoppingBag className="w-5 h-5" />
-               <span className="hidden sm:inline bg-blue-600/20 text-blue-500 px-1.5 rounded">0</span>
-             </button>
              
-             {/* CTA Button (Ukryty na bardzo małych ekranach, żeby nie zasłaniał logo) */}
+             {/* LOGOWANIE / KONTO (Desktop) */}
+             {user ? (
+               <div className="hidden sm:flex items-center gap-3 mr-2 border-r border-zinc-800 pr-4">
+                 
+                 {/* ZMIANA: Link do profilu */}
+                 <Link 
+                    href="/profil" 
+                    className="text-right group/profile cursor-pointer"
+                    title="Przejdź do profilu"
+                 >
+                   <span className="block text-[10px] text-zinc-500 uppercase font-bold group-hover/profile:text-blue-500 transition-colors">
+                     Zalogowany
+                   </span>
+                   <span className="block text-xs font-mono text-white font-bold group-hover/profile:text-blue-400 transition-colors">
+                     {user.firstName || user.email}
+                   </span>
+                 </Link>
+
+                 <button 
+                   onClick={logout} 
+                   title="Wyloguj"
+                   className="p-2 hover:bg-zinc-800 rounded-full transition-colors group"
+                 >
+                   <LogOut className="w-4 h-4 text-zinc-500 group-hover:text-red-500" />
+                 </button>
+               </div>
+             ) : (
+               <Link 
+                 href="/login" 
+                 className="hidden sm:flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-widest transition-colors mr-2 border-r border-zinc-800 pr-4"
+               >
+                 <UserIcon className="w-4 h-4" /> Logowanie
+               </Link>
+             )}
+
+             {/* KOSZYK */}
+             <Link href="/koszyk" className="flex text-xs font-mono text-zinc-400 hover:text-white uppercase transition items-center gap-2 group">
+               <ShoppingBag className="w-5 h-5 group-hover:text-blue-500 transition-colors" />
+               {items.length > 0 && (
+                 <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold animate-in zoom-in">
+                   {items.length}
+                 </span>
+               )}
+             </Link>
+             
+             {/* CTA */}
              <Link 
                href="/konfigurator"
                className="hidden sm:block bg-white text-black text-xs font-bold px-5 py-2 uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all skew-x-[-10deg]"
@@ -48,11 +91,10 @@ export function Navbar() {
                <span className="skew-x-[10deg] inline-block">Zbuduj PC</span>
              </Link>
 
-             {/* --- HAMBURGER TOGGLE --- */}
+             {/* MOBILE HAMBURGER */}
              <button 
                 className="md:hidden text-white p-2 hover:bg-zinc-800 rounded transition-colors" 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label="Toggle menu"
              >
                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
              </button>
@@ -60,19 +102,34 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* --- MOBILE FULLSCREEN OVERLAY --- 
-          Wyświetla się pod navbarem (top-16) i zajmuje resztę ekranu
-      */}
+      {/* MOBILE MENU OVERLAY */}
       {isMobileMenuOpen && (
         <div className="fixed top-16 left-0 w-full h-[calc(100vh-64px)] bg-black z-40 flex flex-col p-6 overflow-y-auto animate-in slide-in-from-top-5 duration-300">
           
-          <div className="flex flex-col gap-2 mt-4">
-            <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4 border-b border-zinc-800 pb-2">Menu Nawigacji</p>
-            
+          {/* Sekcja usera w mobile */}
+          <div className="mb-6 pb-6 border-b border-zinc-800">
+            {user ? (
+               <div className="flex items-center justify-between">
+                 {/* ZMIANA: Link do profilu */}
+                 <Link href="/profil" onClick={closeMenu} className="group">
+                   <p className="text-xs text-zinc-500 uppercase group-hover:text-blue-500 transition-colors">Witaj</p>
+                   <p className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{user.firstName || user.email}</p>
+                 </Link>
+                 <button onClick={logout} className="text-red-500 text-xs uppercase font-bold border border-zinc-800 px-3 py-2">Wyloguj</button>
+               </div>
+            ) : (
+               <Link href="/login" onClick={closeMenu} className="flex items-center gap-2 text-blue-500 font-bold uppercase">
+                 <UserIcon className="w-5 h-5" /> Zaloguj się / Rejestracja
+               </Link>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4">Nawigacja</p>
+            {user && <MobileLink href="/profil" onClick={closeMenu}>Twój Profil</MobileLink>}
             <MobileLink href="/konfigurator" onClick={closeMenu}>Konfigurator 3D</MobileLink>
             <MobileLink href="/czesci" onClick={closeMenu}>Podzespoły</MobileLink>
-            <MobileLink href="/o-nas" onClick={closeMenu}>O Nas</MobileLink>
-            <MobileLink href="/kontakt" onClick={closeMenu}>Kontakt</MobileLink>
+            <MobileLink href="/koszyk" onClick={closeMenu}>Twój Koszyk ({items.length})</MobileLink>
           </div>
 
           <div className="mt-auto mb-8 space-y-4">
@@ -83,10 +140,6 @@ export function Navbar() {
              >
                Rozpocznij Konfigurację <ArrowRight className="w-4 h-4" />
              </Link>
-             
-             <div className="text-center">
-                <p className="text-xs text-zinc-600 font-mono">PlayAgain.tech &copy; 2026</p>
-             </div>
           </div>
 
         </div>
@@ -95,8 +148,7 @@ export function Navbar() {
   );
 }
 
-// --- POMOCNICZE KOMPONENTY ---
-
+// Helpers
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <Link href={href} className="text-xs font-mono text-zinc-400 hover:text-blue-500 uppercase tracking-widest transition-colors relative group">
     {children}

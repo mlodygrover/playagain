@@ -1,24 +1,16 @@
 "use client";
 
+import { useCart } from "@/context/CartContext";
 import dynamic from "next/dynamic";
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+
 import { 
-  Cpu, 
-  MemoryStick, 
-  Fan, 
-  Box, 
-  Check, 
-  Zap, 
-  MonitorPlay, 
-  ShoppingBag, 
-  PackageOpen, 
-  Plus, 
-  Minus,
-  ChevronDown,
-  ChevronUp,
-  Info
+  Cpu, MemoryStick, Fan, Box, Check, MonitorPlay, 
+  ShoppingBag, PackageOpen, Plus, Minus, ChevronDown, ChevronUp, 
+  Sparkles // <--- Nowa ikona
 } from "lucide-react";
+import { Chatbot } from "@/components/Chatbox";
 
 // --- 1. IMPORT SCENY 3D ---
 const Scene3D = dynamic(() => import("@/components/Scene3D"), {
@@ -32,7 +24,7 @@ const Scene3D = dynamic(() => import("@/components/Scene3D"), {
   ),
 });
 
-// --- 2. DANE (MOCK) ---
+// ... (DANE MOCK BEZ ZMIAN) ...
 const CATEGORIES = [
   {
     id: "gpu",
@@ -82,9 +74,7 @@ const CATEGORIES = [
   },
 ];
 
-// --- 3. KOMPONENTY UI ---
-
-// Karta Produktu
+// ... (ProductTile BEZ ZMIAN) ...
 const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }: any) => (
   <div 
     className={`
@@ -168,8 +158,39 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
   </div>
 );
 
-// --- KOMPONENT PODSUMOWANIA ---
+// ... (SummaryPanel BEZ ZMIAN) ...
 const SummaryPanel = ({ selections, totalPrice, onCategoryClick }: any) => {
+  const { addToCart } = useCart();
+  const router = useRouter();
+
+  const handleAddToCart = () => {
+    const componentNames: string[] = [];
+    CATEGORIES.forEach(cat => {
+      const selectedId = selections[cat.id];
+      const item = cat.items.find(i => i.id === selectedId);
+      if (item) {
+        componentNames.push(`${cat.name}: ${item.name}`);
+      }
+    });
+
+    if (componentNames.length === 0) {
+      alert("Wybierz przynajmniej jeden komponent!");
+      return;
+    }
+
+    const cartItem = {
+      id: `build-${Date.now()}`,
+      name: "Custom Gaming PC Build",
+      price: totalPrice,
+      type: "custom_build" as const,
+      components: componentNames,
+      image: null
+    };
+
+    addToCart(cartItem);
+    router.push("/koszyk");
+  };
+
   return (
     <div className="border border-zinc-800 bg-black/80 backdrop-blur-sm">
       <div className="p-3 border-b border-zinc-800 flex items-center gap-2 bg-zinc-900/50">
@@ -205,9 +226,13 @@ const SummaryPanel = ({ selections, totalPrice, onCategoryClick }: any) => {
           <span className="text-zinc-500 text-xs uppercase">Total Cost</span>
           <span className="text-xl font-bold text-white tracking-tighter">{totalPrice} <span className="text-sm text-zinc-600">PLN</span></span>
         </div>
-        <button className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 border border-blue-500">
+        
+        <button 
+          onClick={handleAddToCart}
+          className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 border border-blue-500"
+        >
           <ShoppingBag className="w-4 h-4" />
-          Checkout
+          Dodaj do Koszyka
         </button>
       </div>
     </div>
@@ -216,7 +241,7 @@ const SummaryPanel = ({ selections, totalPrice, onCategoryClick }: any) => {
 
 
 // --- GŁÓWNA ZAWARTOŚĆ ---
-function ConfiguratorContent() {
+function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -251,7 +276,6 @@ function ConfiguratorContent() {
     return total;
   }, [selections]);
 
-  // --- ZMIANA TUTAJ: ANIMACJA SHAKE ---
   const handle3DClick = (friendlyName: string) => {
     const category = CATEGORIES.find(c => c.name === friendlyName);
     
@@ -259,14 +283,10 @@ function ConfiguratorContent() {
       const element = document.getElementById(`section-${category.id}`);
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "start" });
-        
-        // Dodajemy klasy: tło ORAZ shake
-        element.classList.add("bg-zinc-900", "animate-shake");
-        
-        // Po sekundzie usuwamy obie klasy
+        element.classList.add("bg-zinc-900", "animate-shake", "animate-border-flow");
         setTimeout(() => {
-          element.classList.remove("bg-zinc-900", "animate-shake");
-        }, 1000);
+          element.classList.remove("bg-zinc-900", "animate-shake", "animate-border-flow");
+        }, 2000);
       }
     }
   };
@@ -276,6 +296,8 @@ function ConfiguratorContent() {
           
       {/* LEWA KOLUMNA */}
       <div className="lg:col-span-4 lg:sticky lg:top-20 space-y-4">
+        
+        {/* MODEL 3D */}
         <div className="aspect-square w-full bg-black border border-zinc-800 relative group overflow-hidden">
           <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-blue-600 z-10" />
           <div className="absolute bottom-0 right-0 w-4 h-4 border-r-2 border-b-2 border-blue-600 z-10" />
@@ -287,6 +309,18 @@ function ConfiguratorContent() {
           </div>
         </div>
 
+        {/* --- NOWOŚĆ: PRZYCISK AI ASSISTANT POD MODELEM --- */}
+        <button 
+          onClick={onOpenChat}
+          className="w-full py-4 bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/30 text-white font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:border-purple-500 hover:shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all group"
+        >
+          <div className="relative">
+            <Sparkles className="w-5 h-5 text-purple-400 group-hover:animate-spin-slow" />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+          </div>
+          <span>Skonfiguruj z AI</span>
+        </button>
+
         <SummaryPanel 
           selections={selections} 
           totalPrice={totalPrice} 
@@ -294,8 +328,9 @@ function ConfiguratorContent() {
         />
       </div>
 
-      {/* PRAWA KOLUMNA */}
+      {/* PRAWA KOLUMNA (Bez zmian) */}
       <div className="lg:col-span-8 flex flex-col gap-8 pb-20">
+        {/* ... Nagłówek ... */}
         <div className="border-b border-zinc-800 pb-6">
           <h1 className="text-4xl font-black uppercase tracking-tighter italic text-white mb-2">
             Configurator <span className="text-blue-600">V.2.0</span>
@@ -310,8 +345,9 @@ function ConfiguratorContent() {
           <section 
             key={category.id} 
             id={`section-${category.id}`}
-            className="scroll-mt-24 transition-colors duration-300" // transition potrzebne do płynnej zmiany tła
+            className="scroll-mt-24 transition-colors duration-300"
           >
+            {/* ... Nagłówek Kategorii ... */}
             <div className="flex items-center gap-3 mb-0 bg-zinc-950 border border-zinc-800 border-b-0 p-3 sticky top-[4rem] z-10">
               <div className={`p-1.5 ${selections[category.id] ? "text-blue-500" : "text-zinc-600"}`}>
                 {category.icon}
@@ -348,8 +384,11 @@ function ConfiguratorContent() {
 
 // --- 4. WRAPPER ---
 export default function ConfiguratorPage() {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-blue-600 selection:text-white">
+      {/* NAVBAR */}
       <nav className="fixed top-0 w-full z-40 bg-black/90 backdrop-blur-md border-b border-zinc-800 h-16 flex items-center px-6 justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-600 flex items-center justify-center font-black italic text-black">
@@ -365,9 +404,15 @@ export default function ConfiguratorPage() {
 
       <main className="pt-24 px-4 md:px-8 max-w-[1600px] mx-auto">
         <Suspense fallback={<div className="text-white font-mono p-10">LOADING CONFIGURATION...</div>}>
-          <ConfiguratorContent />
+          <ConfiguratorContent onOpenChat={() => setIsChatOpen(true)} />
         </Suspense>
       </main>
+
+      {/* CHATBOT (Przekazujemy stan) */}
+      <Chatbot
+        externalOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+      />
     </div>
   );
 }
