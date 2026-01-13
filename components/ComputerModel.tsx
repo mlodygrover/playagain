@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useGLTF, Center } from "@react-three/drei";
-import { useThree } from "@react-three/fiber"; // Importujemy useThree
+import { useThree, ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 
 interface ModelProps {
@@ -15,16 +15,19 @@ export function ComputerModel({ onPartSelect, selectedPart, ...props }: ModelPro
   const { nodes, materials } = useGLTF("/gaming-pc.glb") as any;
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
 
-  // --- 1. DYNAMICZNE SKALOWANIE (Fix na Mobile) ---
+  // --- 1. POPRAWKI WIZUALNE (POZYCJA I SKALA) ---
   const { viewport } = useThree();
   
-  // Wzór: viewport.width to szerokość ekranu w jednostkach 3D.
-  // Dzielimy ją przez liczbę (np. 5), która reprezentuje "szerokość modelu + margines".
-  // Math.min(1, ...) zapewnia, że na dużych ekranach model nie powiększy się ponad 100%.
-  
-  // Zwiększ liczbę '4.2', jeśli nadal przycina (np. na 5.0).
-  // Zmniejsz, jeśli model jest za mały.
-  const responsiveScale = Math.min(1, viewport.width / 4.2);
+  const isMobile = viewport.width < 5;
+
+  // A. SKALA: Powiększamy model. 
+  // Dzielnik 3.0 (zamiast 4.2) sprawi, że model będzie większy i lepiej wypełni ramkę.
+  const responsiveScale = Math.min(1.3, viewport.width / 3.0);
+
+  // B. POZYCJA Y: "Podciągamy" model do góry.
+  // 0.5 dla Desktopu (żeby był na środku ramki)
+  // 1.5 dla Mobile (bo tam kamera jest niżej/inaczej ustawiona)
+  const yOffset = isMobile ? 1.5 : 0.5;
 
   // --- 2. KONFIGURACJA GRUP ---
   const PART_MAPPING: Record<string, string> = {
@@ -108,8 +111,8 @@ export function ComputerModel({ onPartSelect, selectedPart, ...props }: ModelPro
   };
 
   return (
-    // Center centruje model. Dodatkowo upewniamy się, że obrót jest wyzerowany na grupie nadrzędnej.
-    <Center>
+    // Zastosowanie offsetu Y w komponencie Center
+    <Center position={[0, yOffset, 0]}>
       <group 
         {...props} 
         dispose={null} 
@@ -118,6 +121,7 @@ export function ComputerModel({ onPartSelect, selectedPart, ...props }: ModelPro
         
         {Object.entries(nodes).map(([meshName, node]: [string, any]) => {
           if (!node.geometry) return null;
+          // Ukrywamy szyby i inne elementy blokujące widok
           if (meshName === "Plane019" || meshName === "Plane002") return null;
 
           const friendlyName = PART_MAPPING[meshName];

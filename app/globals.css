@@ -24,3 +24,42 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* src/app/globals.css */
+
+@layer utilities {
+  /* Istniejący shake (zostawiamy go) */
+  @keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+  }
+
+  .animate-shake {
+    animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  /* NOWOŚĆ: Efekt fali na ramce */
+  @keyframes border-flow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .animate-border-flow {
+    /* Ustawiamy border na transparent, żeby widzieć tło pod spodem */
+    border: 1px solid transparent !important;
+    
+    /* Dwie warstwy tła:
+       1. padding-box: Czarne tło w środku elementu
+       2. border-box: Gradient (szary -> niebieski -> szary) pod ramką */
+    background: 
+      linear-gradient(#000, #000) padding-box, 
+      linear-gradient(90deg, #27272a 0%, #3b82f6 50%, #27272a 100%) border-box;
+      
+    background-size: 200% 100%;
+    animation: border-flow 2s linear infinite;
+    
+    /* Dodatkowy błękitny blask */
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  }
+}
