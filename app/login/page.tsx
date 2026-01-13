@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, User, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 
-const server_port = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5009";
+const server_port = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();

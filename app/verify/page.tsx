@@ -4,7 +4,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
-const server_port = "http://localhost:5009";
+
+const server_port = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 function VerifyContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");

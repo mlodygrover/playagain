@@ -7,7 +7,8 @@ import {
   User, Package, Lock, LogOut, Loader2, 
   Save, AlertCircle, CheckCircle2 
 } from "lucide-react";
-const server_port = "http://localhost:5009";
+
+const server_port = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 export default function ProfilePage() {
   const { user, token, logout } = useAuth();
   const router = useRouter();

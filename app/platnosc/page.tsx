@@ -9,7 +9,8 @@ import {
     MapPin, Mail, ArrowRight, ShieldCheck, Loader2
 } from "lucide-react";
 import Link from "next/link";
-const server_port = "http://localhost:5009";
+
+const server_port = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 export default function CheckoutPage() {
     const { items, totalPrice, clearCart } = useCart();
     const { user } = useAuth(); // <--- Sprawdzamy czy user jest zalogowany
