@@ -38,7 +38,7 @@ function LoginContent() {
 
         // Wybór endpointu (Logowanie lub Rejestracja)
         const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-        // UWAGA: Port 5009 z Twojego loga
+        
         const apiUrl = `${server_port}${endpoint}`;
 
         try {

@@ -343,7 +343,7 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
               chipset: item.chipset ? item.chipset.toUpperCase() : item.name.split(' ')[0].toUpperCase(),
               socket: item.socket,
               formFactor: item.formFactor,
-              price: Math.ceil(Math.min(item.stats.averagePrice - item.stats.standardDeviation, item.stats.lowestPrice + item.stats.standardDeviation)) + 5 - Math.ceil(Math.min(item.stats.averagePrice - item.stats.standardDeviation, item.stats.lowestPrice + item.stats.standardDeviation)) % 5,
+              price: Math.ceil(11*(Math.max(item.stats.averagePrice - item.stats.standardDeviation, item.stats.lowestPrice + item.stats.standardDeviation))/10) + 5 - Math.ceil(11*(Math.max(item.stats.averagePrice - item.stats.standardDeviation, item.stats.lowestPrice + item.stats.standardDeviation))/10) % 5,
               image: item.image,
               specs: generateSpecs(item)
             }));

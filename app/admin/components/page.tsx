@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation"; // <--- NOWE IMPORTY
 import { useAuth } from "@/context/AuthContext";
 import {
     Plus, Edit, Trash2, Save, X, Search, RefreshCcw,
     Monitor, Cpu, CircuitBoard, HardDrive, Box, Zap, Fan, MemoryStick, TrendingUp,
     FileJson, CheckCircle, AlertTriangle, Sparkles, Loader2, CheckSquare, Square, Wand2
 } from "lucide-react";
+import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 
@@ -28,6 +29,8 @@ const Input = ({ label, name, val, set, type = "text", placeholder, required = f
 
 export default function ComponentsManager() {
     const { token } = useAuth();
+    const router = useRouter(); // <--- Hook do nawigacji
+    const searchParams = useSearchParams(); // <--- Hook do czytania parametrów URL
 
     const [components, setComponents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,7 +44,15 @@ export default function ComponentsManager() {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    const [filters, setFilters] = useState({ search: "", type: "ALL", minPrice: "", maxPrice: "" });
+    // --- 1. INICJALIZACJA STANU Z URL ---
+    // Zamiast pustych stringów, czytamy to co jest w pasku adresu na starcie
+    const [filters, setFilters] = useState({
+        search: searchParams.get("search") || "",
+        type: searchParams.get("type") || "ALL",
+        minPrice: searchParams.get("minPrice") || "",
+        maxPrice: searchParams.get("maxPrice") || ""
+    });
+
     const [debouncedFilters, setDebouncedFilters] = useState(filters);
 
     const [type, setType] = useState("GPU");
@@ -57,36 +68,48 @@ export default function ComponentsManager() {
         return s.toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
     };
 
-    // --- 1. POBIERANIE MAPY PŁYT (NIEZALEŻNE) ---
+    // --- POBIERANIE MAPY PŁYT ---
     useEffect(() => {
         fetchMoboMap();
-    }, []); // Wywołaj tylko raz przy starcie
+    }, []);
 
     const fetchMoboMap = async () => {
         try {
-            // Pobieramy TYLKO płyty główne, niezależnie od filtrów użytkownika
             const res = await fetch(`${API_URL}/api/components?type=Motherboard`);
             const mobos = await res.json();
-
             const map: Record<string, boolean> = {};
             mobos.forEach((m: any) => {
-                if (m.socket) {
-                    map[normalizeSocket(m.socket)] = true;
-                }
+                if (m.socket) map[normalizeSocket(m.socket)] = true;
             });
             setSocketMoboMap(map);
-            // console.log("Zaktualizowano mapę płyt:", map);
         } catch (err) {
             console.error("Błąd mapy płyt:", err);
         }
     };
 
-    // --- 2. POBIERANIE LISTY GŁÓWNEJ (ZALEŻNE OD FILTRÓW) ---
+    // --- 2. LOGIKA AKTUALIZACJI URL I DEBOUNCE ---
     useEffect(() => {
-        const handler = setTimeout(() => setDebouncedFilters(filters), 500);
-        return () => clearTimeout(handler);
-    }, [filters]);
+        const handler = setTimeout(() => {
+            // A. Ustawiamy filtry do pobrania danych
+            setDebouncedFilters(filters);
 
+            // B. Aktualizujemy URL w przeglądarce
+            const params = new URLSearchParams();
+            if (filters.search) params.set("search", filters.search);
+            if (filters.type && filters.type !== "ALL") params.set("type", filters.type);
+            if (filters.minPrice) params.set("minPrice", filters.minPrice);
+            if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
+
+            // Używamy replace, aby nie zaśmiecać historii cofania każdą literką
+            // scroll: false zapobiega skakaniu strony do góry
+            router.replace(`?${params.toString()}`, { scroll: false });
+
+        }, 500); // 500ms opóźnienia
+
+        return () => clearTimeout(handler);
+    }, [filters, router]);
+
+    // --- 3. POBIERANIE DANYCH (REAGUJE NA DEBOUNCED FILTERS) ---
     useEffect(() => {
         fetchComponents();
     }, [debouncedFilters]);
@@ -106,7 +129,7 @@ export default function ComponentsManager() {
         } catch (err) { console.error(err); } finally { setLoading(false); }
     };
 
-    // --- RESZTA LOGIKI BEZ ZMIAN ---
+    // --- HANDLERY UI ---
     const handleFilterChange = (key: string, value: string) => setFilters(prev => ({ ...prev, [key]: value }));
     const clearFilters = () => setFilters({ search: "", type: "ALL", minPrice: "", maxPrice: "" });
 
@@ -132,6 +155,7 @@ export default function ComponentsManager() {
         else { const allIds = components.map(c => c._id); setSelectedIds(new Set(allIds)); }
     };
 
+    // --- AKCJE ADMINA ---
     const handleCreateMissingMobos = async () => {
         if (!token) return alert("Brak autoryzacji.");
         const selectedCpus = components.filter(c => selectedIds.has(c._id) && c.type === 'CPU' && c.socket);
@@ -160,11 +184,8 @@ export default function ComponentsManager() {
                 if (data.created) totalCreated += data.created.length;
             }
             alert(`Gotowe! Utworzono ${totalCreated} szablonów.`);
-
-            // WAŻNE: Odświeżamy OBA zbiory danych
             fetchMoboMap();
             fetchComponents();
-
         } catch (err: any) { alert("Błąd: " + err.message); } finally { setIsCreatingMobos(false); }
     };
 
@@ -187,14 +208,13 @@ export default function ComponentsManager() {
         } catch (err: any) { alert("Błąd AI: " + err.message); } finally { setIsGenerating(false); }
     };
 
-    // ... (Reszta funkcji CRUD/Import/UI bez zmian) ...
     const handleDelete = async (id: string) => { if (!confirm("Usunąć?")) return; await fetch(`${API_URL}/api/components/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); fetchComponents(); };
     
     const openEdit = (c: any) => { setEditingId(c._id); setType(c.type); setFormData({ ...c, blacklistedKeywords: c.blacklistedKeywords ? c.blacklistedKeywords.join(', ') : "" }); setIsModalOpen(true); };
     const openAdd = () => { setEditingId(null); setFormData({ name: "", searchQuery: "", blacklistedKeywords: "", image: "" }); setIsModalOpen(true); };
 
     const getTypeIcon = (t: string) => { switch (t) { case 'GPU': return <Monitor className="w-5 h-5" />; case 'CPU': return <Cpu className="w-5 h-5" />; case 'Motherboard': return <CircuitBoard className="w-5 h-5" />; case 'RAM': return <MemoryStick className="w-5 h-5" />; case 'Disk': return <HardDrive className="w-5 h-5" />; case 'Case': return <Box className="w-5 h-5" />; case 'PSU': return <Zap className="w-5 h-5" />; case 'Cooling': return <Fan className="w-5 h-5" />; default: return <Search className="w-5 h-5" />; } };
-    // Funkcja renderująca pola specyficzne dla typu
+    
     const renderSpecificFields = () => {
         switch (type) {
             case 'CPU':
@@ -296,24 +316,20 @@ export default function ComponentsManager() {
         }
     };
 
-    // Obsługa zapisu formularza
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!token) return alert("Brak autoryzacji");
 
-        // Formatowanie tablic (keywords)
         const payload = { ...formData, type };
         if (typeof payload.blacklistedKeywords === 'string') {
             payload.blacklistedKeywords = payload.blacklistedKeywords.split(',').map((s: string) => s.trim()).filter(Boolean);
         }
-        // Formatowanie tablic specyficznych (np. mobo support dla obudowy)
         if (payload.motherboardSupport && typeof payload.motherboardSupport === 'string') {
             payload.motherboardSupport = payload.motherboardSupport.split(',').map((s: string) => s.trim());
         }
         if (payload.supportedSockets && typeof payload.supportedSockets === 'string') {
             payload.supportedSockets = payload.supportedSockets.split(',').map((s: string) => s.trim());
         }
-
 
         const method = editingId ? "PUT" : "POST";
         const url = editingId ? `${API_URL}/api/components/${editingId}` : `${API_URL}/api/components`;
@@ -328,25 +344,19 @@ export default function ComponentsManager() {
 
             setIsModalOpen(false);
             fetchComponents();
-            if (!editingId) fetchMoboMap(); // Jeśli dodano nowy, odśwież mapę
+            if (!editingId) fetchMoboMap();
         } catch (err: any) {
             alert(err.message);
         }
     };
 
-    // Obsługa Importu JSON
     const handleJsonImport = async () => {
         if (!token) return;
         setImportStatus({ msg: "Przetwarzanie...", type: 'info' });
         try {
             const parsed = JSON.parse(jsonInput);
             const items = Array.isArray(parsed) ? parsed : [parsed];
-
-            // Dodajemy typ do każdego elementu jeśli go nie ma
-            const componentsToImport = items.map(item => ({
-                ...item,
-                type: item.type || importType
-            }));
+            const componentsToImport = items.map(item => ({ ...item, type: item.type || importType }));
 
             const res = await fetch(`${API_URL}/api/components/import`, {
                 method: "POST",
@@ -368,7 +378,6 @@ export default function ComponentsManager() {
         }
     };
 
-    // Czy zaznaczono CPU? (To dla paska akcji)
     const hasSelectedCpu = Array.from(selectedIds).some(id => components.find(c => c._id === id)?.type === 'CPU');
 
     return (
@@ -414,10 +423,7 @@ export default function ComponentsManager() {
                 <div className="grid gap-3">
                     {components.map((comp) => {
                         const isSelected = selectedIds.has(comp._id);
-
-                        // ZNORMALIZOWANE SPRAWDZANIE
                         const mySocketKey = normalizeSocket(comp.socket);
-                        // Używamy mapy socketMoboMap, która jest teraz niezależna od filtrów
                         const hasMobo = comp.type === 'CPU' && comp.socket && socketMoboMap[mySocketKey];
 
                         return (
@@ -447,7 +453,6 @@ export default function ComponentsManager() {
                                         ) : (
                                             <div className="flex items-center gap-2">
                                                 <h3 className="font-bold text-white text-lg">{comp.name}</h3>
-                                                {/* Badge dla CPU o stanie płyt głównych */}
                                                 {comp.type === 'CPU' && (
                                                     <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase font-mono ${hasMobo ? 'bg-green-900/20 text-green-500 border-green-900/50' : 'bg-red-900/20 text-red-500 border-red-900/50'}`}>
                                                         {hasMobo ? 'MOBO: OK' : 'MOBO: MISSING'}
