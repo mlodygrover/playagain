@@ -13,7 +13,7 @@ const app = express();
 // Middleware
 app.use(cors()); // Pozwala frontendowi (port 3000) gadać z backendem (port 5000)
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
 // Połączenie z bazą
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ Połączono z MongoDB"))

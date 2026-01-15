@@ -87,43 +87,46 @@ router.post('/', async (req, res) => {
 });
 
 // 2. WEBHOOK (Powiadomienia z Tpay)
-// backend/routes/orders.js
-
+// 2. WEBHOOK (Powiadomienia z Tpay)
 router.post('/webhook/payment-update', async (req, res) => {
   try {
-    console.log("🔔 Otrzymano webhook z Tpay:", req.body);
+    // Logujemy, żeby widzieć w Renderze co przyszło
+    console.log("🔔 Otrzymano webhook z Tpay. Body:", req.body);
 
-    const { tr_status, tr_id, tr_error, tr_crc } = req.body;
+    const { tr_status, tr_error, tr_crc, tr_id } = req.body;
 
+    // Sprawdzamy czy płatność udana (TRUE) i brak błędu (none)
     if (tr_status === 'TRUE' && tr_error === 'none') {
 
-      // Próbujemy znaleźć zamówienie na dwa sposoby:
-      // 1. Po ID transakcji Tpay (jeśli zapisaliśmy je w bazie przy tworzeniu)
-      let order = await Order.findOne({ paymentId: tr_id });
-
-      // 2. Jeśli nie znaleziono, szukamy po ID zamówienia (często przekazywane w tr_crc lub hiddenDescription)
-      // Uwaga: Tpay czasem zwraca ID zamówienia w polu tr_crc jeśli tak skonfigurowaliśmy w panelu, 
-      // ale w naszym kodzie API nie wysłaliśmy crc. 
-      // W poprzednim kroku wysłaliśmy 'hiddenDescription', ale webhook rzadko je zwraca wprost.
-
-      // NAJLEPSZA METODA: 
-      // W kroku 1 (tworzenie) upewnij się, że zapisałeś: savedOrder.paymentId = transactionRes.data.transactionId;
+      // Szukamy zamówienia po ID z pola CRC (to jest ID z MongoDB)
+      // Używamy findById, bo w tr_crc wysłaliśmy savedOrder._id
+      const order = await Order.findById(tr_crc);
 
       if (order) {
+        // Zapisujemy paymentId teraz, na wypadek gdyby nie zapisało się przy tworzeniu
+        if (!order.paymentId) {
+          order.paymentId = tr_id;
+        }
+
         if (order.status !== 'PAID') {
           order.status = 'PAID';
           order.paidAt = new Date();
           await order.save();
-          console.log(`✅ Zamówienie ${order._id} opłacone!`);
+          console.log(`✅ Zamówienie ${order._id} zostało opłacone!`);
+        } else {
+          console.log(`ℹ️ Zamówienie ${order._id} było już opłacone wcześniej.`);
         }
       } else {
-        console.error(`⚠️ Nie znaleziono zamówienia dla transakcji Tpay: ${tr_id}`);
+        console.error(`⚠️ Nie znaleziono zamówienia dla CRC: ${tr_crc}`);
       }
     }
 
+    // Tpay musi dostać odpowiedź tekstową TRUE, inaczej będzie ponawiał próbę
     res.status(200).send('TRUE');
   } catch (err) {
     console.error("❌ Webhook Error:", err);
+    // W przypadku błędu serwera też lepiej oddać TRUE lub 200, żeby Tpay nie spamował,
+    // chyba że chcesz, żeby próbował ponownie.
     res.status(500).send('FALSE');
   }
 });
