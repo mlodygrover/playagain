@@ -160,36 +160,77 @@ const PriceHistogramSlider = ({ items, minPrice, maxPrice, currentMin, currentMa
 
 const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }: any) => (
   <div className={`relative w-full border-b last:border-b-0 border-zinc-800 transition-all duration-200 group ${isExpanded ? "bg-zinc-900" : "hover:bg-zinc-900/40 bg-black"}`}>
-    <div onClick={onToggleExpand} className="flex items-center justify-between p-4 cursor-pointer gap-3 sm:gap-4">
+    {/* GŁÓWNY PASEK PRODUKTU */}
+    <div onClick={onToggleExpand} className="flex items-center justify-between p-2 sm:p-4 cursor-pointer gap-2 h-14 sm:h-auto">
+
+      {/* Pasek zaznaczenia */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors ${isSelected ? "bg-blue-600" : "bg-transparent group-hover:bg-zinc-700"}`} />
-      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 pl-2 flex-grow min-w-0">
-        <h3 className={`text-sm font-medium truncate ${isSelected ? "text-blue-400" : "text-zinc-300"}`}>{item.name}</h3>
-        {isSelected && <span className="inline-block w-fit text-[9px] uppercase tracking-wider bg-blue-900/30 text-blue-400 px-1.5 py-0.5 border border-blue-500/20 font-mono rounded-sm">Installed</span>}
+
+      {/* LEWA STRONA: Nazwa i Cena */}
+      <div className="flex flex-col justify-center flex-grow min-w-0 pl-2">
+        {/* Nazwa - priorytet widoczności */}
+        <h3 className={`text-xs sm:text-sm font-medium truncate pr-2 ${isSelected ? "text-blue-400" : "text-zinc-300"}`}>
+          {item.name}
+        </h3>
+
+        {/* Cena i Status - mniejsza czcionka pod spodem */}
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-xs sm:text-sm font-mono text-zinc-400 font-bold leading-none">
+            {item.price} zł
+          </span>
+          {isSelected && (
+            <span className="text-[9px] uppercase tracking-wider text-blue-500 font-mono leading-none">
+              [INSTALLED]
+            </span>
+          )}
+        </div>
       </div>
-      <button onClick={(e) => { e.stopPropagation(); onSelect(); }} className={`flex-shrink-0 w-8 h-8 flex items-center justify-center border transition-all duration-200 z-10 ${isSelected ? "bg-blue-600 border-blue-600 text-white hover:bg-red-600 hover:border-red-600" : "border-zinc-700 text-zinc-500 hover:border-blue-500 hover:text-blue-500 hover:bg-zinc-800"}`}>{isSelected ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}</button>
-      <div className="text-right min-w-[70px]"><span className="text-sm font-mono text-zinc-400">{item.price} zł</span></div>
-      <div className="text-zinc-600 pl-2 border-l border-zinc-800">{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
+
+      {/* PRAWA STRONA: Akcje */}
+      <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+
+        {/* Przycisk Plus/Minus - mniejszy na mobile */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onSelect(); }}
+          className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border rounded transition-all duration-200 z-10 
+            ${isSelected
+              ? "bg-blue-600 border-blue-600 text-white hover:bg-red-600 hover:border-red-600"
+              : "border-zinc-700 text-zinc-500 hover:border-blue-500 hover:text-blue-500 hover:bg-zinc-800"
+            }`}
+        >
+          {isSelected ? <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+        </button>
+
+        {/* Strzałka rozwijania */}
+        <div className="text-zinc-600 w-6 flex justify-center sm:pl-2 sm:border-l border-zinc-800">
+          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </div>
+      </div>
     </div>
+
+    {/* TREŚĆ ROZWINIĘTA */}
     {isExpanded && (
-      <div className="p-4 pt-0 pl-6 pr-4 border-t border-zinc-800/50 bg-zinc-900/50 animate-in slide-in-from-top-1 fade-in duration-200">
-        <div className="flex flex-col sm:flex-row gap-4 mt-4">
-          <div className="w-24 h-24 bg-black border border-zinc-800 flex items-center justify-center flex-shrink-0">
+      <div className="p-3 pt-0 pl-4 sm:pl-6 pr-3 border-t border-zinc-800/50 bg-zinc-900/50 animate-in slide-in-from-top-1 fade-in duration-200">
+        <div className="flex flex-row gap-3 sm:gap-4 mt-3">
+          {/* Mniejszy obrazek na mobile */}
+          <div className="w-16 h-16 sm:w-24 sm:h-24 bg-black border border-zinc-800 flex items-center justify-center flex-shrink-0 rounded-sm">
             {item.image ? (
               <img src={item.image} alt={item.name} className="object-cover w-full h-full opacity-90" />
             ) : (
-              <PackageOpen className="w-8 h-8 text-zinc-700" />
+              <PackageOpen className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-700" />
             )}
           </div>
-          <div className="flex-grow space-y-3">
-            <div className="flex flex-wrap gap-2">
+
+          <div className="flex-grow space-y-2">
+            <div className="flex flex-wrap gap-1.5">
               {item.specs.map((spec: string, i: number) => (
-                <span key={i} className="text-[10px] uppercase font-mono px-1.5 py-0.5 border border-zinc-700 text-zinc-500 bg-zinc-950">
+                <span key={i} className="text-[9px] sm:text-[10px] uppercase font-mono px-1.5 py-0.5 border border-zinc-700 text-zinc-500 bg-zinc-950 rounded-sm">
                   {spec}
                 </span>
               ))}
             </div>
-            <p className="text-xs text-zinc-500 leading-relaxed max-w-md">
-              Komponent sprawdzony przez naszych techników. Gwarancja najniższej ceny rynkowej ({item.price} PLN).
+            <p className="text-[10px] sm:text-xs text-zinc-500 leading-relaxed max-w-md">
+              Komponent zweryfikowany pod kątem kompatybilności.
             </p>
           </div>
         </div>
