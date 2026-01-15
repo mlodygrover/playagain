@@ -41,36 +41,32 @@ router.post('/', async (req, res) => {
       `${process.env.TPAY_API_URL}/transactions`,
       {
         amount: totalAmount,
-        description: `Zamówienie #${savedOrder._id} w PlayAgain`,
+        description: `Zamówienie #${savedOrder._id}`,
         hiddenDescription: savedOrder._id.toString(),
 
-        // ZMIANA TUTAJ: Konfiguracja płatnika i przekierowań
         payer: {
           email: customerDetails.email,
           name: `${customerDetails.firstName} ${customerDetails.lastName}`,
-          phone: customerDetails.phone,
           address: customerDetails.address,
           city: customerDetails.city,
           code: customerDetails.zipCode,
-
-          // NOWE MIEJSCE DLA LINKÓW POWROTNYCH:
-          urls: {
-            success: `${process.env.BASE_URL}/sukces?orderId=${savedOrder._id}`,
-            error: `${process.env.BASE_URL}/koszyk?error=payment_failed`
-          }
+          // TU NIE DAJEMY URLS! Tpay ignoruje je tutaj w nowym API.
         },
 
-        // Callbacks służą tylko do powiadomień dla serwera (webhook)
         callbacks: {
+          // TUTAJ JEST POPRAWNE MIEJSCE:
+          payerUrls: {
+            success: `${process.env.BASE_URL}/sukces?orderId=${savedOrder._id}`,
+            error: `${process.env.BASE_URL}/koszyk?error=payment_failed`
+          },
           notification: {
-            url: process.env.NOTIFICATION_URL,
+            // Adres, na który Tpay wyśle potwierdzenie w tle
+            url: `${process.env.NOTIFICATION_URL}/api/orders/webhook/payment-update`,
             email: customerDetails.email
           }
         }
       },
-      {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      }
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
     // 4. Zapisz ID transakcji Tpay w bazie (opcjonalnie)
@@ -91,52 +87,44 @@ router.post('/', async (req, res) => {
 });
 
 // 2. WEBHOOK (Powiadomienia z Tpay)
+// backend/routes/orders.js
+
 router.post('/webhook/payment-update', async (req, res) => {
   try {
-    // Tpay wysyła dane jako form-data, więc w req.body
-    // W produkcji należy weryfikować sumę kontrolną (md5sum/jws)!
+    console.log("🔔 Otrzymano webhook z Tpay:", req.body);
 
-    console.log("Otrzymano webhook z Tpay:", req.body);
+    const { tr_status, tr_id, tr_error, tr_crc } = req.body;
 
-    const { tr_status, tr_id, tr_crc } = req.body;
+    if (tr_status === 'TRUE' && tr_error === 'none') {
 
-    // W Tpay Sandbox "TRUE" oznacza sukces
-    if (tr_status === 'TRUE') {
-      // Szukamy zamówienia po ID ukrytym w opisie lub paymentId
-      // Tutaj upraszczamy - zakładamy, że tr_crc to nasze orderId (trzeba by to tak ustawić przy tworzeniu)
-      // LUB szukamy po paymentId zapisanym wcześniej.
+      // Próbujemy znaleźć zamówienie na dwa sposoby:
+      // 1. Po ID transakcji Tpay (jeśli zapisaliśmy je w bazie przy tworzeniu)
+      let order = await Order.findOne({ paymentId: tr_id });
 
-      // Prostsza metoda: przy tworzeniu w hiddenDescription daliśmy ID zamówienia.
-      // Ale webhook Tpay standardowo nie zwraca hiddenDescription w prostym body.
-      // Najlepiej szukać po tr_id jeśli zapisaliśmy je wcześniej.
+      // 2. Jeśli nie znaleziono, szukamy po ID zamówienia (często przekazywane w tr_crc lub hiddenDescription)
+      // Uwaga: Tpay czasem zwraca ID zamówienia w polu tr_crc jeśli tak skonfigurowaliśmy w panelu, 
+      // ale w naszym kodzie API nie wysłaliśmy crc. 
+      // W poprzednim kroku wysłaliśmy 'hiddenDescription', ale webhook rzadko je zwraca wprost.
 
-      // Dla celów edukacyjnych/sandbox - zaktualizujemy po prostu status jeśli znajdziemy transakcję
-      // W prawdziwym Tpay musisz powiązać tr_id z orderem.
+      // NAJLEPSZA METODA: 
+      // W kroku 1 (tworzenie) upewnij się, że zapisałeś: savedOrder.paymentId = transactionRes.data.transactionId;
 
-      // Znajdź zamówienie, które ma ten paymentId (jeśli zapisałeś)
-      // const order = await Order.findOne({ paymentId: tr_id });
-
-      // ALE: W tym kodzie wyżej zapisujemy paymentId DOPIERO PO uzyskaniu odpowiedzi.
-      // Więc bezpieczniej jest zaufać, że webhook przyjdzie.
-
-      // W praktyce: Tpay w polu `tr_crc` pozwala przesłać własny ID.
-      // Niestety endpoint POST /transactions w OpenAPI ma inną strukturę niż stare API.
-
-      // --- ROZWIĄZANIE DLA TEGO KODU ---
-      // Ponieważ webhook przyjdzie na localhost tylko przez tunel, 
-      // tutaj piszę logikę "gdyby przyszło".
-
-      // res.status(200).send('TRUE'); 
+      if (order) {
+        if (order.status !== 'PAID') {
+          order.status = 'PAID';
+          order.paidAt = new Date();
+          await order.save();
+          console.log(`✅ Zamówienie ${order._id} opłacone!`);
+        }
+      } else {
+        console.error(`⚠️ Nie znaleziono zamówienia dla transakcji Tpay: ${tr_id}`);
+      }
     }
-
-    // Aby nie komplikować: Na razie zignorujmy webhooka na localhost
-    // Status zmieni się na PAID ręcznie w bazie lub po przekierowaniu na stronę sukcesu (mniej bezpieczne).
 
     res.status(200).send('TRUE');
   } catch (err) {
-    console.error("Webhook Error:", err);
+    console.error("❌ Webhook Error:", err);
     res.status(500).send('FALSE');
   }
 });
-
 module.exports = router;
