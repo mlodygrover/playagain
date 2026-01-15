@@ -3,18 +3,22 @@
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Package, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Suspense, useEffect } from "react";
-import { useCart } from "@/context/CartContext"; // <--- 1. Import Context
+import { Suspense, useEffect, useRef } from "react"; // <--- 1. Dodaj useRef
+import { useCart } from "@/context/CartContext";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
-  const { clearCart } = useCart(); // <--- 2. Pobierz funkcję
+  const { clearCart } = useCart();
+  
+  // 2. Flaga sprawdzająca, czy kod już się wykonał
+  const hasRun = useRef(false);
 
-  // 3. Wyczyść koszyk tylko raz po wejściu na sukces
   useEffect(() => {
-    if (orderId) {
+    // 3. Wykonaj tylko jeśli mamy orderId I jeszcze nie czyściliśmy koszyka
+    if (orderId && !hasRun.current) {
         clearCart();
+        hasRun.current = true; // Zaznacz, że wykonano
     }
   }, [orderId, clearCart]);
 
