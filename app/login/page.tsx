@@ -7,6 +7,7 @@ import { Mail, Lock, User, ArrowRight, AlertCircle, Loader2 } from "lucide-react
 import Link from "next/link";
 
 const server_port = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
+console.log(process.env.NEXT_PUBLIC_API_URL)
 function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();

@@ -5,12 +5,14 @@ import dynamic from "next/dynamic";
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { 
-  Cpu, MemoryStick, Fan, Box, Check, MonitorPlay, 
-  ShoppingBag, PackageOpen, Plus, Minus, ChevronDown, ChevronUp, 
-  Sparkles // <--- Nowa ikona
+import {
+  Cpu, MemoryStick, Fan, Box, Check, MonitorPlay,
+  ShoppingBag, PackageOpen, Plus, Minus, ChevronDown, ChevronUp,
+  Sparkles, CircuitBoard, Zap, HardDrive, SlidersHorizontal, Search as SearchIcon, X
 } from "lucide-react";
 import { Chatbot } from "@/components/Chatbox";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5009";
 
 // --- 1. IMPORT SCENY 3D ---
 const Scene3D = dynamic(() => import("@/components/Scene3D"), {
@@ -24,120 +26,159 @@ const Scene3D = dynamic(() => import("@/components/Scene3D"), {
   ),
 });
 
-// ... (DANE MOCK BEZ ZMIAN) ...
-const CATEGORIES = [
-  {
-    id: "gpu",
-    name: "Karta Graficzna",
-    icon: <MonitorPlay className="w-4 h-4" />,
-    items: [
-      { id: "gpu-1", name: "NVIDIA RTX 3060 12GB", price: 1200, specs: ["12GB VRAM", "Ray Tracing"], image: "/parts/gpu-1.png" },
-      { id: "gpu-2", name: "NVIDIA RTX 4070 Ti", price: 3400, specs: ["12GB GDDR6X", "DLSS 3.0"], image: null },
-      { id: "gpu-3", name: "AMD Radeon RX 6600", price: 900, specs: ["8GB GDDR6", "Eco Mode"], image: null },
-    ]
-  },
-  {
-    id: "cpu",
-    name: "Procesor",
-    icon: <Cpu className="w-4 h-4" />,
-    items: [
-      { id: "cpu-1", name: "Intel Core i5-12400F", price: 600, specs: ["6 Cores", "LGA1700"], image: null },
-      { id: "cpu-2", name: "Intel Core i9-13900K", price: 2500, specs: ["24 Cores", "5.8 GHz"], image: null },
-    ]
-  },
-  {
-    id: "ram",
-    name: "Pamięć RAM",
-    icon: <MemoryStick className="w-4 h-4" />,
-    items: [
-      { id: "ram-1", name: "Kingston Fury 16GB", price: 200, specs: ["DDR4", "3200MHz"], image: null },
-      { id: "ram-2", name: "Corsair Vengeance 32GB", price: 450, specs: ["DDR5", "RGB"], image: null },
-    ]
-  },
-  {
-    id: "cool",
-    name: "Chłodzenie CPU",
-    icon: <Fan className="w-4 h-4" />,
-    items: [
-      { id: "cool-1", name: "SilentiumPC Fera 5", price: 120, specs: ["Air Cooler", "120mm"], image: null },
-      { id: "cool-2", name: "NZXT Kraken 240", price: 600, specs: ["AIO Liquid", "LCD Display"], image: null },
-    ]
-  },
-   {
-    id: "case",
-    name: "Obudowa PC",
-    icon: <Box className="w-4 h-4" />,
-    items: [
-      { id: "case-1", name: "NZXT H5 Flow", price: 400, specs: ["ATX", "Tempered Glass"], image: null },
-      { id: "case-2", name: "SilentiumPC Ventum", price: 250, specs: ["ATX", "Mesh Front"], image: null },
-    ]
-  },
+// Definicja struktury kategorii
+const CATEGORY_DEFINITIONS = [
+  { id: "gpu", apiType: "GPU", name: "Karta Graficzna", icon: <MonitorPlay className="w-4 h-4" /> },
+  { id: "cpu", apiType: "CPU", name: "Procesor", icon: <Cpu className="w-4 h-4" /> },
+  { id: "mobo", apiType: "Motherboard", name: "Płyta Główna", icon: <CircuitBoard className="w-4 h-4" /> },
+  { id: "ram", apiType: "RAM", name: "Pamięć RAM", icon: <MemoryStick className="w-4 h-4" /> },
+  { id: "disk", apiType: "Disk", name: "Dysk SSD/HDD", icon: <HardDrive className="w-4 h-4" /> },
+  { id: "psu", apiType: "PSU", name: "Zasilacz", icon: <Zap className="w-4 h-4" /> },
+  { id: "cool", apiType: "Cooling", name: "Chłodzenie CPU", icon: <Fan className="w-4 h-4" /> },
+  { id: "case", apiType: "Case", name: "Obudowa PC", icon: <Box className="w-4 h-4" /> },
 ];
 
-// ... (ProductTile BEZ ZMIAN) ...
-const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }: any) => (
-  <div 
-    className={`
-      relative w-full border-b last:border-b-0 border-zinc-800 transition-all duration-200 group
-      ${isExpanded ? "bg-zinc-900" : "hover:bg-zinc-900/40 bg-black"}
-    `}
-  >
-    {/* NAGŁÓWEK */}
-    <div 
-      onClick={onToggleExpand}
-      className="flex items-center justify-between p-4 cursor-pointer gap-3 sm:gap-4"
-    >
-      <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors ${isSelected ? "bg-blue-600" : "bg-transparent group-hover:bg-zinc-700"}`} />
+const generateSpecs = (item: any) => {
+  const specs = [];
+  switch (item.type) {
+    case 'GPU':
+      if (item.vram) specs.push(`${item.vram}GB VRAM`);
+      if (item.chipset) specs.push(item.chipset);
+      break;
+    case 'CPU':
+      if (item.cores) specs.push(`${item.cores} Cores`);
+      if (item.socket) specs.push(item.socket);
+      break;
+    case 'RAM':
+      if (item.capacity) specs.push(`${item.capacity}GB`);
+      if (item.memoryType) specs.push(item.memoryType);
+      if (item.speed) specs.push(`${item.speed}MHz`);
+      break;
+    case 'Motherboard':
+      if (item.socket) specs.push(item.socket);
+      if (item.formFactor) specs.push(item.formFactor);
+      if (item.chipset) specs.push(item.chipset);
+      break;
+    case 'Disk':
+      if (item.capacity) specs.push(`${item.capacity}GB`);
+      if (item.diskType) specs.push(item.diskType);
+      if (item.interface) specs.push(item.interface);
+      break;
+    case 'PSU':
+      if (item.power) specs.push(`${item.power}W`);
+      if (item.certification) specs.push(item.certification);
+      if (item.modular) specs.push(`Modular: ${item.modular}`);
+      break;
+    case 'Case':
+      if (item.standard) specs.push(item.standard);
+      if (item.caseType) specs.push(item.caseType);
+      break;
+    case 'Cooling':
+      if (item.coolingType) specs.push(item.coolingType);
+      if (item.fanSize) specs.push(`${item.fanSize}mm`);
+      break;
+  }
+  return specs;
+};
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 pl-2 flex-grow min-w-0">
-        <h3 className={`text-sm font-medium truncate ${isSelected ? "text-blue-400" : "text-zinc-300"}`}>
-          {item.name}
-        </h3>
-        {isSelected && (
-          <span className="inline-block w-fit text-[9px] uppercase tracking-wider bg-blue-900/30 text-blue-400 px-1.5 py-0.5 border border-blue-500/20 font-mono rounded-sm">
-            Installed
-          </span>
-        )}
+// --- KOMPONENT: HISTOGRAM + DUAL SLIDER ---
+const PriceHistogramSlider = ({ items, minPrice, maxPrice, currentMin, currentMax, onChange }: any) => {
+  const bucketsCount = 24;
+
+  const buckets = useMemo(() => {
+    if (items.length === 0) return new Array(bucketsCount).fill(0);
+    const step = (maxPrice - minPrice) / bucketsCount;
+    const data = new Array(bucketsCount).fill(0);
+
+    items.forEach((item: any) => {
+      const index = Math.floor((item.price - minPrice) / step);
+      const safeIndex = Math.min(index, bucketsCount - 1);
+      if (safeIndex >= 0) data[safeIndex]++;
+    });
+    return data;
+  }, [items, minPrice, maxPrice]);
+
+  const maxCount = Math.max(...buckets, 1);
+
+  const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Math.min(Number(e.target.value), currentMax - 10);
+    onChange(val, currentMax);
+  };
+
+  const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Math.max(Number(e.target.value), currentMin + 10);
+    onChange(currentMin, val);
+  };
+
+  return (
+    <div className="w-full pt-6 pb-2">
+      {/* HISTOGRAM */}
+      <div className="flex items-end h-12 gap-1 mb-[-6px] px-1">
+        {buckets.map((count, i) => {
+          const heightPercent = (count / maxCount) * 100;
+          const bucketPriceStart = minPrice + (i * ((maxPrice - minPrice) / bucketsCount));
+          const isActive = bucketPriceStart >= currentMin && bucketPriceStart <= currentMax;
+
+          return (
+            <div
+              key={i}
+              className={`flex-1 rounded-t-sm transition-colors duration-200 ${isActive ? 'bg-blue-500/60' : 'bg-zinc-800'}`}
+              style={{ height: `${Math.max(heightPercent, 5)}%` }}
+            />
+          );
+        })}
       </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect();
-        }}
-        className={`
-          flex-shrink-0 w-8 h-8 flex items-center justify-center border transition-all duration-200 z-10
-          ${isSelected 
-            ? "bg-blue-600 border-blue-600 text-white hover:bg-red-600 hover:border-red-600" 
-            : "border-zinc-700 text-zinc-500 hover:border-blue-500 hover:text-blue-500 hover:bg-zinc-800" 
-          }
-        `}
-        title={isSelected ? "Usuń z zestawu" : "Dodaj do zestawu"}
-      >
-        {isSelected ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-      </button>
-
-      <div className="text-right min-w-[70px]">
-        <span className="text-sm font-mono text-zinc-400">
-          {item.price} zł
-        </span>
+      {/* DUAL SLIDER CONTAINER */}
+      <div className="relative h-6 w-full">
+        <div className="absolute top-1/2 left-0 w-full h-1 bg-zinc-800 rounded -translate-y-1/2" />
+        <div
+          className="absolute top-1/2 h-1 bg-blue-500 rounded -translate-y-1/2 pointer-events-none"
+          style={{
+            left: `${((currentMin - minPrice) / (maxPrice - minPrice)) * 100}%`,
+            right: `${100 - ((currentMax - minPrice) / (maxPrice - minPrice)) * 100}%`
+          }}
+        />
+        <input
+          type="range" min={minPrice} max={maxPrice} value={currentMin} onChange={handleMinChange}
+          className="absolute top-1/2 left-0 w-full -translate-y-1/2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg hover:[&::-webkit-slider-thumb]:scale-110 transition-transform z-20"
+        />
+        <input
+          type="range" min={minPrice} max={maxPrice} value={currentMax} onChange={handleMaxChange}
+          className="absolute top-1/2 left-0 w-full -translate-y-1/2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg hover:[&::-webkit-slider-thumb]:scale-110 transition-transform z-20"
+        />
       </div>
 
-      <div className="text-zinc-600 pl-2 border-l border-zinc-800">
-        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+      {/* ETYKIETY */}
+      <div className="flex justify-between text-[10px] font-mono text-zinc-400 mt-2">
+        <span>{Math.floor(currentMin)} zł</span>
+        <span>{Math.ceil(currentMax)} zł</span>
       </div>
     </div>
+  );
+};
 
-    {/* SZCZEGÓŁY */}
+const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }: any) => (
+  <div className={`relative w-full border-b last:border-b-0 border-zinc-800 transition-all duration-200 group ${isExpanded ? "bg-zinc-900" : "hover:bg-zinc-900/40 bg-black"}`}>
+    <div onClick={onToggleExpand} className="flex items-center justify-between p-4 cursor-pointer gap-3 sm:gap-4">
+      <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors ${isSelected ? "bg-blue-600" : "bg-transparent group-hover:bg-zinc-700"}`} />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 pl-2 flex-grow min-w-0">
+        <h3 className={`text-sm font-medium truncate ${isSelected ? "text-blue-400" : "text-zinc-300"}`}>{item.name}</h3>
+        {isSelected && <span className="inline-block w-fit text-[9px] uppercase tracking-wider bg-blue-900/30 text-blue-400 px-1.5 py-0.5 border border-blue-500/20 font-mono rounded-sm">Installed</span>}
+      </div>
+      <button onClick={(e) => { e.stopPropagation(); onSelect(); }} className={`flex-shrink-0 w-8 h-8 flex items-center justify-center border transition-all duration-200 z-10 ${isSelected ? "bg-blue-600 border-blue-600 text-white hover:bg-red-600 hover:border-red-600" : "border-zinc-700 text-zinc-500 hover:border-blue-500 hover:text-blue-500 hover:bg-zinc-800"}`}>{isSelected ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}</button>
+      <div className="text-right min-w-[70px]"><span className="text-sm font-mono text-zinc-400">{item.price} zł</span></div>
+      <div className="text-zinc-600 pl-2 border-l border-zinc-800">{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
+    </div>
     {isExpanded && (
       <div className="p-4 pt-0 pl-6 pr-4 border-t border-zinc-800/50 bg-zinc-900/50 animate-in slide-in-from-top-1 fade-in duration-200">
         <div className="flex flex-col sm:flex-row gap-4 mt-4">
           <div className="w-24 h-24 bg-black border border-zinc-800 flex items-center justify-center flex-shrink-0">
-             {item.image ? (
-               <img src={item.image} alt={item.name} className="object-cover w-full h-full opacity-90" />
-             ) : (
-               <PackageOpen className="w-8 h-8 text-zinc-700" />
-             )}
+            {item.image ? (
+              <img src={item.image} alt={item.name} className="object-cover w-full h-full opacity-90" />
+            ) : (
+              <PackageOpen className="w-8 h-8 text-zinc-700" />
+            )}
           </div>
           <div className="flex-grow space-y-3">
             <div className="flex flex-wrap gap-2">
@@ -148,8 +189,7 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
               ))}
             </div>
             <p className="text-xs text-zinc-500 leading-relaxed max-w-md">
-              Profesjonalnie odnowiony komponent. Przeszedł 24-godzinne testy obciążeniowe. 
-              Stan wizualny: Klasa A+.
+              Komponent sprawdzony przez naszych techników. Gwarancja najniższej ceny rynkowej ({item.price} PLN).
             </p>
           </div>
         </div>
@@ -158,19 +198,16 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
   </div>
 );
 
-// ... (SummaryPanel BEZ ZMIAN) ...
-const SummaryPanel = ({ selections, totalPrice, onCategoryClick }: any) => {
+const SummaryPanel = ({ categories, selections, totalPrice, onCategoryClick }: any) => {
   const { addToCart } = useCart();
   const router = useRouter();
 
   const handleAddToCart = () => {
     const componentNames: string[] = [];
-    CATEGORIES.forEach(cat => {
+    categories.forEach((cat: any) => {
       const selectedId = selections[cat.id];
-      const item = cat.items.find(i => i.id === selectedId);
-      if (item) {
-        componentNames.push(`${cat.name}: ${item.name}`);
-      }
+      const item = cat.items.find((i: any) => i.id === selectedId);
+      if (item) componentNames.push(`${cat.name}: ${item.name}`);
     });
 
     if (componentNames.length === 0) {
@@ -178,16 +215,14 @@ const SummaryPanel = ({ selections, totalPrice, onCategoryClick }: any) => {
       return;
     }
 
-    const cartItem = {
+    addToCart({
       id: `build-${Date.now()}`,
       name: "Custom Gaming PC Build",
       price: totalPrice,
-      type: "custom_build" as const,
+      type: "custom_build",
       components: componentNames,
       image: null
-    };
-
-    addToCart(cartItem);
+    });
     router.push("/koszyk");
   };
 
@@ -197,222 +232,331 @@ const SummaryPanel = ({ selections, totalPrice, onCategoryClick }: any) => {
         <div className="w-2 h-2 bg-blue-500 animate-pulse" />
         <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">System Status</h3>
       </div>
-      
       <div className="p-0 font-mono text-xs">
-        {CATEGORIES.map((category) => {
+        {categories.map((category: any) => {
           const selectedItemId = selections[category.id];
-          const selectedItem = category.items.find(i => i.id === selectedItemId);
-
+          const selectedItem = category.items.find((i: any) => i.id === selectedItemId);
           return (
-            <div 
-              key={category.id} 
-              onClick={() => onCategoryClick(category.name)}
-              className="flex justify-between items-center p-3 border-b border-zinc-900 hover:bg-zinc-900 cursor-pointer group"
-            >
+            <div key={category.id} onClick={() => onCategoryClick(category.name)} className="flex justify-between items-center p-3 border-b border-zinc-900 hover:bg-zinc-900 cursor-pointer group">
               <div className="flex items-center gap-3">
-                 <span className={`text-[10px] uppercase w-10 text-zinc-600 group-hover:text-zinc-400 truncate`}>{category.id}</span>
-                 <span className={`truncate max-w-[150px] ${selectedItem ? "text-blue-400" : "text-zinc-700 italic"}`}>
-                   {selectedItem ? selectedItem.name : "/// EMPTY"}
-                 </span>
+                <span className={`text-[10px] uppercase w-10 text-zinc-600 group-hover:text-zinc-400 truncate`}>{category.id}</span>
+                <span className={`truncate max-w-[150px] ${selectedItem ? "text-blue-400" : "text-zinc-700 italic"}`}>{selectedItem ? selectedItem.name : "/// EMPTY"}</span>
               </div>
               {selectedItem && <span className="text-zinc-500">{selectedItem.price}</span>}
             </div>
           );
         })}
       </div>
-
       <div className="p-4 bg-zinc-900/80 border-t border-zinc-800">
         <div className="flex justify-between items-end mb-4 font-mono">
           <span className="text-zinc-500 text-xs uppercase">Total Cost</span>
           <span className="text-xl font-bold text-white tracking-tighter">{totalPrice} <span className="text-sm text-zinc-600">PLN</span></span>
         </div>
-        
-        <button 
-          onClick={handleAddToCart}
-          className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 border border-blue-500"
-        >
-          <ShoppingBag className="w-4 h-4" />
-          Dodaj do Koszyka
-        </button>
+        <button onClick={handleAddToCart} className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 border border-blue-500"><ShoppingBag className="w-4 h-4" />Dodaj do Koszyka</button>
       </div>
     </div>
   );
 };
 
-
-// --- GŁÓWNA ZAWARTOŚĆ ---
 function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
+  // Stan filtrów
+  const [filters, setFilters] = useState<Record<string, {
+    search: string;
+    minPrice: number;
+    maxPrice: number;
+    manufacturers: string[];
+    isOpen: boolean
+  }>>({});
+
+  // 1. Logika wykrywania Socketu z wybranego CPU
+  const selectedCpuId = selections['cpu'];
+  const selectedCpuSocket = useMemo(() => {
+    if (!selectedCpuId) return null;
+    const cpuCategory = categories.find(c => c.id === 'cpu');
+    const cpuItem = cpuCategory?.items.find((i: any) => i.id === selectedCpuId);
+    return cpuItem?.socket || null;
+  }, [selectedCpuId, categories]);
+
+  // Pobieranie Danych
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/components?user=true`);
+        const data = await res.json();
+
+        const mappedCategories = CATEGORY_DEFINITIONS.map(def => {
+          const items = data
+            .filter((item: any) => item.type === def.apiType)
+            .map((item: any) => ({
+              id: item._id,
+              name: item.name,
+              chipset: item.chipset ? item.chipset.toUpperCase() : item.name.split(' ')[0].toUpperCase(),
+              socket: item.socket,
+              formFactor: item.formFactor,
+              price: Math.ceil(Math.min(item.stats.averagePrice - item.stats.standardDeviation, item.stats.lowestPrice + item.stats.standardDeviation)) + 5 - Math.ceil(Math.min(item.stats.averagePrice - item.stats.standardDeviation, item.stats.lowestPrice + item.stats.standardDeviation)) % 5,
+              image: item.image,
+              specs: generateSpecs(item)
+            }));
+
+          return { ...def, items: items };
+        });
+
+        setCategories(mappedCategories);
+
+        // Inicjalizacja filtrów
+        const initialFilters: any = {};
+        mappedCategories.forEach(cat => {
+          if (cat.items.length > 0) {
+            const prices = cat.items.map((i: any) => i.price);
+            initialFilters[cat.id] = {
+              search: "",
+              minPrice: Math.min(...prices),
+              maxPrice: Math.max(...prices),
+              manufacturers: [],
+              isOpen: false
+            };
+          }
+        });
+        setFilters(initialFilters);
+
+      } catch (err) { console.error(err); } finally { setLoading(false); }
+    };
+    fetchData();
+  }, []);
+
+  // Synchronizacja URL -> State
   useEffect(() => {
     const currentParams: Record<string, string> = {};
-    searchParams.forEach((value, key) => {
-      currentParams[key] = value;
-    });
+    searchParams.forEach((value, key) => { currentParams[key] = value; });
     setSelections(currentParams);
   }, [searchParams]);
 
+  // Funkcja aktualizacji wyboru (MISSING FUNCTION)
   const updateSelection = (category: string, itemId: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (params.get(category) === itemId) {
-      params.delete(category);
-    } else {
-      params.set(category, itemId);
-    }
+    if (params.get(category) === itemId) { params.delete(category); } else { params.set(category, itemId); }
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   const totalPrice = useMemo(() => {
     let total = 0;
-    CATEGORIES.forEach(cat => {
+    categories.forEach(cat => {
       const selectedId = selections[cat.id];
-      const item = cat.items.find(i => i.id === selectedId);
+      const item = cat.items.find((i: any) => i.id === selectedId);
       if (item) total += item.price;
     });
     return total;
-  }, [selections]);
+  }, [selections, categories]);
 
   const handle3DClick = (friendlyName: string) => {
-    const category = CATEGORIES.find(c => c.name === friendlyName);
-    
+    const category = categories.find(c => c.name === friendlyName);
     if (category) {
       const element = document.getElementById(`section-${category.id}`);
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (collapsedCategories[category.id]) toggleCategoryCollapse(category.id);
         element.classList.add("bg-zinc-900", "animate-shake", "animate-border-flow");
-        setTimeout(() => {
-          element.classList.remove("bg-zinc-900", "animate-shake", "animate-border-flow");
-        }, 2000);
+        setTimeout(() => element.classList.remove("bg-zinc-900", "animate-shake", "animate-border-flow"), 2000);
       }
     }
   };
 
+  const toggleCategoryCollapse = (catId: string) => setCollapsedCategories(prev => ({ ...prev, [catId]: !prev[catId] }));
+  const toggleFilterPanel = (catId: string) => setFilters(prev => ({ ...prev, [catId]: { ...prev[catId], isOpen: !prev[catId]?.isOpen } }));
+  const updateFilter = (catId: string, field: string, value: any) => setFilters(prev => ({ ...prev, [catId]: { ...prev[catId], [field]: value } }));
+
+  const updatePriceRange = (catId: string, min: number, max: number) => {
+    setFilters(prev => ({ ...prev, [catId]: { ...prev[catId], minPrice: min, maxPrice: max } }));
+  };
+
+  const toggleManufacturer = (catId: string, brand: string) => {
+    setFilters(prev => {
+      const currentBrands = prev[catId]?.manufacturers || [];
+      const newBrands = currentBrands.includes(brand) ? currentBrands.filter(b => b !== brand) : [...currentBrands, brand];
+      return { ...prev, [catId]: { ...prev[catId], manufacturers: newBrands } };
+    });
+  };
+
+  if (loading) return <div className="flex h-[50vh] w-full items-center justify-center font-mono text-zinc-500 animate-pulse">INITIALIZING DATABASE CONNECTION...</div>;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
-          
-      {/* LEWA KOLUMNA */}
+      {/* LEWA KOLUMNA (SCENA 3D) */}
       <div className="lg:col-span-4 lg:sticky lg:top-20 space-y-4">
-        
-        {/* MODEL 3D */}
         <div className="aspect-square w-full bg-black border border-zinc-800 relative group overflow-hidden">
           <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-blue-600 z-10" />
           <div className="absolute bottom-0 right-0 w-4 h-4 border-r-2 border-b-2 border-blue-600 z-10" />
-          
           <Scene3D onPartSelect={handle3DClick} />
-          
-          <div className="absolute bottom-4 right-4 text-[10px] font-mono text-blue-500 uppercase tracking-widest bg-black/80 px-2 py-1 border border-blue-500/30">
-            Interactive View
-          </div>
+          <div className="absolute bottom-4 right-4 text-[10px] font-mono text-blue-500 uppercase tracking-widest bg-black/80 px-2 py-1 border border-blue-500/30">Interactive View</div>
         </div>
-
-        {/* --- NOWOŚĆ: PRZYCISK AI ASSISTANT POD MODELEM --- */}
-        <button 
-          onClick={onOpenChat}
-          className="w-full py-4 bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/30 text-white font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:border-purple-500 hover:shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all group"
-        >
-          <div className="relative">
-            <Sparkles className="w-5 h-5 text-purple-400 group-hover:animate-spin-slow" />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-          </div>
-          <span>Skonfiguruj z AI</span>
+        <button onClick={onOpenChat} className="w-full py-4 bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/30 text-white font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:border-purple-500 hover:shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all group">
+          <div className="relative"><Sparkles className="w-5 h-5 text-purple-400 group-hover:animate-spin-slow" /><span className="absolute top-0 right-0 w-2 h-2 bg-green-400 rounded-full animate-pulse" /></div><span>Skonfiguruj z AI</span>
         </button>
-
-        <SummaryPanel 
-          selections={selections} 
-          totalPrice={totalPrice} 
-          onCategoryClick={handle3DClick} 
-        />
+        <SummaryPanel categories={categories} selections={selections} totalPrice={totalPrice} onCategoryClick={handle3DClick} />
       </div>
 
-      {/* PRAWA KOLUMNA (Bez zmian) */}
-      <div className="lg:col-span-8 flex flex-col gap-8 pb-20">
-        {/* ... Nagłówek ... */}
-        <div className="border-b border-zinc-800 pb-6">
-          <h1 className="text-4xl font-black uppercase tracking-tighter italic text-white mb-2">
-            Configurator <span className="text-blue-600">V.2.0</span>
-          </h1>
-          <p className="text-zinc-500 font-mono text-sm max-w-xl">
-            // CLICK [+] TO ADD COMPONENT. CLICK ROW TO VIEW DETAILS. <br/>
-            // LIVE PREVIEW ON THE LEFT.
-          </p>
+      {/* PRAWA KOLUMNA */}
+      <div className="lg:col-span-8 flex flex-col gap-4 pb-20">
+        <div className="border-b border-zinc-800 pb-6 mb-4">
+          <h1 className="text-4xl font-black uppercase tracking-tighter italic text-white mb-2">Configurator <span className="text-blue-600">V.2.0</span></h1>
+          <p className="text-zinc-500 font-mono text-sm max-w-xl">// LIVE PRICES FROM DATABASE. <br />// ONLY AVAILABLE COMPONENTS SHOWN.</p>
         </div>
 
-        {CATEGORIES.map((category) => (
-          <section 
-            key={category.id} 
-            id={`section-${category.id}`}
-            className="scroll-mt-24 transition-colors duration-300"
-          >
-            {/* ... Nagłówek Kategorii ... */}
-            <div className="flex items-center gap-3 mb-0 bg-zinc-950 border border-zinc-800 border-b-0 p-3 sticky top-[4rem] z-10">
-              <div className={`p-1.5 ${selections[category.id] ? "text-blue-500" : "text-zinc-600"}`}>
-                {category.icon}
+        {categories.map((category) => {
+          // 1. Filtracja Płyt Głównych (zależność od CPU)
+          let categoryItems = category.items;
+          let blockReason = null;
+
+          if (category.id === 'mobo') {
+            if (!selectedCpuId) {
+              blockReason = "Najpierw wybierz procesor, aby dopasować płytę główną.";
+              categoryItems = [];
+            } else if (selectedCpuSocket) {
+              categoryItems = categoryItems.filter((mobo: any) => mobo.socket === selectedCpuSocket);
+              if (categoryItems.length === 0) blockReason = `Brak płyt głównych dla socketu ${selectedCpuSocket} w bazie.`;
+            }
+          }
+
+          // 2. Filtry Standardowe
+          const catPrices = categoryItems.map((i: any) => i.price);
+          const absoluteMin = catPrices.length > 0 ? Math.min(...catPrices) : 0;
+          const absoluteMax = catPrices.length > 0 ? Math.max(...catPrices) : 5000;
+
+          const currentFilter = filters[category.id] || {
+            search: "",
+            minPrice: absoluteMin,
+            maxPrice: absoluteMax,
+            manufacturers: [],
+            isOpen: false
+          };
+
+          const availableChipsets = Array.from(new Set(categoryItems.map((i: any) => i.chipset))).filter(Boolean).sort() as string[];
+
+          const filteredItems = categoryItems.filter((item: any) => {
+            const matchesSearch = item.name.toLowerCase().includes(currentFilter.search.toLowerCase());
+            const matchesPrice = item.price >= currentFilter.minPrice && item.price <= currentFilter.maxPrice;
+            const matchesBrand = currentFilter.manufacturers.length > 0 ? currentFilter.manufacturers.includes(item.chipset) : true;
+            return matchesSearch && matchesPrice && matchesBrand;
+          });
+
+          const isCollapsed = collapsedCategories[category.id];
+
+          return (
+            <section key={category.id} id={`section-${category.id}`} className="scroll-mt-24 transition-all duration-300 border border-zinc-800 bg-zinc-950/30">
+              {/* NAGŁÓWEK */}
+              <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-zinc-900/50 transition-colors select-none" onClick={() => toggleCategoryCollapse(category.id)}>
+                <div className="text-zinc-500">{isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}</div>
+                <div className={`p-1.5 rounded bg-zinc-900 border border-zinc-800 ${selections[category.id] ? "text-blue-500 border-blue-900/30" : "text-zinc-600"}`}>{category.icon}</div>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-300 flex-grow">{category.name}</h2>
+                <div className="flex items-center gap-4">
+                  <button onClick={(e) => { e.stopPropagation(); if (isCollapsed) toggleCategoryCollapse(category.id); toggleFilterPanel(category.id); }} className={`text-xs flex items-center gap-1 uppercase font-mono transition-colors p-2 rounded hover:bg-zinc-800 ${currentFilter.isOpen ? 'text-blue-400' : 'text-zinc-500 hover:text-white'}`}>
+                    <SlidersHorizontal className="w-3.5 h-3.5" /><span className="hidden sm:inline">Filters</span>
+                  </button>
+                  {selections[category.id] && <div className="flex items-center gap-2 text-xs font-mono text-blue-500 bg-blue-900/10 px-2 py-1 rounded border border-blue-500/20"><Check className="w-3 h-3" />INSTALLED</div>}
+                </div>
               </div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-300">
-                {category.name}
-              </h2>
-              {selections[category.id] && (
-                <div className="ml-auto flex items-center gap-2 text-xs font-mono text-blue-500">
-                  <Check className="w-3 h-3" />
-                  INSTALLED
+
+              {!isCollapsed && (
+                <div className="animate-in slide-in-from-top-2 duration-300">
+                  {/* BLOKADA DLA MOBO */}
+                  {blockReason && (
+                    <div className="p-8 text-center border-t border-zinc-800 bg-red-950/10">
+                      <div className="inline-flex items-center justify-center p-3 bg-red-900/20 rounded-full mb-3"><Cpu className="w-6 h-6 text-red-500" /></div>
+                      <p className="text-zinc-300 font-bold text-sm mb-1">Wymagany Procesor</p>
+                      <p className="text-zinc-500 font-mono text-xs">{blockReason}</p>
+                    </div>
+                  )}
+
+                  {/* PANEL FILTRÓW */}
+                  {!blockReason && currentFilter.isOpen && (
+                    <div className="bg-zinc-900/80 border-y border-zinc-800 p-6 animate-in slide-in-from-top-2 fade-in backdrop-blur-sm space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-[10px] text-zinc-500 uppercase font-bold mb-1 block">Szukaj</label>
+                            <div className="relative">
+                              <SearchIcon className="absolute left-3 top-2.5 w-4 h-4 text-zinc-600" />
+                              <input value={currentFilter.search} onChange={(e) => updateFilter(category.id, 'search', e.target.value)} placeholder="Model..." className="w-full bg-black border border-zinc-800 text-white text-sm pl-9 pr-3 py-2 focus:border-blue-500 outline-none rounded-sm" />
+                              {currentFilter.search && <button onClick={() => updateFilter(category.id, 'search', "")} className="absolute right-3 top-2.5"><X className="w-4 h-4 text-zinc-500 hover:text-white" /></button>}
+                            </div>
+                          </div>
+                          {availableChipsets.length > 0 && (
+                            <div>
+                              <label className="text-[10px] text-zinc-500 uppercase font-bold mb-2 block">
+                                {category.id === 'gpu' ? 'Producent GPU' : category.id === 'cpu' ? 'Producent CPU' : 'Producent / Marka'}
+                              </label>
+                              <div className="flex flex-wrap gap-2">
+                                {availableChipsets.map((chipset) => {
+                                  const isActive = currentFilter.manufacturers.includes(chipset);
+                                  let colorClass = isActive ? 'bg-zinc-700 border-zinc-600 text-white' : 'bg-black border-zinc-800 text-zinc-400 hover:border-zinc-600';
+                                  if (isActive) {
+                                    if (chipset === 'NVIDIA') colorClass = 'bg-green-900/40 border-green-500 text-green-400';
+                                    else if (chipset === 'AMD') colorClass = 'bg-red-900/40 border-red-500 text-red-400';
+                                    else if (chipset === 'INTEL') colorClass = 'bg-blue-900/40 border-blue-500 text-blue-400';
+                                  }
+                                  return <button key={chipset} onClick={() => toggleManufacturer(category.id, chipset)} className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider border rounded transition-all ${colorClass}`}>{chipset}</button>
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[10px] text-zinc-500 uppercase font-bold">Zakres Cenowy</label>
+                            <span className="text-[10px] font-mono text-blue-400">{filteredItems.length} produktów</span>
+                          </div>
+                          <PriceHistogramSlider items={categoryItems} minPrice={absoluteMin} maxPrice={absoluteMax} currentMin={currentFilter.minPrice} currentMax={currentFilter.maxPrice} onChange={(min: number, max: number) => updatePriceRange(category.id, min, max)} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LISTA PRODUKTÓW */}
+                  {!blockReason && (
+                    <div className="bg-black">
+                      {filteredItems.length > 0 ? (
+                        filteredItems.map((item: any) => (
+                          <ProductTile key={item.id} item={item} isSelected={selections[category.id] === item.id} isExpanded={expandedItemId === item.id} onToggleExpand={() => setExpandedItemId(prev => prev === item.id ? null : item.id)} onSelect={() => updateSelection(category.id, item.id)} />
+                        ))
+                      ) : (
+                        <div className="p-8 text-center border-t border-zinc-800">
+                          <p className="text-zinc-500 font-mono text-xs mb-2">// NO ITEMS MATCHING FILTERS</p>
+                          <button onClick={() => updatePriceRange(category.id, absoluteMin, absoluteMax)} className="text-blue-500 hover:underline text-xs">Reset Filters</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-
-            <div className="border border-zinc-800 bg-black">
-              {category.items.map((item) => (
-                <ProductTile 
-                  key={item.id}
-                  item={item}
-                  isSelected={selections[category.id] === item.id}
-                  isExpanded={expandedItemId === item.id}
-                  onToggleExpand={() => setExpandedItemId(prev => prev === item.id ? null : item.id)}
-                  onSelect={() => updateSelection(category.id, item.id)}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+            </section>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// --- 4. WRAPPER ---
 export default function ConfiguratorPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
-
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-blue-600 selection:text-white">
-      {/* NAVBAR */}
       <nav className="fixed top-0 w-full z-40 bg-black/90 backdrop-blur-md border-b border-zinc-800 h-16 flex items-center px-6 justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-600 flex items-center justify-center font-black italic text-black">
-            P
-          </div>
-          <span className="font-bold text-lg tracking-tight uppercase">PlayAgain<span className="text-zinc-600">.tech</span></span>
-        </div>
-        <div className="flex gap-4">
-           <button className="text-xs font-mono text-zinc-400 hover:text-white uppercase transition">Share Build</button>
-           <button className="text-xs font-mono text-zinc-400 hover:text-white uppercase transition">Support</button>
-        </div>
+        <div className="flex items-center gap-3"><div className="w-8 h-8 bg-blue-600 flex items-center justify-center font-black italic text-black">P</div><span className="font-bold text-lg tracking-tight uppercase">PlayAgain<span className="text-zinc-600">.tech</span></span></div>
+        <div className="flex gap-4"><button className="text-xs font-mono text-zinc-400 hover:text-white uppercase transition">Share Build</button><button className="text-xs font-mono text-zinc-400 hover:text-white uppercase transition">Support</button></div>
       </nav>
-
       <main className="pt-24 px-4 md:px-8 max-w-[1600px] mx-auto">
-        <Suspense fallback={<div className="text-white font-mono p-10">LOADING CONFIGURATION...</div>}>
-          <ConfiguratorContent onOpenChat={() => setIsChatOpen(true)} />
-        </Suspense>
+        <Suspense fallback={<div className="text-white font-mono p-10">LOADING CONFIGURATION...</div>}><ConfiguratorContent onOpenChat={() => setIsChatOpen(true)} /></Suspense>
       </main>
-
-      {/* CHATBOT (Przekazujemy stan) */}
-      <Chatbot
-        externalOpen={isChatOpen} 
-        onClose={() => setIsChatOpen(false)} 
-      />
+      <Chatbot externalOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 }
