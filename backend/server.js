@@ -1,39 +1,40 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 require('dotenv').config();
-const adminRoute = require('./routes/admin'); // <--- 1. Import
+
+// Importy tras
+const adminRoute = require('./routes/admin');
 const authRoute = require('./routes/auth');
 const ordersRoute = require('./routes/orders');
-const usersRoute = require('./routes/users'); // <--- NOWY
+const usersRoute = require('./routes/users');
 const componentsRoute = require('./routes/components');
+
 const app = express();
 
-// Middleware
-app.use(cors()); // Pozwala frontendowi (port 3000) gadać z backendem (port 5000)
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-// Połączenie z bazą
+// --- MIDDLEWARE ---
+app.use(cors()); 
+app.use(express.json()); // Obsługa JSON (dla Frontendu)
+app.use(express.urlencoded({ extended: true })); // Obsługa formularzy (dla Tpay)
+
+// --- POŁĄCZENIE Z BAZĄ ---
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ Połączono z MongoDB"))
     .catch((err) => console.log("❌ Błąd MongoDB:", err));
 
-// Trasy
+// --- TRASY (Tylko raz!) ---
+app.use('/api/admin', adminRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/orders', ordersRoute);
-
+app.use('/api/users', usersRoute);
+app.use('/api/components', componentsRoute);
 
 // Testowy route
 app.get('/', (req, res) => {
     res.send('PlayAgain API is running...');
 });
 
-app.use('/api/admin', adminRoute); // <--- 2. Rejestracja
-app.use('/api/auth', authRoute);
-app.use('/api/orders', ordersRoute);
-app.use('/api/users', usersRoute); // <--- NOWY
-app.use('/api/components', componentsRoute);
+// --- START SERWERA ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 Serwer działa na porcie ${PORT}`);

@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-
+const verify = require('../middleware/auth');
 // Konfiguracja Nodemailer (Wysyłanie maili)
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -118,5 +118,22 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+router.get('/is-admin', verify, (req, res) => {
+  try {
+    const envAdminId = process.env.ADMIN_ID;
+    const userId = req.user.id || req.user._id;
 
+    // Proste porównanie stringów
+    if (envAdminId && userId === envAdminId) {
+      return res.json({ isAdmin: true });
+    } else {
+      return res.json({ isAdmin: false });
+    }
+  } catch (err) {
+    console.error("Błąd sprawdzania admina:", err);
+    res.status(500).json({ isAdmin: false });
+  }
+});
+
+module.exports = router;
 module.exports = router;

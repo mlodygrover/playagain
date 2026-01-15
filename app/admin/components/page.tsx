@@ -54,7 +54,7 @@ export default function ComponentsManager() {
 
     const normalizeSocket = (s: string | undefined) => {
         if (!s) return "UNKNOWN";
-        return s.toString().toUpperCase().replace(/[^A-Z0-9]/g, ''); 
+        return s.toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
     };
 
     // --- 1. POBIERANIE MAPY PŁYT (NIEZALEŻNE) ---
@@ -67,7 +67,7 @@ export default function ComponentsManager() {
             // Pobieramy TYLKO płyty główne, niezależnie od filtrów użytkownika
             const res = await fetch(`${API_URL}/api/components?type=Motherboard`);
             const mobos = await res.json();
-            
+
             const map: Record<string, boolean> = {};
             mobos.forEach((m: any) => {
                 if (m.socket) {
@@ -87,8 +87,8 @@ export default function ComponentsManager() {
         return () => clearTimeout(handler);
     }, [filters]);
 
-    useEffect(() => { 
-        fetchComponents(); 
+    useEffect(() => {
+        fetchComponents();
     }, [debouncedFilters]);
 
     const fetchComponents = async () => {
@@ -121,7 +121,7 @@ export default function ComponentsManager() {
                 for (let i = start; i <= end; i++) newSet.add(components[i]._id);
             }
         } else {
-            if (newSet.has(id)) { newSet.delete(id); setLastSelectedId(null); } 
+            if (newSet.has(id)) { newSet.delete(id); setLastSelectedId(null); }
             else { newSet.add(id); setLastSelectedId(id); }
         }
         setSelectedIds(newSet);
@@ -135,7 +135,7 @@ export default function ComponentsManager() {
     const handleCreateMissingMobos = async () => {
         if (!token) return alert("Brak autoryzacji.");
         const selectedCpus = components.filter(c => selectedIds.has(c._id) && c.type === 'CPU' && c.socket);
-        
+
         const socketsToProcess = Array.from(new Set(
             selectedCpus
                 .filter(c => !socketMoboMap[normalizeSocket(c.socket)])
@@ -157,14 +157,14 @@ export default function ComponentsManager() {
                 });
                 if (!res.ok) throw new Error("Błąd przy " + socket);
                 const data = await res.json();
-                if(data.created) totalCreated += data.created.length;
+                if (data.created) totalCreated += data.created.length;
             }
             alert(`Gotowe! Utworzono ${totalCreated} szablonów.`);
-            
+
             // WAŻNE: Odświeżamy OBA zbiory danych
-            fetchMoboMap(); 
+            fetchMoboMap();
             fetchComponents();
-            
+
         } catch (err: any) { alert("Błąd: " + err.message); } finally { setIsCreatingMobos(false); }
     };
 
@@ -188,14 +188,185 @@ export default function ComponentsManager() {
     };
 
     // ... (Reszta funkcji CRUD/Import/UI bez zmian) ...
-    const handleJsonImport = async () => { /* ... */ }; // SKOPIUJ SWOJĄ LOGIKĘ IMPORTU
-    const handleDelete = async (id: string) => { if(!confirm("Usunąć?")) return; await fetch(`${API_URL}/api/components/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); fetchComponents(); };
-    const handleSubmit = async (e: React.FormEvent) => { e.preventDefault(); /* ... */ }; // SKOPIUJ SWOJĄ LOGIKĘ SUBMIT
+    const handleDelete = async (id: string) => { if (!confirm("Usunąć?")) return; await fetch(`${API_URL}/api/components/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); fetchComponents(); };
+    
     const openEdit = (c: any) => { setEditingId(c._id); setType(c.type); setFormData({ ...c, blacklistedKeywords: c.blacklistedKeywords ? c.blacklistedKeywords.join(', ') : "" }); setIsModalOpen(true); };
     const openAdd = () => { setEditingId(null); setFormData({ name: "", searchQuery: "", blacklistedKeywords: "", image: "" }); setIsModalOpen(true); };
-    
+
     const getTypeIcon = (t: string) => { switch (t) { case 'GPU': return <Monitor className="w-5 h-5" />; case 'CPU': return <Cpu className="w-5 h-5" />; case 'Motherboard': return <CircuitBoard className="w-5 h-5" />; case 'RAM': return <MemoryStick className="w-5 h-5" />; case 'Disk': return <HardDrive className="w-5 h-5" />; case 'Case': return <Box className="w-5 h-5" />; case 'PSU': return <Zap className="w-5 h-5" />; case 'Cooling': return <Fan className="w-5 h-5" />; default: return <Search className="w-5 h-5" />; } };
-    const renderSpecificFields = () => { /* ... SKOPIUJ SWOJĄ LOGIKĘ PÓL ... */ return null; };
+    // Funkcja renderująca pola specyficzne dla typu
+    const renderSpecificFields = () => {
+        switch (type) {
+            case 'CPU':
+                return (
+                    <>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Socket" name="socket" val={formData} set={setFormData} placeholder="np. AM4, LGA1700" />
+                            <Input label="Taktowanie (GHz)" name="clockSpeed" val={formData} set={setFormData} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Rdzenie" name="cores" val={formData} set={setFormData} type="number" />
+                            <Input label="Wątki" name="threads" val={formData} set={setFormData} type="number" />
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                            <input type="checkbox" checked={formData.integratedGraphics || false} onChange={e => setFormData({ ...formData, integratedGraphics: e.target.checked })} />
+                            <label className="text-sm text-zinc-400">Zintegrowana grafika</label>
+                        </div>
+                    </>
+                );
+            case 'GPU':
+                return (
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input label="VRAM (GB)" name="vram" val={formData} set={setFormData} type="number" />
+                        <Input label="Długość (mm)" name="length" val={formData} set={setFormData} type="number" />
+                    </div>
+                );
+            case 'Motherboard':
+                return (
+                    <>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Socket" name="socket" val={formData} set={setFormData} placeholder="np. AM4" />
+                            <Input label="Chipset" name="chipset" val={formData} set={setFormData} placeholder="np. B550" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Format" name="formFactor" val={formData} set={setFormData} placeholder="ATX, Micro ATX" />
+                            <Input label="Standard RAM" name="memoryType" val={formData} set={setFormData} placeholder="DDR4" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Sloty RAM" name="memorySlots" val={formData} set={setFormData} type="number" />
+                            <Input label="Sloty M.2" name="m2Slots" val={formData} set={setFormData} type="number" />
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                            <input type="checkbox" checked={formData.wifi || false} onChange={e => setFormData({ ...formData, wifi: e.target.checked })} />
+                            <label className="text-sm text-zinc-400">WiFi wbudowane</label>
+                        </div>
+                    </>
+                );
+            case 'RAM':
+                return (
+                    <>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Typ" name="type" val={formData} set={setFormData} placeholder="DDR4" />
+                            <Input label="Prędkość (MHz)" name="speed" val={formData} set={setFormData} type="number" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Pojemność (GB)" name="capacity" val={formData} set={setFormData} type="number" />
+                            <Input label="Liczba modułów" name="modules" val={formData} set={setFormData} type="number" />
+                        </div>
+                    </>
+                );
+            case 'Disk':
+                return (
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input label="Typ (SSD/HDD)" name="diskType" val={formData} set={setFormData} placeholder="SSD" />
+                        <Input label="Interfejs" name="interface" val={formData} set={setFormData} placeholder="M.2 NVMe" />
+                        <Input label="Pojemność (GB)" name="capacity" val={formData} set={setFormData} type="number" />
+                    </div>
+                );
+            case 'PSU':
+                return (
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input label="Moc (W)" name="power" val={formData} set={setFormData} type="number" />
+                        <Input label="Certyfikat" name="certification" val={formData} set={setFormData} placeholder="80 Plus Gold" />
+                        <Input label="Modularność" name="modularity" val={formData} set={setFormData} placeholder="Full / Semi / Non" />
+                    </div>
+                );
+            case 'Case':
+                return (
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input label="Max GPU (mm)" name="maxGpuLength" val={formData} set={setFormData} type="number" />
+                        <Input label="Max CPU Cooler (mm)" name="maxCpuCoolerHeight" val={formData} set={setFormData} type="number" />
+                        <div className="col-span-2">
+                            <Input label="Standardy Płyt (po przecinku)" name="motherboardSupport" val={formData} set={setFormData} placeholder="ATX, Micro ATX" />
+                        </div>
+                    </div>
+                );
+            case 'Cooling':
+                return (
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input label="Typ" name="coolingType" val={formData} set={setFormData} placeholder="Air / AIO" />
+                        <Input label="Rozmiar (mm)" name="size" val={formData} set={setFormData} type="number" />
+                        <div className="col-span-2">
+                            <Input label="Sockety (po przecinku)" name="supportedSockets" val={formData} set={setFormData} />
+                        </div>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    // Obsługa zapisu formularza
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!token) return alert("Brak autoryzacji");
+
+        // Formatowanie tablic (keywords)
+        const payload = { ...formData, type };
+        if (typeof payload.blacklistedKeywords === 'string') {
+            payload.blacklistedKeywords = payload.blacklistedKeywords.split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+        // Formatowanie tablic specyficznych (np. mobo support dla obudowy)
+        if (payload.motherboardSupport && typeof payload.motherboardSupport === 'string') {
+            payload.motherboardSupport = payload.motherboardSupport.split(',').map((s: string) => s.trim());
+        }
+        if (payload.supportedSockets && typeof payload.supportedSockets === 'string') {
+            payload.supportedSockets = payload.supportedSockets.split(',').map((s: string) => s.trim());
+        }
+
+
+        const method = editingId ? "PUT" : "POST";
+        const url = editingId ? `${API_URL}/api/components/${editingId}` : `${API_URL}/api/components`;
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error("Błąd zapisu");
+
+            setIsModalOpen(false);
+            fetchComponents();
+            if (!editingId) fetchMoboMap(); // Jeśli dodano nowy, odśwież mapę
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    // Obsługa Importu JSON
+    const handleJsonImport = async () => {
+        if (!token) return;
+        setImportStatus({ msg: "Przetwarzanie...", type: 'info' });
+        try {
+            const parsed = JSON.parse(jsonInput);
+            const items = Array.isArray(parsed) ? parsed : [parsed];
+
+            // Dodajemy typ do każdego elementu jeśli go nie ma
+            const componentsToImport = items.map(item => ({
+                ...item,
+                type: item.type || importType
+            }));
+
+            const res = await fetch(`${API_URL}/api/components/import`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify(componentsToImport)
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                setImportStatus({ msg: `Zaimportowano: ${result.createdCount}, Zaktualizowano: ${result.updatedCount}`, type: 'success' });
+                fetchComponents();
+                fetchMoboMap();
+                setTimeout(() => setIsImportModalOpen(false), 2000);
+            } else {
+                throw new Error(result.error || "Błąd importu");
+            }
+        } catch (err: any) {
+            setImportStatus({ msg: "Błąd JSON: " + err.message, type: 'error' });
+        }
+    };
 
     // Czy zaznaczono CPU? (To dla paska akcji)
     const hasSelectedCpu = Array.from(selectedIds).some(id => components.find(c => c._id === id)?.type === 'CPU');
@@ -243,7 +414,7 @@ export default function ComponentsManager() {
                 <div className="grid gap-3">
                     {components.map((comp) => {
                         const isSelected = selectedIds.has(comp._id);
-                        
+
                         // ZNORMALIZOWANE SPRAWDZANIE
                         const mySocketKey = normalizeSocket(comp.socket);
                         // Używamy mapy socketMoboMap, która jest teraz niezależna od filtrów
@@ -262,7 +433,7 @@ export default function ComponentsManager() {
                                     <div className="w-12 h-12 bg-zinc-800 flex items-center justify-center rounded overflow-hidden">
                                         {comp.image ? <img src={comp.image} className="w-full h-full object-cover" /> : getTypeIcon(comp.type)}
                                     </div>
-                                    
+
                                     <div>
                                         {comp.type === 'Motherboard' ? (
                                             <div className="flex flex-col">
@@ -309,8 +480,107 @@ export default function ComponentsManager() {
                     })}
                 </div>
 
-                {/* MODALE (Bez zmian - wklej je tutaj ze starego pliku) */}
-                {/* ... Kod modali isModalOpen i isImportModalOpen ... */}
+                {/* --- MODAL DODAWANIA / EDYCJI --- */}
+                {isModalOpen && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+                        <div className="bg-zinc-900 border border-zinc-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl animate-in zoom-in-95 duration-200">
+                            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                                <div className="flex justify-between items-center border-b border-zinc-800 pb-4">
+                                    <h2 className="text-xl font-bold uppercase flex items-center gap-2">
+                                        {editingId ? <Edit className="w-5 h-5 text-blue-500" /> : <Plus className="w-5 h-5 text-green-500" />}
+                                        {editingId ? "Edytuj Komponent" : "Nowy Komponent"}
+                                    </h2>
+                                    <button type="button" onClick={() => setIsModalOpen(false)} className="text-zinc-500 hover:text-white transition-colors">
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
+
+                                {/* Podstawowe Pola */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2 md:col-span-1">
+                                        <label className="block text-xs font-mono text-zinc-500 uppercase mb-1">Typ Komponentu</label>
+                                        <select
+                                            value={type}
+                                            onChange={(e) => setType(e.target.value)}
+                                            disabled={!!editingId} // Nie zmieniamy typu przy edycji
+                                            className="w-full bg-black border border-zinc-700 p-3 text-sm text-white focus:border-blue-500 outline-none rounded"
+                                        >
+                                            {['GPU', 'CPU', 'Motherboard', 'RAM', 'Disk', 'Case', 'PSU', 'Cooling'].map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="col-span-2 md:col-span-1">
+                                        <Input label="Nazwa (Display Name)" name="name" val={formData} set={setFormData} required placeholder="np. RTX 3060 Gaming X" />
+                                    </div>
+                                </div>
+
+                                <Input label="Fraza Wyszukiwania (Allegro Query)" name="searchQuery" val={formData} set={setFormData} required placeholder="To wpisze bot w Allegro..." />
+                                <Input label="Wykluczone słowa (po przecinku)" name="blacklistedKeywords" val={formData} set={setFormData} placeholder="uszkodzona, pudełko, wentylator..." />
+                                <Input label="URL Obrazka" name="image" val={formData} set={setFormData} placeholder="https://..." />
+
+                                {/* Pola Specyficzne dla Typu */}
+                                <div className="bg-black/30 p-4 rounded border border-zinc-800/50 space-y-4">
+                                    <h3 className="text-xs font-mono text-zinc-400 uppercase font-bold mb-2">Specyfikacja Techniczna: {type}</h3>
+                                    {renderSpecificFields()}
+                                </div>
+
+                                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 rounded text-zinc-400 hover:text-white text-sm font-bold uppercase transition-colors">Anuluj</button>
+                                    <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-2 rounded font-bold uppercase flex items-center gap-2 transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)]">
+                                        <Save className="w-4 h-4" /> Zapisz
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- MODAL IMPORTU JSON --- */}
+                {isImportModalOpen && (
+                    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+                        <div className="bg-zinc-900 border border-zinc-700 w-full max-w-2xl rounded-xl shadow-2xl animate-in zoom-in-95 duration-200 p-6 space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold uppercase flex items-center gap-2">
+                                    <FileJson className="w-5 h-5 text-yellow-500" /> Import JSON
+                                </h2>
+                                <button onClick={() => setIsImportModalOpen(false)}><X className="w-6 h-6 text-zinc-500 hover:text-white" /></button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-mono text-zinc-500 uppercase mb-1">Domyślny Typ (jeśli brak w JSON)</label>
+                                    <select value={importType} onChange={(e) => setImportType(e.target.value)} className="w-full bg-black border border-zinc-700 p-3 text-sm text-white rounded">
+                                        {['GPU', 'CPU', 'Motherboard', 'RAM', 'Disk', 'Case', 'PSU', 'Cooling'].map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-mono text-zinc-500 uppercase mb-1">Dane JSON (Tablica lub Obiekt)</label>
+                                    <textarea
+                                        value={jsonInput}
+                                        onChange={(e) => setJsonInput(e.target.value)}
+                                        placeholder='[{"name": "RTX 3060", "searchQuery": "RTX 3060", "vram": 12}, ...]'
+                                        className="w-full h-64 bg-black border border-zinc-700 p-4 text-xs font-mono text-green-400 rounded outline-none resize-none focus:border-blue-500"
+                                    />
+                                </div>
+                            </div>
+
+                            {importStatus && (
+                                <div className={`p-3 rounded text-sm font-bold text-center ${importStatus.type === 'error' ? 'bg-red-900/20 text-red-400' :
+                                    importStatus.type === 'success' ? 'bg-green-900/20 text-green-400' : 'bg-blue-900/20 text-blue-400'
+                                    }`}>
+                                    {importStatus.msg}
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-3">
+                                <button onClick={() => setIsImportModalOpen(false)} className="px-6 py-2 text-zinc-400 hover:text-white text-sm font-bold uppercase">Zamknij</button>
+                                <button onClick={handleJsonImport} className="bg-yellow-600 hover:bg-yellow-500 text-black px-8 py-2 rounded font-bold uppercase flex items-center gap-2">
+                                    <FileJson className="w-4 h-4" /> Importuj
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

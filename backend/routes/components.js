@@ -12,26 +12,30 @@ const { protectAdmin } = require('../middleware/authMiddleware');
 // GET: Pobierz komponenty z filtrowaniem (Search, Type, Price Range)
 // backend/routes/components.js
 
+// GET: Pobierz komponenty z filtrowaniem
 router.get('/', async (req, res) => {
     try {
-        // DODANO: 'socket' do destrukturyzacji
         const { type, search, minPrice, maxPrice, user, socket } = req.query;
 
         let filter = {};
 
+        // 1. Filtr podstawowy: Ukrywanie niedostępnych (tylko dla klienta)
+        // Inicjalizujemy obiekt dla 'stats.lowestPrice', żeby móc do niego dopisywać
         if (user === 'true') {
             filter['stats.lowestPrice'] = { $gt: 0 };
         }
 
+        // 2. Filtr Typu
         if (type && type !== 'ALL') {
             filter.type = type;
         }
 
-        // --- NOWOŚĆ: FILTROWANIE PO SOCKET ---
+        // 3. Filtr Socketu
         if (socket) {
             filter.socket = socket;
         }
 
+        // 4. Wyszukiwanie (Nazwa lub Fraza Allegro)
         if (search) {
             const regex = new RegExp(search, 'i');
             filter.$or = [
@@ -40,10 +44,24 @@ router.get('/', async (req, res) => {
             ];
         }
 
-        // ... (reszta filtrów ceny bez zmian) ...
+        // --- 5. FILTROWANIE PO CENIE (NAPRAWIONE) ---
+        if (minPrice || maxPrice) {
+            // Upewniamy się, że obiekt filtru ceny istnieje (jeśli user=true go nie stworzył)
+            if (!filter['stats.lowestPrice']) {
+                filter['stats.lowestPrice'] = {};
+            }
+
+            // Dopisywanie warunków (MongoDB łączy je automatycznie jako AND)
+            if (minPrice) {
+                filter['stats.lowestPrice'].$gte = Number(minPrice);
+            }
+            if (maxPrice) {
+                filter['stats.lowestPrice'].$lte = Number(maxPrice);
+            }
+        }
 
         const components = await Component.find(filter)
-            .sort({ 'stats.lowestPrice': 1 });
+            .sort({ 'stats.lowestPrice': 1 }); // Sortuj od najtańszych
 
         res.json(components);
     } catch (err) {
@@ -51,7 +69,6 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
 // GET: Pobierz jeden komponent + jego oferty
 router.get('/:id', async (req, res) => {
     try {
@@ -195,5 +212,71 @@ router.delete('/offer/:offerId', protectAdmin, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+// backend/routes/components.js
+
+// ... (Inne importy i kod sekcji publicznej)
+
+// ==========================================
+// SEKCJA 2: STREFA ADMINA (Wymaga Tokena i ID Admina)
+// ==========================================
+
+// --- NOWY ENDPOINT: IMPORT JSON (BULK) ---
+router.post('/import', protectAdmin, async (req, res) => {
+    try {
+        const items = req.body;
+
+        // Walidacja czy to tablica
+        if (!Array.isArray(items)) {
+            return res.status(400).json({ error: "Dane muszą być tablicą obiektów JSON" });
+        }
+
+        let createdCount = 0;
+        let updatedCount = 0;
+
+        for (const item of items) {
+            const { type, ...data } = item;
+
+            // Dobieramy odpowiedni Model Mongoose
+            let Model;
+            switch (type) {
+                case 'GPU': Model = GPU; break;
+                case 'CPU': Model = CPU; break;
+                case 'Motherboard': Model = Motherboard; break;
+                case 'RAM': Model = RAM; break;
+                case 'Disk': Model = Disk; break;
+                case 'Case': Model = Case; break;
+                case 'PSU': Model = PSU; break;
+                case 'Cooling': Model = Cooling; break;
+                default:
+                    console.warn(`Pominięto nieznany typ: ${type}`);
+                    continue;
+            }
+
+            // Używamy updateOne z upsert: true
+            // Szukamy po nazwie (name). Jeśli znajdzie -> aktualizuje. Jeśli nie -> tworzy.
+            const result = await Model.updateOne(
+                { name: data.name },
+                { $set: { ...data, type } }, // Nadpisujemy dane
+                { upsert: true, runValidators: true }
+            );
+
+            if (result.upsertedCount > 0) createdCount++;
+            else if (result.modifiedCount > 0) updatedCount++;
+        }
+
+        res.json({
+            message: "Import zakończony",
+            createdCount,
+            updatedCount
+        });
+
+    } catch (err) {
+        console.error("Błąd importu:", err);
+        res.status(500).json({ error: "Błąd podczas importu danych: " + err.message });
+    }
+});
+
+// --- ZARZĄDZANIE KOMPONENTAMI (POJEDYNCZE) ---
+// ... (Reszta Twojego kodu: router.post('/', ...), router.put ...)
 
 module.exports = router;

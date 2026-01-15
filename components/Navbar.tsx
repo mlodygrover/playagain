@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, Menu, X, ArrowRight, User as UserIcon, LogOut } from "lucide-react";
+import { ShoppingBag, Menu, X, ArrowRight, User as UserIcon, LogOut, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -9,7 +9,8 @@ import { useAuth } from "@/context/AuthContext";
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { items } = useCart();
-  const { user, logout } = useAuth();
+  // Pobieramy isAdmin z contextu
+  const { user, isAdmin, logout } = useAuth();
 
   const closeMenu = () => setIsMobileMenuOpen(false);
 
@@ -38,11 +39,19 @@ export function Navbar() {
           {/* ACTION ICONS */}
           <div className="flex items-center gap-4 z-50">
              
+             {/* --- NOWOŚĆ: ZAKŁADKA ADMIN (DESKTOP) --- */}
+             {isAdmin && (
+               <Link 
+                 href="/admin" 
+                 className="hidden sm:flex items-center gap-2 text-xs font-bold text-red-500 hover:text-red-400 uppercase tracking-widest transition-colors mr-4 border border-red-900/30 bg-red-900/10 px-3 py-1.5 rounded"
+               >
+                 <ShieldAlert className="w-4 h-4" /> Admin
+               </Link>
+             )}
+
              {/* LOGOWANIE / KONTO (Desktop) */}
              {user ? (
                <div className="hidden sm:flex items-center gap-3 mr-2 border-r border-zinc-800 pr-4">
-                 
-                 {/* ZMIANA: Link do profilu */}
                  <Link 
                     href="/profil" 
                     className="text-right group/profile cursor-pointer"
@@ -110,7 +119,6 @@ export function Navbar() {
           <div className="mb-6 pb-6 border-b border-zinc-800">
             {user ? (
                <div className="flex items-center justify-between">
-                 {/* ZMIANA: Link do profilu */}
                  <Link href="/profil" onClick={closeMenu} className="group">
                    <p className="text-xs text-zinc-500 uppercase group-hover:text-blue-500 transition-colors">Witaj</p>
                    <p className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{user.firstName || user.email}</p>
@@ -126,6 +134,18 @@ export function Navbar() {
 
           <div className="flex flex-col gap-2">
             <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4">Nawigacja</p>
+            
+            {/* --- NOWOŚĆ: ZAKŁADKA ADMIN (MOBILE) --- */}
+            {isAdmin && (
+              <Link 
+                href="/admin" 
+                onClick={closeMenu}
+                className="text-red-500 font-bold text-lg py-3 flex items-center gap-2 uppercase tracking-wide border-b border-zinc-900 mb-2"
+              >
+                <ShieldAlert className="w-5 h-5" /> Panel Administratora
+              </Link>
+            )}
+
             {user && <MobileLink href="/profil" onClick={closeMenu}>Twój Profil</MobileLink>}
             <MobileLink href="/konfigurator" onClick={closeMenu}>Konfigurator 3D</MobileLink>
             <MobileLink href="/czesci" onClick={closeMenu}>Podzespoły</MobileLink>
