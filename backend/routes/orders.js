@@ -130,4 +130,18 @@ router.post('/webhook/payment-update', async (req, res) => {
     res.status(500).send('FALSE');
   }
 });
+// GET /api/orders/my-orders - Pobiera zamówienia zalogowanego użytkownika
+router.get('/my-orders', verify, async (req, res) => {
+  try {
+    // Szukamy zamówień, gdzie pole `user` równa się ID z tokena
+    // Sortujemy malejąco po dacie (najnowsze na górze)
+    const orders = await Order.find({ user: req.user._id })
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (err) {
+    console.error("Błąd pobierania zamówień:", err);
+    res.status(500).json({ error: "Nie udało się pobrać historii zamówień." });
+  }
+});
 module.exports = router;
