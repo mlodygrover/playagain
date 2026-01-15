@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Search, Terminal, Loader2, AlertCircle } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5009";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 
 export default function AllegroTestPage() {
   const [query, setQuery] = useState("");

@@ -9,7 +9,7 @@ import {
     FileJson, CheckCircle, AlertTriangle, Sparkles, Loader2, CheckSquare, Square, Wand2
 } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5009";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 
 const Input = ({ label, name, val, set, type = "text", placeholder, required = false }: any) => (
     <div className="w-full">

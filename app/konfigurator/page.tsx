@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Chatbot } from "@/components/Chatbox";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5009";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 
 // --- 1. IMPORT SCENY 3D ---
 const Scene3D = dynamic(() => import("@/components/Scene3D"), {

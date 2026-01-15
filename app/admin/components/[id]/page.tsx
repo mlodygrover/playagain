@@ -9,7 +9,7 @@ import {
     Plus, Edit2, ShoppingBag, Globe, Save, X, CircuitBoard, AlertTriangle, Wand2
 } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5009";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 
 export default function ComponentDetails() {
     const { id } = useParams();
