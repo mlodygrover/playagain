@@ -67,7 +67,7 @@ export default function CheckoutPage() {
 
             if (res.ok && data.paymentUrl) {
                 // --- ZMIANA: PRZEKIEROWANIE DO TPAY ---
-                clearCart();
+      
                 window.location.href = data.paymentUrl;
             } else {
                 alert("Błąd zamówienia: " + (data.error || "Brak linku do płatności"));

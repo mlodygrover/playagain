@@ -132,10 +132,11 @@ router.post('/webhook/payment-update', async (req, res) => {
 });
 // GET /api/orders/my-orders - Pobiera zamówienia zalogowanego użytkownika
 router.get('/my-orders', verify, async (req, res) => {
+  console.log("Probuje pobrac dla", req.user.id)
   try {
     // Szukamy zamówień, gdzie pole `user` równa się ID z tokena
     // Sortujemy malejąco po dacie (najnowsze na górze)
-    const orders = await Order.find({ user: req.user._id })
+    const orders = await Order.find({ user: req.user.id })
       .sort({ createdAt: -1 });
 
     res.json(orders);

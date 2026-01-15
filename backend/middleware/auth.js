@@ -1,20 +1,31 @@
 const jwt = require('jsonwebtoken');
 
 module.exports = function (req, res, next) {
-  // 1. Pobierz token z nagłówka (Format: "Bearer TOKEN")
-  const token = req.header('Authorization');
-
-  if (!token) return res.status(401).json({ error: "Brak dostępu. Wymagane logowanie." });
-
-  try {
-    // 2. Usuń słowo "Bearer " jeśli istnieje i zweryfikuj
-    const tokenString = token.replace("Bearer ", "");
-    const verified = jwt.verify(tokenString, process.env.JWT_SECRET);
+    // 1. Pobierz token z nagłówka
+    const authHeader = req.header('Authorization');
     
-    // 3. Dodaj dane użytkownika (id) do obiektu req
-    req.user = verified;
-    next(); // Przejdź dalej
-  } catch (err) {
-    res.status(400).json({ error: "Nieprawidłowy token." });
-  }
+    if (!authHeader) {
+        return res.status(401).json({ error: "Odmowa dostępu. Brak tokena." });
+    }
+
+    // 2. Usuń prefiks "Bearer ", jeśli istnieje (standard JWT)
+    const token = authHeader.startsWith('Bearer ') 
+        ? authHeader.slice(7, authHeader.length).trim() 
+        : authHeader;
+
+    try {
+        // 3. Zweryfikuj token
+        const verified = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // 4. Przypisz zdekodowane dane (payload) do req.user
+        // Upewnij się, że przy logowaniu (auth.js) używasz { _id: user._id }
+        req.user = verified;
+        
+        console.log("🔑 Middleware Auth - Zdekodowany user:", req.user); // DEBUG
+        
+        next();
+    } catch (err) {
+        console.error("Błąd weryfikacji tokena:", err.message);
+        res.status(400).json({ error: "Nieprawidłowy token." });
+    }
 };

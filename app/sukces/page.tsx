@@ -3,11 +3,20 @@
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Package, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { useCart } from "@/context/CartContext"; // <--- 1. Import Context
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const { clearCart } = useCart(); // <--- 2. Pobierz funkcję
+
+  // 3. Wyczyść koszyk tylko raz po wejściu na sukces
+  useEffect(() => {
+    if (orderId) {
+        clearCart();
+    }
+  }, [orderId, clearCart]);
 
   return (
     <div className="min-h-screen bg-black text-white pt-32 pb-20 flex items-center justify-center px-4">
