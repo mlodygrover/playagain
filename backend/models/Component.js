@@ -14,6 +14,8 @@ const ComponentSchema = new mongoose.Schema({
         lowestPrice: { type: Number, default: 0 },
         highestPrice: { type: Number, default: 0 }, // Dodane dla pełnego obrazu
         standardDeviation: { type: Number, default: 0 }, // <--- TWOJE NOWE POLE
+
+        basePrice: { type: Number, default: 0 }, // <--- TWOJE NOWE POLE
         offersCount: { type: Number, default: 0 },
         lastUpdate: { type: Date }
     }

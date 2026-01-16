@@ -1,23 +1,38 @@
 const router = require('express').Router();
 const { Component, Motherboard } = require('../models/Component');
 const Offer = require('../models/Offer');
+
 // Importujemy funkcje serwisu Perplexity
 const {
   fetchOffersFromAI,
   fetchMotherboardOffers,
   fetchRamOffers,
-  fetchDiskOffers // <--- WAŻNE: Dodany import
+  fetchDiskOffers
 } = require('../services/perplexityService');
+
+// Importujemy serwis eBay
+const { fetchEbayOffers } = require('../services/ebayService');
 
 const { updateComponentStats } = require('../utils/statsCalculator');
 const { protectAdmin } = require('../middleware/authMiddleware');
 
+const EBAY_CATEGORIES = {
+  GPU: "27386",
+  CPU: "164",
+  Motherboard: "1244",
+  RAM: "170083",
+  Disk: "",
+  PSU: "42017",
+  Case: "42014",
+  Cooling: "131486"
+};
+
 // ==========================================
-// ROUTE 1: GENEROWANIE OFERT PRZEZ AI
+// ROUTE 1: GENEROWANIE OFERT (AI + EBAY)
 // ==========================================
 router.post('/generate-ai-offers', protectAdmin, async (req, res) => {
   try {
-    const { componentIds } = req.body;
+    const { componentIds, ai = true } = req.body;
 
     if (!componentIds || !Array.isArray(componentIds)) {
       return res.status(400).json({ error: "Wymagana tablica componentIds" });
@@ -29,110 +44,99 @@ router.post('/generate-ai-offers', protectAdmin, async (req, res) => {
       errors: []
     };
 
-    // Iterujemy po komponentach
     for (const id of componentIds) {
       const component = await Component.findById(id);
       if (!component) continue;
 
       try {
-        console.log(`🤖 AI przetwarza: ${component.name} (${component.type})...`);
+        console.log(`🤖 Przetwarzanie: ${component.name} (${component.type})...`);
+        if (ai === false) console.log(`   -> Tryb: TYLKO EBAY (AI pominięte)`);
 
         let aiOffers = [];
+        let ebayOffers = [];
 
-        // ==================================================
-        // LOGIKA WYBORU METODY SZUKANIA
-        // ==================================================
-
-        if (component.type === 'Motherboard') {
-          // --- 1. PŁYTY GŁÓWNE ---
-          if (component.socket && component.formFactor) {
-            console.log(`   -> Tryb generyczny dla MOBO: ${component.socket} / ${component.formFactor}`);
-            aiOffers = await fetchMotherboardOffers(component.socket, component.formFactor);
-          } else {
-            console.log(`   -> Tryb standardowy (brak parametrów socket/format)`);
-            aiOffers = await fetchOffersFromAI(component.searchQuery || component.name);
+        // --- KROK 1: AI ---
+        if (ai !== false) {
+          try {
+            if (component.type === 'Motherboard') {
+              if (component.socket && component.formFactor) {
+                aiOffers = await fetchMotherboardOffers(component.socket, component.formFactor);
+              } else {
+                aiOffers = await fetchOffersFromAI(component.searchQuery || component.name);
+              }
+            } else if (component.type === 'RAM') {
+              const capacityParam = component.capacity ? `${component.capacity}GB` : null;
+              aiOffers = await fetchRamOffers(capacityParam);
+            } else if (component.type === 'Disk') {
+              aiOffers = await fetchDiskOffers(component.diskType, component.interface, component.capacity);
+            } else {
+              aiOffers = await fetchOffersFromAI(component.searchQuery || component.name);
+            }
+            console.log(`   -> AI znalazło: ${aiOffers.length} ofert.`);
+          } catch (aiError) {
+            console.error(`   ⚠️ Błąd AI dla ${component.name}:`, aiError.message);
           }
-
-        } else if (component.type === 'RAM') {
-          // --- 2. PAMIĘĆ RAM ---
-          const capacityParam = component.capacity ? `${component.capacity}GB` : null;
-          console.log(`   -> Tryb dedykowany dla RAM. Pojemność: ${capacityParam || 'MIX'}`);
-          aiOffers = await fetchRamOffers(capacityParam);
-
-        } else if (component.type === 'Disk') {
-          // --- 3. DYSKI (NOWOŚĆ) ---
-          // Pobieramy parametry: diskType (SSD/HDD), interface (M.2/SATA), capacity (np. 1000)
-          // Uwaga: 'interface' jest słowem kluczowym w JS, więc bezpiecznie pobieramy je z obiektu
-          const diskType = component.diskType;
-          const interfaceType = component.interface;
-          const capacity = component.capacity;
-          
-          console.log(`   -> Tryb dedykowany dla DYSKU: ${diskType || 'SSD'} / ${interfaceType || 'Any'} / ${capacity || 'Any'}GB`);
-          
-          // Wywołanie nowej funkcji
-          aiOffers = await fetchDiskOffers(diskType, interfaceType, capacity);
-
-        } else {
-          // --- 4. FALLBACK (GPU, CPU, PSU, Case, Cooling...) ---
-          // Używa standardowego zapytania na podstawie nazwy lub searchQuery
-          aiOffers = await fetchOffersFromAI(component.searchQuery || component.name);
         }
 
-        // ==================================================
-        // ZAPISYWANIE OFERT DO BAZY
-        // ==================================================
+        // --- KROK 2: EBAY ---
+        try {
+          const categoryId = EBAY_CATEGORIES[component.type];
+          
+          if (categoryId && fetchEbayOffers) {
+            // fetchEbayOffers zwraca już obiekty z polem 'url' (nie itemWebUrl)
+            const ebayRaw = await fetchEbayOffers(component.searchQuery || component.name, categoryId);
+            
+            ebayOffers = ebayRaw.map(item => ({
+              title: item.title,
+              price: parseFloat(item.totalPrice || item.price),
+              url: item.url, // <--- POPRAWKA: Tutaj był błąd (item.itemWebUrl -> item.url)
+              platform: "eBay",
+              description: `Stan: ${item.condition} | Lokalizacja: ${item.location || 'PL'}`,
+              externalId: `ebay-${item.id}`
+            }));
+            
+            console.log(`   -> eBay znalazł: ${ebayOffers.length} ofert.`);
+          }
+        } catch (ebayError) {
+          console.error(`   ⚠️ Błąd eBay dla ${component.name}:`, ebayError.message);
+        }
 
-        let addedCount = 0;
+        // --- KROK 3: ŁĄCZENIE I ZAPIS ---
+        // Dodajemy filtr .filter(o => o.url), aby usunąć ewentualne wadliwe oferty
+        const allNewOffers = [...aiOffers, ...ebayOffers].filter(o => o.url && o.url.startsWith('http'));
 
-        for (const offerData of aiOffers) {
-          // Podstawowa walidacja
-          if (!offerData.price || !offerData.url) continue;
+        if (allNewOffers.length > 0) {
+          await Offer.deleteMany({ componentId: component._id });
 
-          // Sprawdzenie duplikatów po URL
-          const exists = await Offer.findOne({ url: offerData.url });
-          if (exists) continue;
-
-          // Tworzenie oferty
-          await Offer.create({
+          const offersToSave = allNewOffers.map(offer => ({
             componentId: component._id,
-            // Jeśli AI zwróciło "title" (np. dla RAMu, Dysku lub Mobo), użyj go.
-            // W przeciwnym razie użyj nazwy komponentu z naszej bazy.
-            title: offerData.title || component.name,
-            price: offerData.price,
-            url: offerData.url,
-            platform: offerData.platform || "Web",
-            // Zapisujemy specyfikację techniczną (np. prędkość dysku, CL ramu) w opisie
-            description: offerData.specs || null, 
-            externalId: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            title: offer.title || component.name,
+            price: offer.price,
+            url: offer.url,
+            platform: offer.platform || "Web",
+            description: offer.description || offer.specs || null,
+            externalId: offer.externalId || `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             isActive: true
-          });
-          addedCount++;
-        }
+          }));
 
-        // ==================================================
-        // AKTUALIZACJA STATYSTYK
-        // ==================================================
-
-        if (addedCount > 0) {
+          await Offer.insertMany(offersToSave);
           await updateComponentStats(component._id);
-          console.log(`   ✅ Dodano ${addedCount} nowych ofert.`);
+          console.log(`   ✅ ZAKTUALIZOWANO BAZĘ: ${offersToSave.length} ofert.`);
+          results.offersCreated += offersToSave.length;
+
         } else {
-          console.log(`   ⚠️ Nie znaleziono nowych ofert (lub duplikaty).`);
+          console.log(`   ⛔ BRAK NOWYCH OFERT. Stare oferty zostały zachowane.`);
         }
 
         results.processed++;
-        results.offersCreated += addedCount;
 
       } catch (err) {
-        console.error(`❌ Błąd przy ${component.name}:`, err.message);
+        console.error(`❌ Krytyczny błąd przy ${component.name}:`, err.message);
         results.errors.push({ name: component.name, error: err.message });
       }
     }
 
-    res.json({
-      message: "Proces generowania ofert zakończony",
-      details: results
-    });
+    res.json({ message: "Proces zakończony", details: results });
 
   } catch (err) {
     console.error("Critical Admin Error:", err);
@@ -141,46 +145,60 @@ router.post('/generate-ai-offers', protectAdmin, async (req, res) => {
 });
 
 // ==========================================
-// ROUTE 2: TWORZENIE SZABLONÓW PŁYT GŁÓWNYCH
+// ROUTE: TWORZENIE SZABLONÓW PŁYT
 // ==========================================
 router.post('/create-mobo-templates', protectAdmin, async (req, res) => {
   try {
     const { socket } = req.body;
-
-    if (!socket) {
-      return res.status(400).json({ error: "Brak podanego socketu." });
-    }
+    if (!socket) return res.status(400).json({ error: "Brak podanego socketu." });
 
     const standards = ["ATX", "Micro-ATX", "Mini-ITX"];
     const created = [];
 
     for (const standard of standards) {
-      // Sprawdź czy już istnieje taki szablon
-      const exists = await Component.findOne({
-        type: 'Motherboard',
-        socket: socket,
-        formFactor: standard
-      });
-
+      const exists = await Component.findOne({ type: 'Motherboard', socket: socket, formFactor: standard });
       if (!exists) {
         const newMobo = new Motherboard({
-          name: `${socket} ${standard}`, // np. "AM4 ATX"
+          name: `${socket} ${standard}`,
           searchQuery: `Płyta główna ${socket} ${standard}`,
           type: "Motherboard",
           socket: socket,
           formFactor: standard,
-          image: "", // Brak zdjęcia na start
+          image: "",
           blacklistedKeywords: ["Uszkodzona", "Zestaw"]
         });
         await newMobo.save();
         created.push(newMobo);
       }
     }
-
     res.json({ message: `Utworzono ${created.length} szablonów.`, created });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
+// ROUTE: UPDATE ALL STATS
+// ==========================================
+router.post('/update-all-stats', protectAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    let filter = {};
+    if (ids && Array.isArray(ids) && ids.length > 0) {
+      filter = { _id: { $in: ids } };
+      console.log(`🔄 Aktualizacja statystyk dla ${ids.length} wybranych komponentów...`);
+    } else {
+      console.log("🔄 Aktualizacja statystyk WSZYSTKICH komponentów...");
+    }
+    
+    const components = await Component.find(filter, '_id name');
+    const updatePromises = components.map(comp => updateComponentStats(comp._id));
+    await Promise.all(updatePromises);
+
+    res.json({ message: `Zaktualizowano statystyki dla ${components.length} komponentów.`, count: components.length });
+  } catch (err) {
+    console.error("❌ Błąd aktualizacji:", err);
+    res.status(500).json({ error: "Błąd podczas aktualizacji." });
   }
 });
 

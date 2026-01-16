@@ -6,7 +6,7 @@ async function fetchOffersFromAI(componentName) {
 
     // Prompt wymuszający JSON
     const prompt = `
-    Znajdź 10 aktualnych ofert sprzedaży (najlepiej używanych, najniższe ceny) dla podzespołu: "${componentName}".
+    Znajdź 10 aktualnych ofert sprzedaży (najlepiej używanych) dla podzespołu: "${componentName}".
     Przeszukaj polskie serwisy (Allegro, OLX, sklepy).
     Chodzi o oferty zawierajace tylko ten komponent, nie interesuja mnie oferty typu plyta glowna + procesor + chlodzenie.
     Zwróć odpowiedź TYLKO I WYŁĄCZNIE jako czysty JSON (bez markdown, bez '''json). Dopuszczalne stany to tylko nowe i uzywane - calkowicie nie dopuszczam uszkodzonych.
@@ -16,7 +16,7 @@ async function fetchOffersFromAI(componentName) {
         "title": "Tytuł oferty",
         "price": 1200.00 (jako liczba, w PLN),
         "url": "link do oferty",
-        "platform": "Allegro/OLX/Inne/Ebay"
+        "platform": "Allegro/OLX/Inne"
       }
     ]
     Jeśli nie znajdziesz ofert, zwróć pustą tablicę [].
@@ -63,7 +63,7 @@ async function fetchMotherboardOffers(socket, formFactor) {
     - Socket: ${socket}
     - Standard/Format: ${standardQuery}
     - Stan: Nowe lub Używane (sprawne)
-    - Sklepy: Polskie (Ebay, Allegro, Morele, X-Kom, OLX)
+    - Sklepy: Polskie (Allegro, Morele, X-Kom, OLX)
     
     Nie szukaj jednego konkretnego modelu. Znajdź RÓŻNE modele (Asus, MSI, Gigabyte itp.) pasujące do tych kryteriów.
     Wybierz najtańsze sensowne oferty.
@@ -122,7 +122,7 @@ async function fetchRamOffers(specificCapacity = null) {
     - Format: DIMM (Desktop). WYKLUCZ: SODIMM (laptop), ECC (serwerowe).
     - Pojemność: ${capacityQuery}. Mogą to być pojedyncze kości lub zestawy (np. 2x8GB, 2x16GB).
     - Stan: Nowe lub Używane (tylko w pełni sprawne).
-    - Sklepy: Polskie (Ebay, Allegro, OLX, Morele, X-Kom, Amazon.pl).
+    - Sklepy: Polskie (Allegro, OLX, Morele, X-Kom, Amazon.pl).
     
     Wybierz najkorzystniejsze cenowo oferty w stosunku do wydajności (CL/MHz).
     

@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // <--- NOWE IMPORTY
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
     Plus, Edit, Trash2, Save, X, Search, RefreshCcw,
     Monitor, Cpu, CircuitBoard, HardDrive, Box, Zap, Fan, MemoryStick, TrendingUp,
-    FileJson, CheckCircle, AlertTriangle, Sparkles, Loader2, CheckSquare, Square, Wand2
+    FileJson, CheckCircle, AlertTriangle, Sparkles, Loader2, CheckSquare, Square, Wand2,
+    ArrowUpDown, Calculator
 } from "lucide-react";
 import Link from "next/link";
 
@@ -29,8 +30,8 @@ const Input = ({ label, name, val, set, type = "text", placeholder, required = f
 
 export default function ComponentsManager() {
     const { token } = useAuth();
-    const router = useRouter(); // <--- Hook do nawigacji
-    const searchParams = useSearchParams(); // <--- Hook do czytania parametrów URL
+    const router = useRouter();
+    const searchParams = useSearchParams();
 
     const [components, setComponents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -40,17 +41,19 @@ export default function ComponentsManager() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isCreatingMobos, setIsCreatingMobos] = useState(false);
 
+    const [isRecalculating, setIsRecalculating] = useState(false);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    // --- 1. INICJALIZACJA STANU Z URL ---
-    // Zamiast pustych stringów, czytamy to co jest w pasku adresu na starcie
+    // --- 1. INICJALIZACJA STANU ---
     const [filters, setFilters] = useState({
         search: searchParams.get("search") || "",
         type: searchParams.get("type") || "ALL",
         minPrice: searchParams.get("minPrice") || "",
-        maxPrice: searchParams.get("maxPrice") || ""
+        maxPrice: searchParams.get("maxPrice") || "",
+        sortBy: searchParams.get("sortBy") || "lowestPrice-asc"
     });
 
     const [debouncedFilters, setDebouncedFilters] = useState(filters);
@@ -90,26 +93,22 @@ export default function ComponentsManager() {
     // --- 2. LOGIKA AKTUALIZACJI URL I DEBOUNCE ---
     useEffect(() => {
         const handler = setTimeout(() => {
-            // A. Ustawiamy filtry do pobrania danych
             setDebouncedFilters(filters);
 
-            // B. Aktualizujemy URL w przeglądarce
             const params = new URLSearchParams();
             if (filters.search) params.set("search", filters.search);
             if (filters.type && filters.type !== "ALL") params.set("type", filters.type);
             if (filters.minPrice) params.set("minPrice", filters.minPrice);
             if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
+            if (filters.sortBy) params.set("sortBy", filters.sortBy);
 
-            // Używamy replace, aby nie zaśmiecać historii cofania każdą literką
-            // scroll: false zapobiega skakaniu strony do góry
             router.replace(`?${params.toString()}`, { scroll: false });
-
-        }, 500); // 500ms opóźnienia
+        }, 500);
 
         return () => clearTimeout(handler);
     }, [filters, router]);
 
-    // --- 3. POBIERANIE DANYCH (REAGUJE NA DEBOUNCED FILTERS) ---
+    // --- 3. POBIERANIE DANYCH + SORTOWANIE FRONTENDOWE ---
     useEffect(() => {
         fetchComponents();
     }, [debouncedFilters]);
@@ -124,14 +123,85 @@ export default function ComponentsManager() {
             if (debouncedFilters.maxPrice) params.append("maxPrice", debouncedFilters.maxPrice);
 
             const res = await fetch(`${API_URL}/api/components?${params.toString()}`);
-            const data = await res.json();
+            let data = await res.json();
+
+            // --- LOGIKA SORTOWANIA CLIENT-SIDE ---
+            if (debouncedFilters.sortBy && Array.isArray(data)) {
+                const [sortKey, sortDir] = debouncedFilters.sortBy.split('-');
+                const multiplier = sortDir === 'asc' ? 1 : -1;
+
+                data.sort((a: any, b: any) => {
+                    let valA = 0;
+                    let valB = 0;
+
+                    if (sortKey === 'lowestPrice') {
+                        valA = a.stats?.lowestPrice || 0;
+                        valB = b.stats?.lowestPrice || 0;
+                    }
+                    else if (sortKey === 'deviation') {
+                        valA = a.stats?.standardDeviation || 0;
+                        valB = b.stats?.standardDeviation || 0;
+                    }
+                    else if (sortKey === 'ratio') {
+                        const avgA = a.stats?.averagePrice || 1;
+                        const avgB = b.stats?.averagePrice || 1;
+                        valA = (a.stats?.standardDeviation || 0) / avgA;
+                        valB = (b.stats?.standardDeviation || 0) / avgB;
+                    }
+
+                    return (valA - valB) * multiplier;
+                });
+            }
+
             setComponents(data);
-        } catch (err) { console.error(err); } finally { setLoading(false); }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- 4. PRZELICZANIE STATYSTYK (SELEKTYWNE LUB PEŁNE) ---
+    const handleRecalculateStats = async () => {
+        if (!token) return alert("Brak autoryzacji.");
+
+        const count = selectedIds.size;
+        const mode = count > 0 ? 'selected' : 'all';
+        const msg = count > 0
+            ? `Przeliczyć statystyki dla ${count} zaznaczonych elementów?`
+            : `Czy na pewno chcesz przeliczyć statystyki dla WSZYSTKICH komponentów? Może to chwilę potrwać.`;
+
+        if (!confirm(msg)) return;
+
+        setIsRecalculating(true);
+        try {
+            const body = count > 0 ? { ids: Array.from(selectedIds) } : {};
+
+            const res = await fetch(`${API_URL}/api/admin/update-all-stats`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) throw new Error("Błąd aktualizacji");
+            const data = await res.json();
+
+            alert(`Sukces! ${data.message}`);
+            fetchComponents();
+            if (count > 0) setSelectedIds(new Set()); // Odznacz po sukcesie
+        } catch (err: any) {
+            alert("Błąd: " + err.message);
+        } finally {
+            setIsRecalculating(false);
+        }
     };
 
     // --- HANDLERY UI ---
     const handleFilterChange = (key: string, value: string) => setFilters(prev => ({ ...prev, [key]: value }));
-    const clearFilters = () => setFilters({ search: "", type: "ALL", minPrice: "", maxPrice: "" });
+    const clearFilters = () => setFilters({ search: "", type: "ALL", minPrice: "", maxPrice: "", sortBy: "lowestPrice-asc" });
 
     const toggleSelect = (id: string, e?: React.MouseEvent) => {
         const newSet = new Set(selectedIds);
@@ -188,33 +258,44 @@ export default function ComponentsManager() {
             fetchComponents();
         } catch (err: any) { alert("Błąd: " + err.message); } finally { setIsCreatingMobos(false); }
     };
-
-    const handleGenerateOffers = async () => {
+    const handleGenerateOffers = async (useAi: boolean = true) => {
         if (!token) return alert("Brak autoryzacji.");
         if (selectedIds.size === 0) return;
-        if (!confirm(`Uruchomić AI dla ${selectedIds.size} elementów?`)) return;
+
+        const modeText = useAi ? "AI + eBay" : "TYLKO eBay";
+        if (!confirm(`Uruchomić pobieranie ofert (${modeText}) dla ${selectedIds.size} elementów?`)) return;
+
         setIsGenerating(true);
         try {
             const res = await fetch(`${API_URL}/api/admin/generate-ai-offers`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({ componentIds: Array.from(selectedIds) })
+                // Przekazujemy parametr 'ai' do backendu
+                body: JSON.stringify({
+                    componentIds: Array.from(selectedIds),
+                    ai: useAi
+                })
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.error);
-            alert(`Sukces! Dodano ofert: ${result.details.offersCreated}`);
+
+            alert(`Sukces! (${modeText}) Dodano ofert: ${result.details.offersCreated}`);
             setSelectedIds(new Set());
             fetchComponents();
-        } catch (err: any) { alert("Błąd AI: " + err.message); } finally { setIsGenerating(false); }
+        } catch (err: any) {
+            alert("Błąd: " + err.message);
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     const handleDelete = async (id: string) => { if (!confirm("Usunąć?")) return; await fetch(`${API_URL}/api/components/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); fetchComponents(); };
-    
+
     const openEdit = (c: any) => { setEditingId(c._id); setType(c.type); setFormData({ ...c, blacklistedKeywords: c.blacklistedKeywords ? c.blacklistedKeywords.join(', ') : "" }); setIsModalOpen(true); };
     const openAdd = () => { setEditingId(null); setFormData({ name: "", searchQuery: "", blacklistedKeywords: "", image: "" }); setIsModalOpen(true); };
 
     const getTypeIcon = (t: string) => { switch (t) { case 'GPU': return <Monitor className="w-5 h-5" />; case 'CPU': return <Cpu className="w-5 h-5" />; case 'Motherboard': return <CircuitBoard className="w-5 h-5" />; case 'RAM': return <MemoryStick className="w-5 h-5" />; case 'Disk': return <HardDrive className="w-5 h-5" />; case 'Case': return <Box className="w-5 h-5" />; case 'PSU': return <Zap className="w-5 h-5" />; case 'Cooling': return <Fan className="w-5 h-5" />; default: return <Search className="w-5 h-5" />; } };
-    
+
     const renderSpecificFields = () => {
         switch (type) {
             case 'CPU':
@@ -387,6 +468,16 @@ export default function ComponentsManager() {
                 <div className="flex justify-between items-center mb-6">
                     <div><h1 className="text-3xl font-black uppercase tracking-tight">Baza Części</h1><p className="text-zinc-500 text-sm">Zarządzaj definicjami podzespołów</p></div>
                     <div className="flex gap-3">
+                        {/* PRZYCISK PRZELICZANIA STATYSTYK */}
+                        <button
+                            onClick={handleRecalculateStats}
+                            disabled={isRecalculating}
+                            className="bg-purple-900/40 hover:bg-purple-900/60 text-purple-300 border border-purple-800 px-4 py-2.5 rounded font-bold uppercase flex items-center gap-2 text-sm disabled:opacity-50"
+                        >
+                            {isRecalculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />}
+                            {selectedIds.size > 0 ? `Przelicz Zaznaczone (${selectedIds.size})` : "Przelicz Wszystkie"}
+                        </button>
+
                         <button onClick={() => { setIsImportModalOpen(true); setImportStatus(null); }} className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2.5 rounded font-bold uppercase flex items-center gap-2 text-sm border border-zinc-700"><FileJson className="w-4 h-4" /> Importuj JSON</button>
                         <button onClick={openAdd} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded font-bold uppercase flex items-center gap-2 text-sm"><Plus className="w-4 h-4" /> Dodaj Komponent</button>
                     </div>
@@ -397,7 +488,25 @@ export default function ComponentsManager() {
                     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-700 p-4 rounded-lg shadow-2xl z-50 flex items-center gap-6 animate-in slide-in-from-bottom-4">
                         <span className="font-mono text-sm text-zinc-300">Zaznaczono: <strong className="text-white">{selectedIds.size}</strong></span>
                         <div className="h-6 w-px bg-zinc-700" />
-                        <button onClick={handleGenerateOffers} disabled={isGenerating} className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 disabled:opacity-50">{isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} {isGenerating ? "AI Pracuje..." : "Generuj Oferty"}</button>
+                        {/* Przycisk 1: Pełne AI + eBay (Domyślny) */}
+                        <button
+                            onClick={() => handleGenerateOffers(true)}
+                            disabled={isGenerating}
+                            className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 disabled:opacity-50"
+                        >
+                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                            {isGenerating ? "Praca..." : "Generuj (AI + eBay)"}
+                        </button>
+
+                        {/* Przycisk 2: Tylko eBay (Szybki) */}
+                        <button
+                            onClick={() => handleGenerateOffers(false)}
+                            disabled={isGenerating}
+                            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 disabled:opacity-50"
+                        >
+                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                            {isGenerating ? "Praca..." : "Generuj (Tylko eBay)"}
+                        </button>
                         {hasSelectedCpu && (
                             <button onClick={handleCreateMissingMobos} disabled={isCreatingMobos} className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 disabled:opacity-50">
                                 {isCreatingMobos ? <Loader2 className="w-4 h-4 animate-spin" /> : <CircuitBoard className="w-4 h-4" />} Utwórz Płyty (Mobo)
@@ -409,8 +518,24 @@ export default function ComponentsManager() {
                 {/* FILTRY */}
                 <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded mb-6 flex flex-wrap gap-4 items-end">
                     <div className="flex-grow min-w-[200px]"><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Szukaj</label><input value={filters.search} onChange={(e) => handleFilterChange("search", e.target.value)} placeholder="Szukaj..." className="w-full bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none" /></div>
+
                     <div className="min-w-[150px]"><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Typ</label><select value={filters.type} onChange={(e) => handleFilterChange("type", e.target.value)} className="w-full bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none"><option value="ALL">Wszystkie</option>{['GPU', 'CPU', 'Motherboard', 'RAM', 'Disk', 'Case', 'PSU', 'Cooling'].map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+
                     <div className="flex gap-2"><div><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Cena Od</label><input type="number" value={filters.minPrice} onChange={(e) => handleFilterChange("minPrice", e.target.value)} className="w-24 bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none" /></div><div><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Cena Do</label><input type="number" value={filters.maxPrice} onChange={(e) => handleFilterChange("maxPrice", e.target.value)} className="w-24 bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none" /></div></div>
+
+                    {/* --- DROPDOWN SORTOWANIA --- */}
+                    <div className="min-w-[180px]">
+                        <label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block flex items-center gap-1"><ArrowUpDown className="w-3 h-3" /> Sortuj według</label>
+                        <select value={filters.sortBy} onChange={(e) => handleFilterChange("sortBy", e.target.value)} className="w-full bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none">
+                            <option value="lowestPrice-asc">Cena (Rosnąco)</option>
+                            <option value="lowestPrice-desc">Cena (Malejąco)</option>
+                            <option value="deviation-asc">Odchylenie (Stabilne)</option>
+                            <option value="deviation-desc">Odchylenie (Zmienne)</option>
+                            <option value="ratio-asc">Wsp. Zmienności (Mały)</option>
+                            <option value="ratio-desc">Wsp. Zmienności (Duży)</option>
+                        </select>
+                    </div>
+
                     <button onClick={clearFilters} className="bg-zinc-800 px-4 py-2 rounded h-[38px] text-sm"><RefreshCcw className="w-4 h-4" /></button>
                 </div>
 
@@ -425,6 +550,11 @@ export default function ComponentsManager() {
                         const isSelected = selectedIds.has(comp._id);
                         const mySocketKey = normalizeSocket(comp.socket);
                         const hasMobo = comp.type === 'CPU' && comp.socket && socketMoboMap[mySocketKey];
+
+                        // Obliczenie współczynnika zmienności (CV) do wyświetlenia w UI
+                        const cv = comp.stats?.averagePrice > 0
+                            ? Math.ceil((comp.stats?.standardDeviation / comp.stats?.averagePrice) * 100)
+                            : 0;
 
                         return (
                             <div
@@ -465,8 +595,17 @@ export default function ComponentsManager() {
                                             <span className={`${comp.stats?.lowestPrice > 0 ? 'text-green-500' : 'text-zinc-600'} font-bold`}>
                                                 Min: {comp.stats?.lowestPrice} zł
                                             </span>
-                                            <span className="flex items-center gap-1">
+
+                                            {/* NOWE POLE: BASE PRICE (WYŚWIETLANIE) */}
+                                            <span className="text-zinc-400 font-bold border-l border-r border-zinc-700 px-2" title="Cena bazowa (używana do wyceny PC)">
+                                                Base: <span className="text-white">{comp.stats?.basePrice || 0} zł</span>
+                                            </span>
+
+                                            <span className="flex items-center gap-1" title={`Współczynnik zmienności: ${cv}%`}>
                                                 <TrendingUp className="w-3 h-3" /> ±{comp.stats?.standardDeviation} zł
+                                                <span className={`ml-1 px-1 rounded font-bold ${cv > 25 ? 'text-red-400 bg-red-900/30' : cv > 15 ? 'text-yellow-400 bg-yellow-900/30' : 'text-zinc-500'}`}>
+                                                    ({cv}%)
+                                                </span>
                                             </span>
                                             <span className="text-zinc-500">
                                                 Ofert: {comp.stats?.offersCount || 0}
@@ -507,7 +646,7 @@ export default function ComponentsManager() {
                                         <select
                                             value={type}
                                             onChange={(e) => setType(e.target.value)}
-                                            disabled={!!editingId} // Nie zmieniamy typu przy edycji
+                                            disabled={!!editingId}
                                             className="w-full bg-black border border-zinc-700 p-3 text-sm text-white focus:border-blue-500 outline-none rounded"
                                         >
                                             {['GPU', 'CPU', 'Motherboard', 'RAM', 'Disk', 'Case', 'PSU', 'Cooling'].map(t => <option key={t} value={t}>{t}</option>)}

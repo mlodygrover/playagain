@@ -28,7 +28,7 @@ app.use('/api/auth', authRoute);
 app.use('/api/orders', ordersRoute);
 app.use('/api/users', usersRoute);
 app.use('/api/components', componentsRoute);
-
+app.use('/api/ebay-test', require('./routes/ebayTest'));
 // Testowy route
 app.get('/', (req, res) => {
     res.send('PlayAgain API is running...');
