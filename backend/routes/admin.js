@@ -27,9 +27,35 @@ const EBAY_CATEGORIES = {
   Cooling: "131486"
 };
 
-// ==========================================
-// ROUTE 1: GENEROWANIE OFERT (AI + EBAY)
-// ==========================================
+router.post('/update-all-stats', protectAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    let filter = { type: { $ne: 'Service' } }; // Domyślnie wykluczamy Services
+
+    if (ids && Array.isArray(ids) && ids.length > 0) {
+      // Jeśli podano ID, filtrujemy po ID ORAZ wykluczamy Services
+      filter._id = { $in: ids };
+      console.log(`🔄 Aktualizacja statystyk dla ${ids.length} wybranych komponentów (z pominięciem usług)...`);
+    } else {
+      console.log("🔄 Aktualizacja statystyk WSZYSTKICH komponentów (z pominięciem usług)...");
+    }
+
+    const components = await Component.find(filter, '_id name type'); // Pobieramy też type do logowania (opcjonalnie)
+
+    if (components.length === 0) {
+      return res.json({ message: "Brak komponentów do aktualizacji (lub wybrano same usługi).", count: 0 });
+    }
+
+    const updatePromises = components.map(comp => updateComponentStats(comp._id));
+    await Promise.all(updatePromises);
+
+    res.json({ message: `Zaktualizowano statystyki dla ${components.length} komponentów.`, count: components.length });
+  } catch (err) {
+    console.error("❌ Błąd aktualizacji:", err);
+    res.status(500).json({ error: "Błąd podczas aktualizacji." });
+  }
+});
+
 router.post('/generate-ai-offers', protectAdmin, async (req, res) => {
   try {
     const { componentIds, ai = true } = req.body;
@@ -38,11 +64,18 @@ router.post('/generate-ai-offers', protectAdmin, async (req, res) => {
       return res.status(400).json({ error: "Wymagana tablica componentIds" });
     }
 
-    const results = { processed: 0, offersCreated: 0, errors: [] };
+    const results = { processed: 0, offersCreated: 0, errors: [], skipped: 0 };
 
     for (const id of componentIds) {
       const component = await Component.findById(id);
       if (!component) continue;
+
+      // --- ZABEZPIECZENIE: POMIJANIE USŁUG ---
+      if (component.type === 'Service') {
+        console.log(`⚠️ Pominięto usługę: ${component.name} (nie generuje się ofert dla usług).`);
+        results.skipped++;
+        continue;
+      }
 
       try {
         console.log(`🤖 Przetwarzanie: ${component.name} (${component.type})...`);
@@ -190,39 +223,6 @@ router.post('/generate-ai-offers', protectAdmin, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-// ==========================================
-// ROUTE: TWORZENIE SZABLONÓW PŁYT
-// ==========================================
-router.post('/create-mobo-templates', protectAdmin, async (req, res) => {
-  try {
-    const { socket } = req.body;
-    if (!socket) return res.status(400).json({ error: "Brak podanego socketu." });
-
-    const standards = ["ATX", "Micro-ATX", "Mini-ITX"];
-    const created = [];
-
-    for (const standard of standards) {
-      const exists = await Component.findOne({ type: 'Motherboard', socket: socket, formFactor: standard });
-      if (!exists) {
-        const newMobo = new Motherboard({
-          name: `${socket} ${standard}`,
-          searchQuery: `Płyta główna ${socket} ${standard}`,
-          type: "Motherboard",
-          socket: socket,
-          formFactor: standard,
-          image: "",
-          blacklistedKeywords: ["Uszkodzona", "Zestaw"]
-        });
-        await newMobo.save();
-        created.push(newMobo);
-      }
-    }
-    res.json({ message: `Utworzono ${created.length} szablonów.`, created });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ==========================================
 // ROUTE: UPDATE ALL STATS
 // ==========================================

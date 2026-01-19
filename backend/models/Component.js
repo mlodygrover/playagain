@@ -78,5 +78,28 @@ const CoolingSchema = new mongoose.Schema({
     radiatorSize: { type: Number } // Dla AIO: 240, 360 itd.
 });
 const Cooling = Component.discriminator('Cooling', CoolingSchema);
+// --- NOWY MODEL: USŁUGI (Service) ---
+const ServiceSchema = new mongoose.Schema({
+    serviceType: {
+        type: String,
+        enum: ['Assembly', 'Renewal', 'Testing', 'Software', 'Warranty']
+    },
+    duration: { type: Number }, // Czas realizacji w godzinach (opcjonalne)
+    description: { type: String } // Np. "Układanie kabli, aktualizacja BIOS"
+});
 
-module.exports = { Component, GPU, CPU, Motherboard, RAM, Disk, Case, PSU, Cooling };
+const Service = Component.discriminator('Service', ServiceSchema);
+
+// Pamiętaj o dodaniu Service do exports!
+module.exports = {
+    Component,
+    GPU,
+    CPU,
+    Motherboard,
+    RAM,
+    Disk,
+    Case,
+    PSU,
+    Cooling,
+    Service // <--- NOWOŚĆ
+};

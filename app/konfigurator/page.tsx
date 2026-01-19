@@ -9,7 +9,7 @@ import {
   Cpu, MemoryStick, Fan, Box, Check, MonitorPlay,
   ShoppingBag, PackageOpen, Plus, Minus, ChevronDown, ChevronUp,
   Sparkles, CircuitBoard, Zap, HardDrive, SlidersHorizontal, Search as SearchIcon, X,
-  ArrowDownNarrowWide, ArrowUpNarrowWide
+  ArrowDownNarrowWide, ArrowUpNarrowWide, Wrench // <--- Dodano ikonę Wrench
 } from "lucide-react";
 import { Chatbot } from "@/components/Chatbox";
 
@@ -37,6 +37,8 @@ const CATEGORY_DEFINITIONS = [
   { id: "psu", apiType: "PSU", name: "Zasilacz", icon: <Zap className="w-4 h-4" /> },
   { id: "cool", apiType: "Cooling", name: "Chłodzenie CPU", icon: <Fan className="w-4 h-4" /> },
   { id: "case", apiType: "Case", name: "Obudowa PC", icon: <Box className="w-4 h-4" /> },
+  // --- NOWOŚĆ: SEKCJA USŁUG ---
+  { id: "service", apiType: "Service", name: "Usługi i Montaż", icon: <Wrench className="w-4 h-4" /> }, 
 ];
 
 const generateSpecs = (item: any) => {
@@ -78,6 +80,11 @@ const generateSpecs = (item: any) => {
       if (item.coolingType) specs.push(item.coolingType);
       if (item.fanSize) specs.push(`${item.fanSize}mm`);
       break;
+    // --- NOWOŚĆ: SPECYFIKACJA USŁUG ---
+    case 'Service':
+       if (item.serviceType) specs.push(item.serviceType);
+       if (item.duration) specs.push(`Czas: ${item.duration}h`);
+       break;
   }
   return specs;
 };
@@ -167,7 +174,7 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
         <h3 className={`text-xs sm:text-sm font-medium truncate pr-2 ${isSelected ? "text-blue-400" : "text-zinc-300"}`}>{item.name}</h3>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-xs sm:text-sm font-mono text-zinc-400 font-bold leading-none">{item.price} zł</span>
-          {isSelected && <span className="text-[9px] uppercase tracking-wider text-blue-500 font-mono leading-none">[INSTALLED]</span>}
+          {isSelected && <span className="text-[9px] uppercase tracking-wider text-blue-500 font-mono leading-none">[SELECTED]</span>}
         </div>
       </div>
       <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
@@ -195,7 +202,10 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
                 <span key={i} className="text-[9px] sm:text-[10px] uppercase font-mono px-1.5 py-0.5 border border-zinc-700 text-zinc-500 bg-zinc-950 rounded-sm">{spec}</span>
               ))}
             </div>
-            <p className="text-[10px] sm:text-xs text-zinc-500 leading-relaxed max-w-md">Komponent zweryfikowany pod kątem kompatybilności.</p>
+            {/* Opis dla usług jest w item.description, dla części generyczny */}
+            <p className="text-[10px] sm:text-xs text-zinc-500 leading-relaxed max-w-md">
+                {item.description || "Komponent zweryfikowany pod kątem kompatybilności."}
+            </p>
           </div>
         </div>
       </div>
@@ -241,10 +251,15 @@ const SummaryPanel = ({ categories, selections, totalPrice, onCategoryClick }: a
         {categories.map((category: any) => {
           const selectedItemId = selections[category.id];
           const selectedItem = category.items.find((i: any) => i.id === selectedItemId);
+          
+          // Dla usług nie pokazujemy "/// EMPTY", jeśli nic nie wybrano - po prostu nie pokazujemy wiersza
+          // Ale jeśli to główny komponent, to pokazujemy "/// EMPTY"
+          if (category.id === 'service' && !selectedItem) return null;
+
           return (
             <div key={category.id} onClick={() => onCategoryClick(category.name)} className="flex justify-between items-center p-3 border-b border-zinc-900 hover:bg-zinc-900 cursor-pointer group">
               <div className="flex items-center gap-3">
-                <span className={`text-[10px] uppercase w-10 text-zinc-600 group-hover:text-zinc-400 truncate`}>{category.id}</span>
+                <span className={`text-[10px] uppercase w-10 text-zinc-600 group-hover:text-zinc-400 truncate`}>{category.id.slice(0, 8)}</span>
                 <span className={`truncate max-w-[150px] ${selectedItem ? "text-blue-400" : "text-zinc-700 italic"}`}>{selectedItem ? selectedItem.name : "/// EMPTY"}</span>
               </div>
               {selectedItem && <span className="text-zinc-500">{selectedItem.price}</span>}
@@ -297,12 +312,12 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
       try {
         const res = await fetch(`${API_URL}/api/components?user=true`);
         const data = await res.json();
-
+        console.log(data)
         const mappedCategories = CATEGORY_DEFINITIONS.map(def => {
           const items = data
             .filter((item: any) => item.type === def.apiType)
             .map((item: any) => {
-              let chipset = item.chipset ? item.chipset.toUpperCase() : item.name.split(' ')[0].toUpperCase();
+              let chipset = item.chipset ? item.chipset.toUpperCase() : (item.name ? item.name.split(' ')[0].toUpperCase() : "UNKNOWN");
               if (def.id === 'gpu') {
                 const fullName = (item.name + " " + (item.chipset || "")).toUpperCase();
                 if (fullName.includes("NVIDIA") || fullName.includes("GEFORCE") || fullName.includes("RTX") || fullName.includes("GTX")) {
@@ -313,14 +328,23 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
                   chipset = "INTEL";
                 }
               }
+              // Dla usług chipsetem jest serviceType
+              if (def.id === 'service') {
+                  chipset = item.serviceType || "SERVICE";
+              }
+
               return {
                 id: item._id,
                 name: item.name,
+                type: item.type, // Dodajemy typ do obiektu
                 chipset: chipset,
                 socket: item.socket,
                 formFactor: item.formFactor,
                 price: item.stats.basePrice > 0 ? item.stats.basePrice : item.stats.averagePrice,
                 image: item.image,
+                description: item.description, // Dla usług
+                serviceType: item.serviceType, // Dla usług
+                duration: item.duration, // Dla usług
                 specs: generateSpecs(item)
               };
             });
@@ -396,7 +420,6 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
     });
   };
 
-  // === PRZYGOTOWANIE DANYCH DLA AI (Wewnątrz komponentu) ===
   const aiInventory = useMemo(() => {
     const items: any[] = [];
     categories.forEach(cat => {
@@ -485,10 +508,12 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
                 <div className={`p-1.5 rounded bg-zinc-900 border border-zinc-800 ${selections[category.id] ? "text-blue-500 border-blue-900/30" : "text-zinc-600"}`}>{category.icon}</div>
                 <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-300 flex-grow">{category.name}</h2>
                 <div className="flex items-center gap-4">
-                  <button onClick={(e) => { e.stopPropagation(); if (isCollapsed) toggleCategoryCollapse(category.id); toggleFilterPanel(category.id); }} className={`text-xs flex items-center gap-1 uppercase font-mono transition-colors p-2 rounded hover:bg-zinc-800 ${currentFilter.isOpen ? 'text-blue-400' : 'text-zinc-500 hover:text-white'}`}>
-                    <SlidersHorizontal className="w-3.5 h-3.5" /><span className="hidden sm:inline">Filters</span>
-                  </button>
-                  {selections[category.id] && <div className="flex items-center gap-2 text-xs font-mono text-blue-500 bg-blue-900/10 px-2 py-1 rounded border border-blue-500/20"><Check className="w-3 h-3" />INSTALLED</div>}
+                  {category.id !== 'service' && (
+                    <button onClick={(e) => { e.stopPropagation(); if (isCollapsed) toggleCategoryCollapse(category.id); toggleFilterPanel(category.id); }} className={`text-xs flex items-center gap-1 uppercase font-mono transition-colors p-2 rounded hover:bg-zinc-800 ${currentFilter.isOpen ? 'text-blue-400' : 'text-zinc-500 hover:text-white'}`}>
+                        <SlidersHorizontal className="w-3.5 h-3.5" /><span className="hidden sm:inline">Filters</span>
+                    </button>
+                  )}
+                  {selections[category.id] && <div className="flex items-center gap-2 text-xs font-mono text-blue-500 bg-blue-900/10 px-2 py-1 rounded border border-blue-500/20"><Check className="w-3 h-3" />SELECTED</div>}
                 </div>
               </div>
 
@@ -502,8 +527,9 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
                     </div>
                   )}
 
-                  {!blockReason && currentFilter.isOpen && (
+                  {!blockReason && currentFilter.isOpen && category.id !== 'service' && (
                     <div className="bg-zinc-900/80 border-y border-zinc-800 p-6 animate-in slide-in-from-top-2 fade-in backdrop-blur-sm space-y-6">
+                      {/* FILTRY DLA ZWYKŁYCH CZĘŚCI (bez zmian) */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
                           <div>
@@ -572,7 +598,6 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
         })}
       </div>
 
-      {/* --- TU JEST CHATBOT --- */}
       <Chatbot
         externalOpen={isChatOpen}
         onClose={onCloseChat}
@@ -588,7 +613,7 @@ export default function ConfiguratorPage() {
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-blue-600 selection:text-white">
       <nav className="fixed top-0 w-full z-40 bg-black/90 backdrop-blur-md border-b border-zinc-800 h-16 flex items-center px-6 justify-between">
-        <div className="flex items-center gap-3"><div className="w-8 h-8 bg-blue-600 flex items-center justify-center font-black italic text-black">P</div><span className="font-bold text-lg tracking-tight uppercase">PlayAgain<span className="text-zinc-600">.tech</span></span></div>
+        <div className="flex items-center gap-3"><div className="w-8 h-8 bg-blue-600 flex items-center justify-center font-black italic text-black">P</div><span className="font-bold text-lg tracking-tight uppercase">PlayAgain<span className="text-zinc-600"></span></span></div>
         <div className="flex gap-4"><button className="text-xs font-mono text-zinc-400 hover:text-white uppercase transition">Share Build</button><button className="text-xs font-mono text-zinc-400 hover:text-white uppercase transition">Support</button></div>
       </nav>
       <main className="pt-24 px-4 md:px-8 max-w-[1600px] mx-auto">

@@ -9,7 +9,6 @@ import { useAuth } from "@/context/AuthContext";
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { items } = useCart();
-  // Pobieramy isAdmin z contextu
   const { user, isAdmin, logout } = useAuth();
 
   const closeMenu = () => setIsMobileMenuOpen(false);
@@ -25,21 +24,22 @@ export function Navbar() {
               P
             </div>
             <span className="font-bold text-lg tracking-tight uppercase text-white">
-              PlayAgain<span className="text-zinc-600 group-hover:text-blue-500 transition-colors">.tech</span>
+              PlayAgain<span className="text-zinc-600 group-hover:text-blue-500 transition-colors"></span>
             </span>
           </Link>
 
           {/* DESKTOP MENU */}
           <div className="hidden md:flex items-center gap-8">
-            <NavLink href="/konfigurator">Konfigurator 3D</NavLink>
-            <NavLink href="/czesci">Podzespoły</NavLink>
+            <NavLink href="/konfigurator">Konfigurator </NavLink>
+            {/* ZMIANA: Zamiast Podzespoły -> Gotowe Zestawy */}
+            <NavLink href="/gotowe-konfiguracje">Gotowe Zestawy</NavLink> 
             <NavLink href="/o-nas">O Nas</NavLink>
           </div>
 
           {/* ACTION ICONS */}
           <div className="flex items-center gap-4 z-50">
              
-             {/* --- NOWOŚĆ: ZAKŁADKA ADMIN (DESKTOP) --- */}
+             {/* ADMIN (DESKTOP) */}
              {isAdmin && (
                <Link 
                  href="/admin" 
@@ -135,7 +135,7 @@ export function Navbar() {
           <div className="flex flex-col gap-2">
             <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4">Nawigacja</p>
             
-            {/* --- NOWOŚĆ: ZAKŁADKA ADMIN (MOBILE) --- */}
+            {/* ADMIN (MOBILE) */}
             {isAdmin && (
               <Link 
                 href="/admin" 
@@ -147,8 +147,9 @@ export function Navbar() {
             )}
 
             {user && <MobileLink href="/profil" onClick={closeMenu}>Twój Profil</MobileLink>}
-            <MobileLink href="/konfigurator" onClick={closeMenu}>Konfigurator 3D</MobileLink>
-            <MobileLink href="/czesci" onClick={closeMenu}>Podzespoły</MobileLink>
+            <MobileLink href="/konfigurator" onClick={closeMenu}>Konfigurator </MobileLink>
+            {/* ZMIANA: Zamiast Podzespoły -> Gotowe Zestawy */}
+            <MobileLink href="/gotowe-konfiguracje" onClick={closeMenu}>Gotowe Zestawy</MobileLink>
             <MobileLink href="/koszyk" onClick={closeMenu}>Twój Koszyk ({items.length})</MobileLink>
           </div>
 

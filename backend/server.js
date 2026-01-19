@@ -11,6 +11,8 @@ const usersRoute = require('./routes/users');
 const componentsRoute = require('./routes/components');
 const chatRoutes = require('./routes/chatRoutes'); // <--- IMPORT
 const app = express();
+const prebuiltsRoutes = require('./routes/prebuilts');
+
 
 // --- MIDDLEWARE ---
 app.use(cors());
@@ -30,6 +32,7 @@ app.use('/api/users', usersRoute);
 app.use('/api/components', componentsRoute);
 app.use('/api/ebay-test', require('./routes/ebayTest'));
 app.use('/api/chat', chatRoutes); // <--- REJESTRACJA
+app.use('/api/prebuilts', prebuiltsRoutes);
 // Testowy route
 app.get('/', (req, res) => {
     res.send('PlayAgain API is running...');

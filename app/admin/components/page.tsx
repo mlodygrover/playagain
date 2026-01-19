@@ -7,7 +7,7 @@ import {
     Plus, Edit, Trash2, Save, X, Search, RefreshCcw,
     Monitor, Cpu, CircuitBoard, HardDrive, Box, Zap, Fan, MemoryStick, TrendingUp,
     FileJson, CheckCircle, AlertTriangle, Sparkles, Loader2, CheckSquare, Square, Wand2,
-    ArrowUpDown, Calculator
+    ArrowUpDown, Calculator, Wrench
 } from "lucide-react";
 import Link from "next/link";
 
@@ -28,11 +28,10 @@ const Input = ({ label, name, val, set, type = "text", placeholder, required = f
     </div>
 );
 
-// --- 1. KOMPONENT Z LOGIKĄ (NIE EKSPORTOWANY DOMYŚLNIE) ---
 function ComponentsContent() {
     const { token } = useAuth();
     const router = useRouter();
-    const searchParams = useSearchParams(); // To wymaga Suspense przy budowaniu
+    const searchParams = useSearchParams();
 
     const [components, setComponents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -48,7 +47,6 @@ function ComponentsContent() {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    // INICJALIZACJA STANU
     const [filters, setFilters] = useState({
         search: searchParams.get("search") || "",
         type: searchParams.get("type") || "ALL",
@@ -72,7 +70,6 @@ function ComponentsContent() {
         return s.toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
     };
 
-    // POBIERANIE MAPY PŁYT
     useEffect(() => {
         fetchMoboMap();
     }, []);
@@ -91,25 +88,20 @@ function ComponentsContent() {
         }
     };
 
-    // LOGIKA AKTUALIZACJI URL I DEBOUNCE
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedFilters(filters);
-
             const params = new URLSearchParams();
             if (filters.search) params.set("search", filters.search);
             if (filters.type && filters.type !== "ALL") params.set("type", filters.type);
             if (filters.minPrice) params.set("minPrice", filters.minPrice);
             if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
             if (filters.sortBy) params.set("sortBy", filters.sortBy);
-
             router.replace(`?${params.toString()}`, { scroll: false });
         }, 500);
-
         return () => clearTimeout(handler);
     }, [filters, router]);
 
-    // POBIERANIE DANYCH + SORTOWANIE FRONTENDOWE
     useEffect(() => {
         fetchComponents();
     }, [debouncedFilters]);
@@ -126,7 +118,6 @@ function ComponentsContent() {
             const res = await fetch(`${API_URL}/api/components?${params.toString()}`);
             let data = await res.json();
 
-            // LOGIKA SORTOWANIA CLIENT-SIDE
             if (debouncedFilters.sortBy && Array.isArray(data)) {
                 const [sortKey, sortDir] = debouncedFilters.sortBy.split('-');
                 const multiplier = sortDir === 'asc' ? 1 : -1;
@@ -134,7 +125,6 @@ function ComponentsContent() {
                 data.sort((a: any, b: any) => {
                     let valA = 0;
                     let valB = 0;
-
                     if (sortKey === 'lowestPrice') {
                         valA = a.stats?.lowestPrice || 0;
                         valB = b.stats?.lowestPrice || 0;
@@ -149,57 +139,43 @@ function ComponentsContent() {
                         valA = (a.stats?.standardDeviation || 0) / avgA;
                         valB = (b.stats?.standardDeviation || 0) / avgB;
                     }
-
                     return (valA - valB) * multiplier;
                 });
             }
-
             setComponents(data);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+        } catch (err) { console.error(err); } finally { setLoading(false); }
     };
 
-    // PRZELICZANIE STATYSTYK
     const handleRecalculateStats = async () => {
         if (!token) return alert("Brak autoryzacji.");
-
         const count = selectedIds.size;
-        const msg = count > 0
-            ? `Przeliczyć statystyki dla ${count} zaznaczonych elementów?`
-            : `Czy na pewno chcesz przeliczyć statystyki dla WSZYSTKICH komponentów? Może to chwilę potrwać.`;
-
+        const msg = count > 0 ? `Przeliczyć statystyki dla ${count} zaznaczonych elementów?` : `Przeliczyć WSZYSTKIE statystyki?`;
         if (!confirm(msg)) return;
 
         setIsRecalculating(true);
         try {
-            const body = count > 0 ? { ids: Array.from(selectedIds) } : {};
-
+            let body = {};
+            if (selectedIds.size > 0) {
+                const validIds = Array.from(selectedIds).filter(id => {
+                    const comp = components.find(c => c._id === id);
+                    return comp && comp.type !== "Service";
+                });
+                if (validIds.length === 0) return alert("Nie można przeliczać statystyk dla usług!");
+                body = { ids: validIds };
+            }
             const res = await fetch(`${API_URL}/api/admin/update-all-stats`, {
                 method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
+                headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify(body)
             });
-
             if (!res.ok) throw new Error("Błąd aktualizacji");
             const data = await res.json();
-
             alert(`Sukces! ${data.message}`);
             fetchComponents();
-            if (count > 0) setSelectedIds(new Set()); // Odznacz po sukcesie
-        } catch (err: any) {
-            alert("Błąd: " + err.message);
-        } finally {
-            setIsRecalculating(false);
-        }
+            if (count > 0) setSelectedIds(new Set());
+        } catch (err: any) { alert("Błąd: " + err.message); } finally { setIsRecalculating(false); }
     };
 
-    // HANDLERY UI
     const handleFilterChange = (key: string, value: string) => setFilters(prev => ({ ...prev, [key]: value }));
     const clearFilters = () => setFilters({ search: "", type: "ALL", minPrice: "", maxPrice: "", sortBy: "lowestPrice-asc" });
 
@@ -225,20 +201,12 @@ function ComponentsContent() {
         else { const allIds = components.map(c => c._id); setSelectedIds(new Set(allIds)); }
     };
 
-    // AKCJE ADMINA
     const handleCreateMissingMobos = async () => {
         if (!token) return alert("Brak autoryzacji.");
         const selectedCpus = components.filter(c => selectedIds.has(c._id) && c.type === 'CPU' && c.socket);
-
-        const socketsToProcess = Array.from(new Set(
-            selectedCpus
-                .filter(c => !socketMoboMap[normalizeSocket(c.socket)])
-                .map(c => c.socket)
-        ));
-
-        if (socketsToProcess.length === 0) return alert("Wszystkie zaznaczone procesory mają już płyty główne!");
-
-        if (!confirm(`Utworzyć płyty dla socketów: ${socketsToProcess.join(", ")}?`)) return;
+        const socketsToProcess = Array.from(new Set(selectedCpus.filter(c => !socketMoboMap[normalizeSocket(c.socket)]).map(c => c.socket)));
+        if (socketsToProcess.length === 0) return alert("Wszystkie procesory mają płyty!");
+        if (!confirm(`Utworzyć płyty dla: ${socketsToProcess.join(", ")}?`)) return;
 
         setIsCreatingMobos(true);
         try {
@@ -253,7 +221,7 @@ function ComponentsContent() {
                 const data = await res.json();
                 if (data.created) totalCreated += data.created.length;
             }
-            alert(`Gotowe! Utworzono ${totalCreated} szablonów.`);
+            alert(`Gotowe! Utworzono ${totalCreated} płyt.`);
             fetchMoboMap();
             fetchComponents();
         } catch (err: any) { alert("Błąd: " + err.message); } finally { setIsCreatingMobos(false); }
@@ -262,18 +230,37 @@ function ComponentsContent() {
         if (!token) return alert("Brak autoryzacji.");
         if (selectedIds.size === 0) return;
 
+        // 1. Filtrujemy ID, aby wykluczyć usługi (Service)
+        const validIds = Array.from(selectedIds).filter(id => {
+            const comp = components.find(c => c._id === id);
+            return comp && comp.type !== "Service";
+        });
+
+        // 2. Jeśli po filtracji lista jest pusta (użytkownik zaznaczył same usługi)
+        if (validIds.length === 0) {
+            return alert("Nie można generować ofert dla usług (Service)! Usługi nie są wyszukiwane na aukcjach, mają stałą cenę.");
+        }
+
+        // 3. Jeśli zaznaczono więcej elementów niż jest poprawnych (mieszanka części i usług)
+        if (selectedIds.size > validIds.length) {
+            const skippedCount = selectedIds.size - validIds.length;
+            if (!confirm(`Uwaga: Zaznaczono ${selectedIds.size} elementów, z czego ${skippedCount} to usługi. Zostaną one pominięte. Czy kontynuować dla pozostałych ${validIds.length} części?`)) {
+                return;
+            }
+        }
+
         const modeText = useAi ? "AI + eBay" : "TYLKO eBay";
-        if (!confirm(`Uruchomić pobieranie ofert (${modeText}) dla ${selectedIds.size} elementów?`)) return;
+
+        // 4. Potwierdzenie dla poprawnych ID
+        if (!confirm(`Uruchomić pobieranie ofert (${modeText}) dla ${validIds.length} elementów?`)) return;
 
         setIsGenerating(true);
         try {
             const res = await fetch(`${API_URL}/api/admin/generate-ai-offers`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({
-                    componentIds: Array.from(selectedIds),
-                    ai: useAi
-                })
+                // Wysyłamy validIds zamiast selectedIds
+                body: JSON.stringify({ componentIds: validIds, ai: useAi })
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.error);
@@ -293,7 +280,20 @@ function ComponentsContent() {
     const openEdit = (c: any) => { setEditingId(c._id); setType(c.type); setFormData({ ...c, blacklistedKeywords: c.blacklistedKeywords ? c.blacklistedKeywords.join(', ') : "" }); setIsModalOpen(true); };
     const openAdd = () => { setEditingId(null); setFormData({ name: "", searchQuery: "", blacklistedKeywords: "", image: "" }); setIsModalOpen(true); };
 
-    const getTypeIcon = (t: string) => { switch (t) { case 'GPU': return <Monitor className="w-5 h-5" />; case 'CPU': return <Cpu className="w-5 h-5" />; case 'Motherboard': return <CircuitBoard className="w-5 h-5" />; case 'RAM': return <MemoryStick className="w-5 h-5" />; case 'Disk': return <HardDrive className="w-5 h-5" />; case 'Case': return <Box className="w-5 h-5" />; case 'PSU': return <Zap className="w-5 h-5" />; case 'Cooling': return <Fan className="w-5 h-5" />; default: return <Search className="w-5 h-5" />; } };
+    const getTypeIcon = (t: string) => {
+        switch (t) {
+            case 'GPU': return <Monitor className="w-5 h-5" />;
+            case 'CPU': return <Cpu className="w-5 h-5" />;
+            case 'Motherboard': return <CircuitBoard className="w-5 h-5" />;
+            case 'RAM': return <MemoryStick className="w-5 h-5" />;
+            case 'Disk': return <HardDrive className="w-5 h-5" />;
+            case 'Case': return <Box className="w-5 h-5" />;
+            case 'PSU': return <Zap className="w-5 h-5" />;
+            case 'Cooling': return <Fan className="w-5 h-5" />;
+            case 'Service': return <Wrench className="w-5 h-5" />; // Nowa ikona dla usług
+            default: return <Search className="w-5 h-5" />;
+        }
+    };
 
     const renderSpecificFields = () => {
         switch (type) {
@@ -391,6 +391,37 @@ function ComponentsContent() {
                         </div>
                     </div>
                 );
+            case 'Service':
+                return (
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2 md:col-span-1">
+                            <label className="block text-xs font-mono text-zinc-500 uppercase mb-1">Typ Usługi</label>
+                            <select
+                                name="serviceType"
+                                value={formData.serviceType || ""}
+                                onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
+                                className="w-full bg-zinc-900 border border-zinc-700 p-3 text-sm text-white focus:border-blue-500 outline-none rounded"
+                            >
+                                <option value="">Wybierz...</option>
+                                <option value="Assembly">Montaż</option>
+                                <option value="Renewal">Odnowienie</option>
+                                <option value="Testing">Testowanie</option>
+                                <option value="Software">Software</option>
+                                <option value="Warranty">Gwarancja</option>
+                            </select>
+                        </div>
+                        <Input label="Czas Trwania (h)" name="duration" val={formData} set={setFormData} type="number" />
+                        <div className="col-span-2">
+                            <Input label="Opis Usługi" name="description" val={formData} set={setFormData} placeholder="Co wchodzi w skład usługi..." />
+                        </div>
+                        <div className="col-span-2 p-2 bg-yellow-900/10 border border-yellow-700/30 rounded text-xs text-yellow-500">
+                            <strong>Uwaga:</strong> Dla usług "Cena Bazowa" jest stała i nie jest nadpisywana przez bota cenowego.
+                        </div>
+                        <div className="col-span-2">
+                            <Input label="Cena Usługi (PLN)" name="basePrice" val={formData} set={setFormData} type="number" />
+                        </div>
+                    </div>
+                );
             default:
                 return null;
         }
@@ -399,6 +430,12 @@ function ComponentsContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!token) return alert("Brak autoryzacji");
+
+        // Dla usług, basePrice znajduje się w stats
+        if (type === 'Service' && formData.basePrice) {
+            formData.stats = { ...formData.stats, basePrice: Number(formData.basePrice), averagePrice: Number(formData.basePrice) };
+            delete formData.basePrice; // czyścimy z głównego obiektu, bo jest w stats
+        }
 
         const payload = { ...formData, type };
         if (typeof payload.blacklistedKeywords === 'string') {
@@ -425,9 +462,7 @@ function ComponentsContent() {
             setIsModalOpen(false);
             fetchComponents();
             if (!editingId) fetchMoboMap();
-        } catch (err: any) {
-            alert(err.message);
-        }
+        } catch (err: any) { alert(err.message); }
     };
 
     const handleJsonImport = async () => {
@@ -450,12 +485,8 @@ function ComponentsContent() {
                 fetchComponents();
                 fetchMoboMap();
                 setTimeout(() => setIsImportModalOpen(false), 2000);
-            } else {
-                throw new Error(result.error || "Błąd importu");
-            }
-        } catch (err: any) {
-            setImportStatus({ msg: "Błąd JSON: " + err.message, type: 'error' });
-        }
+            } else { throw new Error(result.error || "Błąd importu"); }
+        } catch (err: any) { setImportStatus({ msg: "Błąd JSON: " + err.message, type: 'error' }); }
     };
 
     const hasSelectedCpu = Array.from(selectedIds).some(id => components.find(c => c._id === id)?.type === 'CPU');
@@ -463,45 +494,27 @@ function ComponentsContent() {
     return (
         <div className="min-h-screen bg-black text-white pt-32 px-4 pb-20 select-none">
             <div className="max-w-6xl mx-auto">
-                {/* HEADER */}
                 <div className="flex justify-between items-center mb-6">
                     <div><h1 className="text-3xl font-black uppercase tracking-tight">Baza Części</h1><p className="text-zinc-500 text-sm">Zarządzaj definicjami podzespołów</p></div>
                     <div className="flex gap-3">
-                        <button
-                            onClick={handleRecalculateStats}
-                            disabled={isRecalculating}
-                            className="bg-purple-900/40 hover:bg-purple-900/60 text-purple-300 border border-purple-800 px-4 py-2.5 rounded font-bold uppercase flex items-center gap-2 text-sm disabled:opacity-50"
-                        >
+                        <button onClick={handleRecalculateStats} disabled={isRecalculating} className="bg-purple-900/40 hover:bg-purple-900/60 text-purple-300 border border-purple-800 px-4 py-2.5 rounded font-bold uppercase flex items-center gap-2 text-sm disabled:opacity-50">
                             {isRecalculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />}
                             {selectedIds.size > 0 ? `Przelicz Zaznaczone (${selectedIds.size})` : "Przelicz Wszystkie"}
                         </button>
-
                         <button onClick={() => { setIsImportModalOpen(true); setImportStatus(null); }} className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2.5 rounded font-bold uppercase flex items-center gap-2 text-sm border border-zinc-700"><FileJson className="w-4 h-4" /> Importuj JSON</button>
                         <button onClick={openAdd} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded font-bold uppercase flex items-center gap-2 text-sm"><Plus className="w-4 h-4" /> Dodaj Komponent</button>
                     </div>
                 </div>
 
-                {/* PASEK AKCJI */}
                 {selectedIds.size > 0 && (
                     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-700 p-4 rounded-lg shadow-2xl z-50 flex items-center gap-6 animate-in slide-in-from-bottom-4">
                         <span className="font-mono text-sm text-zinc-300">Zaznaczono: <strong className="text-white">{selectedIds.size}</strong></span>
                         <div className="h-6 w-px bg-zinc-700" />
-                        <button
-                            onClick={() => handleGenerateOffers(true)}
-                            disabled={isGenerating}
-                            className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 disabled:opacity-50"
-                        >
-                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                            {isGenerating ? "Praca..." : "Generuj (AI + eBay)"}
+                        <button onClick={() => handleGenerateOffers(true)} disabled={isGenerating} className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 disabled:opacity-50">
+                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} {isGenerating ? "Praca..." : "Generuj (AI + eBay)"}
                         </button>
-
-                        <button
-                            onClick={() => handleGenerateOffers(false)}
-                            disabled={isGenerating}
-                            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 disabled:opacity-50"
-                        >
-                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                            {isGenerating ? "Praca..." : "Generuj (Tylko eBay)"}
+                        <button onClick={() => handleGenerateOffers(false)} disabled={isGenerating} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 disabled:opacity-50">
+                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} {isGenerating ? "Praca..." : "Generuj (Tylko eBay)"}
                         </button>
                         {hasSelectedCpu && (
                             <button onClick={handleCreateMissingMobos} disabled={isCreatingMobos} className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 disabled:opacity-50">
@@ -511,14 +524,10 @@ function ComponentsContent() {
                     </div>
                 )}
 
-                {/* FILTRY */}
                 <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded mb-6 flex flex-wrap gap-4 items-end">
                     <div className="flex-grow min-w-[200px]"><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Szukaj</label><input value={filters.search} onChange={(e) => handleFilterChange("search", e.target.value)} placeholder="Szukaj..." className="w-full bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none" /></div>
-
-                    <div className="min-w-[150px]"><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Typ</label><select value={filters.type} onChange={(e) => handleFilterChange("type", e.target.value)} className="w-full bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none"><option value="ALL">Wszystkie</option>{['GPU', 'CPU', 'Motherboard', 'RAM', 'Disk', 'Case', 'PSU', 'Cooling'].map(t => <option key={t} value={t}>{t}</option>)}</select></div>
-
+                    <div className="min-w-[150px]"><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Typ</label><select value={filters.type} onChange={(e) => handleFilterChange("type", e.target.value)} className="w-full bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none"><option value="ALL">Wszystkie</option>{['GPU', 'CPU', 'Motherboard', 'RAM', 'Disk', 'Case', 'PSU', 'Cooling', 'Service'].map(t => <option key={t} value={t}>{t}</option>)}</select></div>
                     <div className="flex gap-2"><div><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Cena Od</label><input type="number" value={filters.minPrice} onChange={(e) => handleFilterChange("minPrice", e.target.value)} className="w-24 bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none" /></div><div><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Cena Do</label><input type="number" value={filters.maxPrice} onChange={(e) => handleFilterChange("maxPrice", e.target.value)} className="w-24 bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none" /></div></div>
-
                     <div className="min-w-[180px]">
                         <label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block flex items-center gap-1"><ArrowUpDown className="w-3 h-3" /> Sortuj według</label>
                         <select value={filters.sortBy} onChange={(e) => handleFilterChange("sortBy", e.target.value)} className="w-full bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none">
@@ -530,7 +539,6 @@ function ComponentsContent() {
                             <option value="ratio-desc">Wsp. Zmienności (Duży)</option>
                         </select>
                     </div>
-
                     <button onClick={clearFilters} className="bg-zinc-800 px-4 py-2 rounded h-[38px] text-sm"><RefreshCcw className="w-4 h-4" /></button>
                 </div>
 
@@ -539,40 +547,34 @@ function ComponentsContent() {
                     </button>
                 </div>
 
-                {/* LISTA */}
                 <div className="grid gap-3">
                     {components.map((comp) => {
                         const isSelected = selectedIds.has(comp._id);
                         const mySocketKey = normalizeSocket(comp.socket);
                         const hasMobo = comp.type === 'CPU' && comp.socket && socketMoboMap[mySocketKey];
-
-                        const cv = comp.stats?.averagePrice > 0
-                            ? Math.ceil((comp.stats?.standardDeviation / comp.stats?.averagePrice) * 100)
-                            : 0;
+                        const cv = comp.stats?.averagePrice > 0 ? Math.ceil((comp.stats?.standardDeviation / comp.stats?.averagePrice) * 100) : 0;
 
                         return (
-                            <div
-                                key={comp._id}
-                                onClick={(e) => toggleSelect(comp._id, e)}
-                                className={`border p-4 rounded flex justify-between items-center group transition-colors relative cursor-pointer ${isSelected ? "bg-blue-950/20 border-blue-900" : "bg-zinc-900 border-zinc-800 hover:border-zinc-600"}`}
-                            >
+                            <div key={comp._id} onClick={(e) => toggleSelect(comp._id, e)} className={`border p-4 rounded flex justify-between items-center group transition-colors relative cursor-pointer ${isSelected ? "bg-blue-950/20 border-blue-900" : "bg-zinc-900 border-zinc-800 hover:border-zinc-600"}`}>
                                 <div className="flex items-center gap-4 pointer-events-none">
-                                    <button className={`p-1 rounded transition-colors ${isSelected ? "text-blue-500" : "text-zinc-600 group-hover:text-white"}`}>
+                                    <button
+                                        disabled={comp.type === "Service"} // Fizyczna blokada klikania
+                                        className={`p-1 rounded transition-colors ${comp.type === "Service"
+                                            ? "text-zinc-800 cursor-not-allowed opacity-50" // Styl dla zablokowanego (ciemny, brak kursora)
+                                            : (isSelected ? "text-blue-500" : "text-zinc-600 group-hover:text-white") // Styl normalny
+                                            }`}
+                                    >
+                                        {/* Jeśli zaznaczony - Check, jeśli nie - Pusty kwadrat */}
                                         {isSelected ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
                                     </button>
                                     <div className="w-12 h-12 bg-zinc-800 flex items-center justify-center rounded overflow-hidden">
                                         {comp.image ? <img src={comp.image} className="w-full h-full object-cover" /> : getTypeIcon(comp.type)}
                                     </div>
-
                                     <div>
                                         {comp.type === 'Motherboard' ? (
                                             <div className="flex flex-col">
-                                                <span className="font-bold text-white text-lg leading-tight">
-                                                    {comp.socket} <span className="text-zinc-500">/</span> {comp.formFactor}
-                                                </span>
-                                                <span className="text-[9px] text-blue-400 uppercase tracking-widest font-mono mt-0.5">
-                                                    GENERIC MOTHERBOARD TEMPLATE
-                                                </span>
+                                                <span className="font-bold text-white text-lg leading-tight">{comp.socket} <span className="text-zinc-500">/</span> {comp.formFactor}</span>
+                                                <span className="text-[9px] text-blue-400 uppercase tracking-widest font-mono mt-0.5">GENERIC MOTHERBOARD TEMPLATE</span>
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2">
@@ -582,33 +584,23 @@ function ComponentsContent() {
                                                         {hasMobo ? 'MOBO: OK' : 'MOBO: MISSING'}
                                                     </span>
                                                 )}
+                                                {comp.type === 'Service' && (
+                                                    <span className="text-[9px] px-1.5 py-0.5 rounded border border-blue-900/50 bg-blue-900/20 text-blue-400 uppercase font-mono">
+                                                        USŁUGA
+                                                    </span>
+                                                )}
                                             </div>
                                         )}
-
                                         <div className="flex gap-4 text-xs text-zinc-500 font-mono mt-1">
-                                            <span className={`${comp.stats?.lowestPrice > 0 ? 'text-green-500' : 'text-zinc-600'} font-bold`}>
-                                                Min: {comp.stats?.lowestPrice} zł
-                                            </span>
-
-                                            <span className="text-zinc-400 font-bold border-l border-r border-zinc-700 px-2" title="Cena bazowa (używana do wyceny PC)">
-                                                Base: <span className="text-white">{comp.stats?.basePrice || 0} zł</span>
-                                            </span>
-
-                                            <span className="flex items-center gap-1" title={`Współczynnik zmienności: ${cv}%`}>
-                                                <TrendingUp className="w-3 h-3" /> ±{comp.stats?.standardDeviation} zł
-                                                <span className={`ml-1 px-1 rounded font-bold ${cv > 25 ? 'text-red-400 bg-red-900/30' : cv > 15 ? 'text-yellow-400 bg-yellow-900/30' : 'text-zinc-500'}`}>
-                                                    ({cv}%)
-                                                </span>
-                                            </span>
-                                            <span className="text-zinc-500">
-                                                Ofert: {comp.stats?.offersCount || 0}
-                                            </span>
+                                            <span className={`${comp.stats?.lowestPrice > 0 ? 'text-green-500' : 'text-zinc-600'} font-bold`}>Min: {comp.stats?.lowestPrice} zł</span>
+                                            <span className="text-zinc-400 font-bold border-l border-r border-zinc-700 px-2" title="Cena bazowa">Base: <span className="text-white">{comp.stats?.basePrice || 0} zł</span></span>
+                                            <span className="flex items-center gap-1" title={`CV: ${cv}%`}><TrendingUp className="w-3 h-3" /> ±{comp.stats?.standardDeviation} zł</span>
+                                            <span className="text-zinc-500">Ofert: {comp.stats?.offersCount || 0}</span>
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                                    <Link href={`/admin/components/${comp._id}`} className="p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded"><Search className="w-4 h-4" /></Link>
+                                    {comp.type != "Service" && <Link href={`/admin/components/${comp._id}`} className="p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded"><Search className="w-4 h-4" /></Link>}
                                     <button onClick={() => openEdit(comp)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit className="w-4 h-4" /></button>
                                     <button onClick={() => handleDelete(comp._id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 className="w-4 h-4" /></button>
                                 </div>
@@ -626,42 +618,29 @@ function ComponentsContent() {
                                         {editingId ? <Edit className="w-5 h-5 text-blue-500" /> : <Plus className="w-5 h-5 text-green-500" />}
                                         {editingId ? "Edytuj Komponent" : "Nowy Komponent"}
                                     </h2>
-                                    <button type="button" onClick={() => setIsModalOpen(false)} className="text-zinc-500 hover:text-white transition-colors">
-                                        <X className="w-6 h-6" />
-                                    </button>
+                                    <button type="button" onClick={() => setIsModalOpen(false)} className="text-zinc-500 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
                                 </div>
-
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="col-span-2 md:col-span-1">
                                         <label className="block text-xs font-mono text-zinc-500 uppercase mb-1">Typ Komponentu</label>
-                                        <select
-                                            value={type}
-                                            onChange={(e) => setType(e.target.value)}
-                                            disabled={!!editingId}
-                                            className="w-full bg-black border border-zinc-700 p-3 text-sm text-white focus:border-blue-500 outline-none rounded"
-                                        >
-                                            {['GPU', 'CPU', 'Motherboard', 'RAM', 'Disk', 'Case', 'PSU', 'Cooling'].map(t => <option key={t} value={t}>{t}</option>)}
+                                        <select value={type} onChange={(e) => setType(e.target.value)} disabled={!!editingId} className="w-full bg-black border border-zinc-700 p-3 text-sm text-white focus:border-blue-500 outline-none rounded">
+                                            {['GPU', 'CPU', 'Motherboard', 'RAM', 'Disk', 'Case', 'PSU', 'Cooling', 'Service'].map(t => <option key={t} value={t}>{t}</option>)}
                                         </select>
                                     </div>
                                     <div className="col-span-2 md:col-span-1">
                                         <Input label="Nazwa (Display Name)" name="name" val={formData} set={setFormData} required placeholder="np. RTX 3060 Gaming X" />
                                     </div>
                                 </div>
-
-                                <Input label="Fraza Wyszukiwania (Allegro Query)" name="searchQuery" val={formData} set={setFormData} required placeholder="To wpisze bot w Allegro..." />
+                                <Input label="Fraza Wyszukiwania (Dla usług techniczne ID)" name="searchQuery" val={formData} set={setFormData} required placeholder="To wpisze bot w Allegro..." />
                                 <Input label="Wykluczone słowa (po przecinku)" name="blacklistedKeywords" val={formData} set={setFormData} placeholder="uszkodzona, pudełko, wentylator..." />
                                 <Input label="URL Obrazka" name="image" val={formData} set={setFormData} placeholder="https://..." />
-
                                 <div className="bg-black/30 p-4 rounded border border-zinc-800/50 space-y-4">
                                     <h3 className="text-xs font-mono text-zinc-400 uppercase font-bold mb-2">Specyfikacja Techniczna: {type}</h3>
                                     {renderSpecificFields()}
                                 </div>
-
                                 <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
                                     <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 rounded text-zinc-400 hover:text-white text-sm font-bold uppercase transition-colors">Anuluj</button>
-                                    <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-2 rounded font-bold uppercase flex items-center gap-2 transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)]">
-                                        <Save className="w-4 h-4" /> Zapisz
-                                    </button>
+                                    <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-2 rounded font-bold uppercase flex items-center gap-2 transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)]"><Save className="w-4 h-4" /> Zapisz</button>
                                 </div>
                             </form>
                         </div>
@@ -672,44 +651,29 @@ function ComponentsContent() {
                     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
                         <div className="bg-zinc-900 border border-zinc-700 w-full max-w-2xl rounded-xl shadow-2xl animate-in zoom-in-95 duration-200 p-6 space-y-6">
                             <div className="flex justify-between items-center">
-                                <h2 className="text-xl font-bold uppercase flex items-center gap-2">
-                                    <FileJson className="w-5 h-5 text-yellow-500" /> Import JSON
-                                </h2>
+                                <h2 className="text-xl font-bold uppercase flex items-center gap-2"><FileJson className="w-5 h-5 text-yellow-500" /> Import JSON</h2>
                                 <button onClick={() => setIsImportModalOpen(false)}><X className="w-6 h-6 text-zinc-500 hover:text-white" /></button>
                             </div>
-
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-xs font-mono text-zinc-500 uppercase mb-1">Domyślny Typ (jeśli brak w JSON)</label>
                                     <select value={importType} onChange={(e) => setImportType(e.target.value)} className="w-full bg-black border border-zinc-700 p-3 text-sm text-white rounded">
-                                        {['GPU', 'CPU', 'Motherboard', 'RAM', 'Disk', 'Case', 'PSU', 'Cooling'].map(t => <option key={t} value={t}>{t}</option>)}
+                                        {['GPU', 'CPU', 'Motherboard', 'RAM', 'Disk', 'Case', 'PSU', 'Cooling', 'Service'].map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
                                 </div>
-
                                 <div>
                                     <label className="block text-xs font-mono text-zinc-500 uppercase mb-1">Dane JSON (Tablica lub Obiekt)</label>
-                                    <textarea
-                                        value={jsonInput}
-                                        onChange={(e) => setJsonInput(e.target.value)}
-                                        placeholder='[{"name": "RTX 3060", "searchQuery": "RTX 3060", "vram": 12}, ...]'
-                                        className="w-full h-64 bg-black border border-zinc-700 p-4 text-xs font-mono text-green-400 rounded outline-none resize-none focus:border-blue-500"
-                                    />
+                                    <textarea value={jsonInput} onChange={(e) => setJsonInput(e.target.value)} placeholder='[{"name": "RTX 3060", "searchQuery": "RTX 3060", "vram": 12}, ...]' className="w-full h-64 bg-black border border-zinc-700 p-4 text-xs font-mono text-green-400 rounded outline-none resize-none focus:border-blue-500" />
                                 </div>
                             </div>
-
                             {importStatus && (
-                                <div className={`p-3 rounded text-sm font-bold text-center ${importStatus.type === 'error' ? 'bg-red-900/20 text-red-400' :
-                                    importStatus.type === 'success' ? 'bg-green-900/20 text-green-400' : 'bg-blue-900/20 text-blue-400'
-                                    }`}>
+                                <div className={`p-3 rounded text-sm font-bold text-center ${importStatus.type === 'error' ? 'bg-red-900/20 text-red-400' : importStatus.type === 'success' ? 'bg-green-900/20 text-green-400' : 'bg-blue-900/20 text-blue-400'}`}>
                                     {importStatus.msg}
                                 </div>
                             )}
-
                             <div className="flex justify-end gap-3">
                                 <button onClick={() => setIsImportModalOpen(false)} className="px-6 py-2 text-zinc-400 hover:text-white text-sm font-bold uppercase">Zamknij</button>
-                                <button onClick={handleJsonImport} className="bg-yellow-600 hover:bg-yellow-500 text-black px-8 py-2 rounded font-bold uppercase flex items-center gap-2">
-                                    <FileJson className="w-4 h-4" /> Importuj
-                                </button>
+                                <button onClick={handleJsonImport} className="bg-yellow-600 hover:bg-yellow-500 text-black px-8 py-2 rounded font-bold uppercase flex items-center gap-2"><FileJson className="w-4 h-4" /> Importuj</button>
                             </div>
                         </div>
                     </div>
@@ -719,7 +683,6 @@ function ComponentsContent() {
     );
 }
 
-// --- 2. GŁÓWNY KOMPONENT EKSPORTOWANY (WRAPPER) ---
 export default function ComponentsManager() {
     return (
         <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center">Ładowanie...</div>}>

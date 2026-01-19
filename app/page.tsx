@@ -1,135 +1,249 @@
+"use client";
+
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Cpu, Recycle, Zap } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { 
+  ArrowRight, ShieldCheck, Cpu, Recycle, Zap, 
+  Settings2, PackageCheck, Wrench, ShoppingBag, 
+  ChevronLeft, ChevronRight, MonitorPlay 
+} from "lucide-react";
+
+// --- API URL ---
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 
 export default function LandingPage() {
-  return (
-    <main className="min-h-screen pt-16">
-      
-      {/* HERO SECTION */}
-      <section className="relative h-[85vh] flex items-center justify-center overflow-hidden border-b border-zinc-800">
-        
-        {/* Tło (Siatka + Gradient) */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#111_1px,transparent_1px),linear-gradient(to_bottom,#111_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black pointer-events-none" />
+  const [featuredPCs, setFeaturedPCs] = useState<any[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-mono mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            SYSTEM V.2.0 ONLINE
+  // Pobieranie 4-5 przykładowych zestawów na stronę główną
+  useEffect(() => {
+    fetch(`${API_URL}/api/prebuilts`)
+      .then(res => res.json())
+      .then(data => setFeaturedPCs(data.slice(0, 6)))
+      .catch(err => console.error(err));
+  }, []);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { current } = scrollRef;
+      const scrollAmount = direction === 'left' ? -400 : 400;
+      current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <main className="min-h-screen pt-16 bg-black text-white selection:bg-blue-600 selection:text-white overflow-hidden">
+      
+      {/* 1. HERO SECTION */}
+      <section className="relative h-[90vh] flex flex-col items-center justify-center border-b border-zinc-800 overflow-hidden">
+        {/* Tło dynamiczne */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black opacity-60 animate-pulse-slow" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+
+        <div className="relative z-10 text-center px-4 max-w-6xl mx-auto space-y-8">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-mono uppercase tracking-widest animate-in fade-in slide-in-from-top-4 duration-700">
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-ping" />
+            PlayAgain.tech V.2.0
           </div>
           
-          <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-6 bg-gradient-to-b from-white to-zinc-600 bg-clip-text text-transparent animate-in zoom-in duration-700">
-            NEXT GEN <br /> REFURBISHED.
+          <h1 className="text-6xl md:text-9xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-zinc-600 animate-in zoom-in duration-1000">
+            DEFINE YOUR <br /> <span className="text-blue-600">PERFORMANCE.</span>
           </h1>
           
-          <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-10 font-light leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-            Wydajność klasy premium za ułamek ceny. Buduj ekologicznie, graj bez kompromisów. 
-            Certyfikowane podzespoły z 24-miesięczną gwarancją.
+          <p className="text-lg md:text-2xl text-zinc-400 max-w-3xl mx-auto font-light leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
+            Zbuduj wymarzonego PC w konfiguratorze 3D, wybierz gotowy zestaw lub ulepsz swoją maszynę. 
+            <strong className="text-white"> Premium Refurbished</strong> – wydajność bez kompromisów.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
             <Link 
               href="/konfigurator" 
-              className="group relative px-8 py-4 bg-blue-600 text-white font-bold uppercase tracking-widest hover:bg-blue-500 transition-all overflow-hidden"
+              className="group relative px-10 py-5 bg-white text-black font-black uppercase tracking-widest hover:bg-zinc-200 transition-all overflow-hidden skew-x-[-10deg]"
             >
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-              <span className="flex items-center gap-2">
-                Uruchom Konfigurator <ArrowRight className="w-4 h-4" />
+              <div className="absolute inset-0 w-2 bg-blue-600 -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
+              <span className="flex items-center gap-3 skew-x-[10deg]">
+                <Zap className="w-5 h-5" /> Zbuduj PC
               </span>
             </Link>
             
             <Link 
-              href="/czesci" 
-              className="px-8 py-4 border border-zinc-700 text-zinc-300 font-mono text-sm uppercase hover:bg-zinc-900 transition-colors"
+              href="/gotowe-konfiguracje" 
+              className="px-10 py-5 border border-zinc-700 text-zinc-300 font-bold uppercase tracking-widest hover:border-white hover:text-white transition-all skew-x-[-10deg]"
             >
-              Przeglądaj Części
+              <span className="inline-block skew-x-[10deg]">Gotowe Zestawy</span>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* STATYSTYKI / TRUST BAR */}
-      <div className="border-b border-zinc-800 bg-black">
-        <div className="max-w-[1600px] mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-zinc-800">
-          <StatItem label="Gwarancja" value="24 Miesiące" />
-          <StatItem label="Oszczędność" value="do 40%" />
-          <StatItem label="Dostawa" value="24h" />
-          <StatItem label="Eko-Impact" value="-15kg CO2" />
-        </div>
-      </div>
-
-      {/* DLACZEGO MY (GRID) */}
-      <section className="py-24 px-6 max-w-[1600px] mx-auto">
-        <div className="mb-16">
-          <h2 className="text-3xl font-bold mb-4 uppercase tracking-tight">Standard Jakości</h2>
-          <div className="h-1 w-20 bg-blue-600" />
+      {/* 2. CHOOSE YOUR PATH (3 KAFLE) */}
+      <section className="py-24 px-6 max-w-[1600px] mx-auto border-b border-zinc-800">
+        <div className="text-center mb-16">
+          <h2 className="text-sm font-bold text-blue-500 uppercase tracking-widest mb-2">Możliwości</h2>
+          <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight">Wybierz swoją ścieżkę</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <FeatureCard 
-            icon={<ShieldCheck className="w-8 h-8 text-blue-500" />}
-            title="Certyfikat PlayAgain™"
-            desc="Każda karta graficzna i procesor przechodzi 3-etapowe testy obciążeniowe (FurMark, Cinebench). Nie sprzedajemy sprzętu, któremu nie ufamy."
-          />
-          <FeatureCard 
-            icon={<Recycle className="w-8 h-8 text-green-500" />}
-            title="Technologia Obiegu"
-            desc="Dajemy drugie życie topowym podzespołom. To nie tylko oszczędność pieniędzy, ale realny wpływ na redukcję elektrośmieci."
-          />
-          <FeatureCard 
-            icon={<Cpu className="w-8 h-8 text-purple-500" />}
-            title="Profesjonalny Montaż"
-            desc="Nie musisz znać się na składaniu. Nasi technicy złożą Twój zestaw, ułożą kable (cable management) i zaktualizują BIOS."
-          />
-        </div>
-      </section>
-
-      {/* CTA SECTION */}
-      <section className="py-20 border-t border-zinc-800 bg-zinc-900/30">
-        <div className="max-w-4xl mx-auto text-center px-6">
-          <h2 className="text-4xl md:text-5xl font-black mb-6">GOTOWY NA UPGRADE?</h2>
-          <p className="text-zinc-400 mb-8">
-            Skorzystaj z naszego interaktywnego modelu 3D i zobacz, jak będzie wyglądał Twój nowy setup.
-          </p>
-          <Link 
+          {/* KAFEL 1: CUSTOM */}
+          <PathCard 
             href="/konfigurator"
-            className="inline-flex items-center gap-3 text-2xl font-bold text-blue-500 hover:text-white transition-colors group"
-          >
-            <Zap className="w-8 h-8 group-hover:text-yellow-400 transition-colors" />
-            <span>WEJDŹ DO KONFIGURATORA</span>
-            <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
-          </Link>
+            icon={<Settings2 className="w-12 h-12 text-blue-500" />}
+            title="Custom Build 3D"
+            desc="Pełna kontrola. Wybierz każdą część w naszym interaktywnym konfiguratorze. Zobacz swój komputer zanim go zamówisz."
+            label="Skonfiguruj"
+          />
+          {/* KAFEL 2: PREBUILT */}
+          <PathCard 
+            href="/gotowe-konfiguracje"
+            icon={<PackageCheck className="w-12 h-12 text-purple-500" />}
+            title="Gotowe Zestawy"
+            desc="Sprawdzone konfiguracje przez naszych ekspertów. Plug & Play. Wyjmujesz z pudełka i grasz."
+            label="Zobacz Zestawy"
+            highlight
+          />
+          {/* KAFEL 3: UPGRADE (na razie linkuje do części) */}
+          <PathCard 
+            href="/gotowe-konfiguracje"
+            icon={<Wrench className="w-12 h-12 text-green-500" />}
+            title="Baza Modyfikacji"
+            desc="Każdy nasz gotowy zestaw możesz edytować. Podoba Ci się 'Cyber Starter', ale chcesz lepsze GPU? Jedno kliknięcie."
+            label="Modyfikuj"
+          />
         </div>
       </section>
-      
-      {/* STOPKA */}
-      <footer className="border-t border-zinc-800 py-12 text-center text-zinc-600 text-sm font-mono">
-        <p>&copy; 2026 PlayAgain.tech. All Systems Operational.</p>
-      </footer>
 
+      {/* 3. FEATURED BUILDS (SLIDER) */}
+      <section className="py-24 border-b border-zinc-800 bg-zinc-900/20">
+        <div className="max-w-[1600px] mx-auto px-6">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <h2 className="text-4xl font-black uppercase tracking-tight mb-2">Bestsellery</h2>
+              <p className="text-zinc-400">Najczęściej wybierane konfiguracje w tym tygodniu.</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => scroll('left')} className="p-3 border border-zinc-700 hover:bg-white hover:text-black transition-colors rounded-full"><ChevronLeft /></button>
+              <button onClick={() => scroll('right')} className="p-3 border border-zinc-700 hover:bg-white hover:text-black transition-colors rounded-full"><ChevronRight /></button>
+            </div>
+          </div>
+
+          <div 
+            ref={scrollRef}
+            className="flex gap-6 overflow-x-auto pb-8 scrollbar-hide snap-x"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {featuredPCs.length > 0 ? featuredPCs.map((pc) => (
+              <div key={pc._id} className="min-w-[300px] md:min-w-[400px] snap-center bg-black border border-zinc-800 hover:border-blue-600/50 transition-all group relative">
+                <div className="aspect-[4/3] bg-zinc-900 flex items-center justify-center p-8 relative overflow-hidden">
+                  {pc.image ? (
+                    <img src={pc.image} alt={pc.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <MonitorPlay className="w-20 h-20 text-zinc-800" />
+                  )}
+                  <div className="absolute top-4 right-4 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest">
+                    {pc.category}
+                  </div>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-white mb-2 truncate">{pc.name}</h3>
+                  <div className="flex justify-between items-center border-t border-zinc-800 pt-4 mt-4">
+                    <span className="text-2xl font-black text-white">{pc.price} PLN</span>
+                    <Link href={`/gotowe-konfiguracje/${pc._id}`} className="text-xs font-bold uppercase text-zinc-400 hover:text-white flex items-center gap-1">
+                      Szczegóły <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )) : (
+              <div className="w-full text-center text-zinc-500 py-10">Ładowanie zestawów...</div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. DLACZEGO WARTO (GRID ICONS) */}
+      <section className="py-24 px-6 max-w-[1600px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <h2 className="text-5xl font-black uppercase tracking-tighter mb-6 leading-tight">
+              Technologia <br/> <span className="text-blue-600">Obiegu Zamkniętego.</span>
+            </h2>
+            <p className="text-xl text-zinc-400 mb-8 leading-relaxed">
+              Kupując u nas, nie tylko oszczędzasz do 40% ceny rynkowej. Otrzymujesz sprzęt klasy premium, który został profesjonalnie odnowiony, przetestowany i objęty pełną gwarancją.
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <FeatureItem icon={<ShieldCheck className="text-blue-500" />} title="Gwarancja 24m" desc="Pełna ochrona jak przy nowym sprzęcie." />
+              <FeatureItem icon={<Recycle className="text-green-500" />} title="Eco-Friendly" desc="Redukcja elektrośmieci o 15kg na zestaw." />
+              <FeatureItem icon={<Cpu className="text-purple-500" />} title="Stress Tests" desc="24h testów obciążeniowych (GPU/CPU)." />
+              <FeatureItem icon={<Zap className="text-yellow-500" />} title="Ready to Play" desc="Windows, sterowniki i BIOS zaktualizowane." />
+            </div>
+          </div>
+          
+          <div className="relative h-[500px] bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden group">
+            {/* Tutaj można wstawić duże zdjęcie z montażu */}
+            <div className="absolute inset-0 flex items-center justify-center bg-[url('/assembly-bg.jpg')] bg-cover bg-center opacity-50 group-hover:opacity-70 transition-opacity" />
+            <div className="relative z-10 flex flex-col items-center justify-center h-full text-center p-8">
+               <Wrench className="w-24 h-24 text-zinc-700 mb-4" />
+               <h3 className="text-2xl font-bold text-white">Lab Serwisowy</h3>
+               <p className="text-zinc-400">Poznań, Polska</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. CTA FOOTER */}
+      <section className="py-24 border-t border-zinc-800 bg-gradient-to-b from-zinc-900/50 to-black text-center">
+        <div className="max-w-3xl mx-auto px-6">
+          <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-8">Zacznij Swoją Historię</h2>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link 
+              href="/konfigurator" 
+              className="px-12 py-5 bg-blue-600 text-white font-bold uppercase tracking-widest hover:bg-blue-500 hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all"
+            >
+              Stwórz Własny PC
+            </Link>
+            <Link 
+              href="/gotowe-konfiguracje" 
+              className="px-12 py-5 border border-zinc-700 text-white font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all"
+            >
+              Kup Gotowca
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-zinc-900 py-12 text-center text-zinc-600 text-xs font-mono">
+        <p>&copy; 2026 PlayAgain.tech. Designed for gamers, engineered for planet.</p>
+      </footer>
     </main>
   );
 }
 
-// Pomocnicze komponenty
-const StatItem = ({ label, value }: { label: string, value: string }) => (
-  <div className="p-8 text-center hover:bg-zinc-900/50 transition-colors">
-    <p className="text-xs text-zinc-500 uppercase tracking-widest mb-1">{label}</p>
-    <p className="text-2xl md:text-3xl font-bold text-white font-mono">{value}</p>
-  </div>
-);
+// --- KOMPONENTY POMOCNICZE ---
 
-const FeatureCard = ({ icon, title, desc }: { icon: any, title: string, desc: string }) => (
-  <div className="p-8 border border-zinc-800 bg-zinc-950 hover:border-blue-500/50 transition-colors group">
-    <div className="mb-6 bg-zinc-900 w-16 h-16 flex items-center justify-center rounded-sm group-hover:bg-blue-900/20 transition-colors">
-      {icon}
+function PathCard({ href, icon, title, desc, label, highlight }: any) {
+  return (
+    <Link href={href} className={`block p-8 border ${highlight ? 'border-blue-600 bg-blue-900/10' : 'border-zinc-800 bg-zinc-900/30'} hover:border-zinc-500 transition-all group h-full flex flex-col`}>
+      <div className="mb-6">{icon}</div>
+      <h3 className="text-2xl font-bold text-white mb-3 uppercase">{title}</h3>
+      <p className="text-zinc-400 text-sm leading-relaxed mb-8 flex-grow">{desc}</p>
+      <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-white group-hover:text-blue-400 transition-colors">
+        {label} <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+      </div>
+    </Link>
+  );
+}
+
+function FeatureItem({ icon, title, desc }: any) {
+  return (
+    <div className="flex gap-4">
+      <div className="w-12 h-12 bg-zinc-900 border border-zinc-800 flex items-center justify-center rounded-lg flex-shrink-0">
+        {React.cloneElement(icon, { className: "w-6 h-6" })}
+      </div>
+      <div>
+        <h4 className="font-bold text-white uppercase text-sm mb-1">{title}</h4>
+        <p className="text-xs text-zinc-500 leading-relaxed">{desc}</p>
+      </div>
     </div>
-    <h3 className="text-xl font-bold mb-3 text-zinc-200 group-hover:text-blue-400 transition-colors">{title}</h3>
-    <p className="text-zinc-400 leading-relaxed text-sm">
-      {desc}
-    </p>
-  </div>
-);
+  );
+}

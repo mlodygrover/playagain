@@ -2,7 +2,8 @@
 
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Environment, ContactShadows } from "@react-three/drei";
-import { useState, Suspense } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ComputerModel } from "./ComputerModel";
 
 interface SceneProps {
@@ -10,61 +11,75 @@ interface SceneProps {
 }
 
 export default function Scene3D({ onPartSelect }: SceneProps) {
-  // Lokalny stan do wyświetlania dymka nad modelem
-  const [localSelected, setLocalSelected] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const [selectedPart, setSelectedPart] = useState<string | null>(null);
 
-  const handleSelect = (partName: string) => {
-    setLocalSelected(partName);
-    if (onPartSelect) {
-      onPartSelect(partName);
-    }
+  const configuredCategories = useMemo(() => {
+    const cats = [];
+    if (searchParams.get('gpu')) cats.push('gpu');
+    if (searchParams.get('cpu')) cats.push('cpu');
+    if (searchParams.get('mobo')) cats.push('mobo');
+    if (searchParams.get('ram')) cats.push('ram');
+    if (searchParams.get('disk')) cats.push('disk');
+    if (searchParams.get('psu')) cats.push('psu');
+    if (searchParams.get('cool')) cats.push('cool');
+    if (searchParams.get('case')) cats.push('case');
+    return cats;
+  }, [searchParams]);
+
+  const handleModelSelect = (partName: string) => {
+    setSelectedPart(partName === selectedPart ? null : partName);
+    if (onPartSelect) onPartSelect(partName);
   };
 
   return (
-    <div className="h-[600px] w-full relative">
-      
-      {/* Overlay wewnątrz canvasu (opcjonalny) */}
-      <div className="absolute top-4 left-4 z-10 pointer-events-none">
-        <span className="bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm border border-white/10">
-          Render: Realtime WebGL
-        </span>
-      </div>
-
+    <div className="h-[600px] w-full relative min-h-[400px]">
       <Canvas>
-        {/* 1. Ustawienia kamery - oddalona, żeby widzieć cały model */}
-        <PerspectiveCamera makeDefault position={[5, 4, 6]} fov={45} />
+        <PerspectiveCamera makeDefault position={[5, 2, 7]} fov={40} />
         
-        {/* 2. Oświetlenie studyjne */}
-        <ambientLight intensity={0.7} />
-        <spotLight 
-          position={[10, 10, 10]} 
-          angle={0.15} 
-          penumbra={1} 
-          intensity={1} 
-          castShadow 
-        />
+        <ambientLight intensity={0.6} />
+        <spotLight position={[10, 15, 10]} angle={0.2} penumbra={1} intensity={1} castShadow />
         <Environment preset="city" />
 
-        {/* 3. Model 3D */}
         <Suspense fallback={null}>
-          <group position={[0, -1, 0]}> {/* Obniżamy model, żeby był na środku */}
-            <ComputerModel 
-              onPartSelect={handleSelect} 
-              selectedPart={localSelected} 
-              scale={0.5} // <--- SKALOWANIE: Zmniejszamy model o połowę
-            />
+          {/* 1. POZYCJONOWANIE MODELU 
+             Ustawiamy grupę w [0, 0, 0] (lub lekko wyżej, np. 0.5), aby środek obudowy
+             pokrywał się z celem kamery. Usunąłem ujemny Y (-0.5).
+          */}
+          <group position={[0, 0, 0]}> 
+             <ComputerModel 
+                onPartSelect={handleModelSelect}
+                configuredCategories={configuredCategories}
+                selectedPart={selectedPart}
+             />
           </group>
+
+          {/* 2. POZYCJONOWANIE PODŁOGI
+             Skoro podnieśliśmy model do 0, to podłoga też musi "podejść" do góry.
+             W ComputerModel.tsx części leżą na wysokości -1.5. 
+             Więc podłoga na -2.0 będzie idealnie tuż pod nimi.
+          */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.0, 0]} receiveShadow>
+            <circleGeometry args={[10, 64]} />
+            <meshStandardMaterial color="#1a1a1a" roughness={0.8} metalness={0.2} />
+          </mesh>
+          
+          <ContactShadows position={[0, -1.99, 0]} opacity={0.6} scale={20} blur={2} far={4} color="#000000" />
         </Suspense>
 
-        {/* 4. Kontrola (Myszka) */}
+        {/* 3. KAMERA
+             Target ustawiony na [0,0,0]. Ponieważ model też jest w [0,0,0],
+             zoomowanie będzie odbywać się idealnie "do środka" komputera.
+        */}
         <OrbitControls 
-          enablePan={false} // Blokada przesuwania modelu na boki (tylko obrót)
+          makeDefault 
+          target={[0, 0, 0]} 
           minPolarAngle={0} 
-          maxPolarAngle={Math.PI / 1.8} // Blokada, żeby nie wjeżdżać pod podłogę
+          maxPolarAngle={Math.PI / 2.1} 
+          autoRotate={configuredCategories.length === 0} 
+          autoRotateSpeed={0.5}
+          enablePan={false} 
         />
-        
-        {/* Cień pod modelem */}
-        <ContactShadows position={[0, -1, 0]} opacity={0.4} scale={10} blur={2} far={4.5} />
       </Canvas>
     </div>
   );

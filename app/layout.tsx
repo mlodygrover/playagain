@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 // --- SEO START ---
 export const metadata: Metadata = {
-  title: "PlayAgain.tech | Konfigurator PC Refurbished",
+  title: "PlayAgain | Konfigurator PC Refurbished",
   description: "Zbuduj swój wymarzony komputer z certyfikowanych części używanych. Oszczędź do 40% ceny i graj ekologicznie. Gwarancja 24 miesiące.",
   keywords: ["konfigurator pc", "komputery używane", "refurbished", "gaming pc", "tanie komputery"],
   openGraph: {

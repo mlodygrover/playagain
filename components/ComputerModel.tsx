@@ -1,162 +1,168 @@
 "use client";
 
-import React, { useState } from "react";
-import { useGLTF, Center } from "@react-three/drei";
-import { useThree, ThreeEvent } from "@react-three/fiber";
+import React, { useMemo, useState } from "react";
+import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { useSpring, animated, config } from "@react-spring/three";
 
 interface ModelProps {
   onPartSelect?: (partName: string) => void;
-  selectedPart?: string | null;
+  configuredCategories?: string[]; 
+  selectedPart?: string | null; // <--- 1. DODANO PROP
   [key: string]: any;
 }
 
-export function ComputerModel({ onPartSelect, selectedPart, ...props }: ModelProps) {
-  const { nodes, materials } = useGLTF("/gaming-pc.glb") as any;
+export function ComputerModel({ onPartSelect, configuredCategories = [], selectedPart, ...props }: ModelProps) {
+  const { nodes } = useGLTF("/gaming-pc.glb") as any;
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
 
-  // --- 1. POPRAWKI WIZUALNE (POZYCJA I SKALA) ---
-  const { viewport } = useThree();
-  
-  const isMobile = viewport.width < 5;
-
-  // A. SKALA: Powiększamy model. 
-  // Dzielnik 3.0 (zamiast 4.2) sprawi, że model będzie większy i lepiej wypełni ramkę.
-  const responsiveScale = Math.min(1.3, viewport.width / 3.0);
-
-  // B. POZYCJA Y: "Podciągamy" model do góry.
-  // 0.5 dla Desktopu (żeby był na środku ramki)
-  // 1.5 dla Mobile (bo tam kamera jest niżej/inaczej ustawiona)
-  const yOffset = isMobile ? 1.5 : 0.5;
-
-  // --- 2. KONFIGURACJA GRUP ---
-  const PART_MAPPING: Record<string, string> = {
-    // Chłodzenie procesora
-    "Cube009": "Chłodzenie CPU",
-    "Cube012": "Chłodzenie CPU",
-    "Cube010": "Chłodzenie CPU",
-    "BezierCurve001": "Chłodzenie CPU",
-    "BezierCurve": "Chłodzenie CPU",
-
-    // GPU (Karta Graficzna)
-    "Cube013": "Karta Graficzna",
-    "Cube014": "Karta Graficzna",
-    "Cube015": "Karta Graficzna",
-
-    // CPU (Procesor)
-    "Cylinder001": "Procesor",
-    "Cylinder003": "Procesor",
-
-    // Pamięć RAM
-    "Cube005": "Pamięć RAM",
-    "Cube011": "Pamięć RAM",
-    "Cube001": "Pamięć RAM",
-    "Cube004": "Pamięć RAM",
-
-    // Płyta główna
-    "Plane": "Płyta Główna",
-    "Cube003": "Płyta Główna",
-    "Cube008": "Płyta Główna",
-    "Cube002": "Płyta Główna",
-    "Cube007": "Płyta Główna",
-    "Plane001": "Płyta Główna",
-    
-    // Obudowa
-    "Cube": "Obudowa PC",
-    "Cube006": "Obudowa PC",
-    "Cylinder011": "Obudowa PC",
-    "Cylinder012": "Obudowa PC",
-    "Cube016": "Obudowa PC",
+  const MAPPING: Record<string, { id: string, label: string }> = {
+    // ... (Twoje mapowanie bez zmian) ...
+    "Cube013": { id: "gpu", label: "Karta Graficzna" },
+    "Cube014": { id: "gpu", label: "Karta Graficzna" },
+    "Cube015": { id: "gpu", label: "Karta Graficzna" },
+    "Cylinder001": { id: "cpu", label: "Procesor" },
+    "Cylinder003": { id: "cpu", label: "Procesor" },
+    "Cube005": { id: "ram", label: "Pamięć RAM" },
+    "Cube011": { id: "ram", label: "Pamięć RAM" },
+    "Cube001": { id: "ram", label: "Pamięć RAM" },
+    "Cube004": { id: "ram", label: "Pamięć RAM" },
+    "Plane": { id: "mobo", label: "Płyta Główna" },
+    "Cube003": { id: "mobo", label: "Płyta Główna" },
+    "Cube008": { id: "mobo", label: "Płyta Główna" },
+    "Cube002": { id: "mobo", label: "Płyta Główna" },
+    "Cube007": { id: "mobo", label: "Płyta Główna" },
+    "Plane001": { id: "mobo", label: "Płyta Główna" },
+    "Cube": { id: "case", label: "Obudowa PC" },
+    "Cube006": { id: "case", label: "Obudowa PC" },
+    "Cylinder011": { id: "case", label: "Obudowa PC" },
+    "Cylinder012": { id: "case", label: "Obudowa PC" },
+    "Cube016": { id: "case", label: "Obudowa PC" },
+    "Cube009": { id: "cool", label: "Chłodzenie CPU" },
+    "Cube012": { id: "cool", label: "Chłodzenie CPU" },
+    "Cube010": { id: "cool", label: "Chłodzenie CPU" },
+    "BezierCurve001": { id: "cool", label: "Chłodzenie CPU" },
+    "BezierCurve": { id: "cool", label: "Chłodzenie CPU" },
   };
 
-  // --- 3. Logika materiałów ---
-  const getMaterial = (originalMaterial: THREE.Material, componentName: string) => {
-    if (!originalMaterial) return undefined;
-    const mat = originalMaterial.clone();
+  const groupData = useMemo(() => {
+    const centers: Record<string, THREE.Vector3> = {};
+    const counts: Record<string, number> = {};
 
-    const isSelected = selectedPart === componentName;
-    const isHovered = hoveredGroup === componentName;
-    const isAnythingHovered = hoveredGroup !== null;
+    Object.entries(nodes).forEach(([name, node]: [string, any]) => {
+      const info = MAPPING[name];
+      if (info && node.position && node.geometry) {
+        if (!centers[info.id]) centers[info.id] = new THREE.Vector3(0, 0, 0);
+        if (!counts[info.id]) counts[info.id] = 0;
+        centers[info.id].add(node.position);
+        counts[info.id]++;
+      }
+    });
 
-    if (isSelected) {
-      mat.transparent = false;
-      mat.opacity = 1.0;
-      // @ts-ignore
-      mat.color.set("#2563EB"); 
-      // @ts-ignore
-      mat.emissive.set("#1D4ED8");
-      // @ts-ignore
-      mat.emissiveIntensity = 0.5;
+    Object.keys(centers).forEach(key => {
+      if (counts[key] > 0) centers[key].divideScalar(counts[key]);
+    });
 
-    } else if (isHovered) {
-      mat.transparent = false;
-      mat.opacity = 1.0;
-      // @ts-ignore
-      mat.color.set("#60A5FA"); 
-      // @ts-ignore
-      mat.emissive.set("#93C5FD");
-      // @ts-ignore
-      mat.emissiveIntensity = 0.4;
+    const tableSlots: Record<string, [number, number, number]> = {};
+    const categories = Object.keys(centers).filter(k => k !== 'case');
+    const TABLE_RADIUS = 4.5;
+    const TABLE_HEIGHT = -1.5;
 
-    } else if (isAnythingHovered) {
-      mat.transparent = true;
-      mat.opacity = 0.40;
-      mat.depthWrite = false;
-      // @ts-ignore
-      mat.color.set("#999999"); 
-      // @ts-ignore
-      mat.emissive.set("#000000"); 
-    } 
-    return mat;
-  };
+    categories.forEach((catId, index) => {
+      const angle = (index / categories.length) * Math.PI * 2;
+      tableSlots[catId] = [
+        Math.cos(angle) * TABLE_RADIUS,
+        TABLE_HEIGHT, 
+        Math.sin(angle) * TABLE_RADIUS
+      ];
+    });
+
+    return { centers, tableSlots };
+  }, [nodes]);
 
   return (
-    // Zastosowanie offsetu Y w komponencie Center
-    <Center position={[0, yOffset, 0]}>
-      <group 
-        {...props} 
-        dispose={null} 
-        scale={responsiveScale}
-      >
+    <group {...props} dispose={null}>
+      {Object.entries(nodes).map(([meshName, node]: [string, any]) => {
+        if (!node.geometry) return null;
+        if (meshName === "Plane019" || meshName === "Plane002") return null;
+
+        const info = MAPPING[meshName];
+        if (!info) return null;
+
+        const isConfigured = configuredCategories.includes(info.id);
+        const isCase = info.id === "case";
+        const isAssembled = isCase || isConfigured;
         
-        {Object.entries(nodes).map(([meshName, node]: [string, any]) => {
-          if (!node.geometry) return null;
-          // Ukrywamy szyby i inne elementy blokujące widok
-          if (meshName === "Plane019" || meshName === "Plane002") return null;
+        // --- 2. CZY TEN KONKRETNY ELEMENT JEST WYBRANY PRZEZ UŻYTKOWNIKA? ---
+        const isSelected = selectedPart === info.label;
 
-          const friendlyName = PART_MAPPING[meshName];
+        let targetPos: [number, number, number];
+        const targetRot: [number, number, number] = [
+            node.rotation.x, 
+            node.rotation.y, 
+            node.rotation.z
+        ];
 
-          return (
-            <mesh
-              key={meshName}
-              name={meshName}
-              position={node.position}
-              rotation={node.rotation}
-              scale={node.scale}
-              castShadow
-              receiveShadow
-              geometry={node.geometry}
-              
-              material={getMaterial(node.material, friendlyName)}
-              
-              onPointerOver={(e) => { 
-                e.stopPropagation(); 
-                setHoveredGroup(friendlyName || meshName); 
-              }}
-              
-              onPointerOut={(e) => setHoveredGroup(null)}
-              
-              onClick={(e) => {
-                e.stopPropagation();
-                if (friendlyName) {
-                  if (onPartSelect) onPartSelect(friendlyName);
-                }
-              }}
+        if (isAssembled) {
+          targetPos = [node.position.x, node.position.y, node.position.z];
+        } else {
+          const groupCenter = groupData.centers[info.id];
+          const slotPos = groupData.tableSlots[info.id];
+
+          if (groupCenter && slotPos) {
+            targetPos = [
+              (node.position.x - groupCenter.x) + slotPos[0],
+              (node.position.y - groupCenter.y) + slotPos[1], 
+              (node.position.z - groupCenter.z) + slotPos[2],
+            ];
+          } else {
+            targetPos = [node.position.x, -5, node.position.z];
+          }
+        }
+
+        const { position, rotation, color, emissiveIntensity } = useSpring({
+          position: targetPos,
+          rotation: targetRot,
+          // --- 3. POPRAWIONA LOGIKA KOLORÓW ---
+          // Świecimy TYLKO jeśli isSelected jest true.
+          // Jeśli jest w obudowie (isAssembled), ale nie wybrany -> biały (normalny).
+          color: isSelected 
+            ? "#2563EB" // Wybrany = Niebieski
+            : (hoveredGroup === info.label ? "#60A5FA" : "#ffffff"), // Hover = Jasny niebieski, Inne = Biały
+          
+          emissiveIntensity: isSelected ? 0.6 : 0, // Tylko wybrany emituje światło
+          
+          config: { mass: 1, tension: 120, friction: 26 }
+        });
+
+        return (
+          <animated.mesh
+            key={meshName}
+            name={meshName}
+            geometry={node.geometry}
+            castShadow
+            receiveShadow
+            position={position as any}
+            rotation={rotation as any}
+            scale={node.scale}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onPartSelect) onPartSelect(info.label);
+            }}
+            onPointerOver={(e) => { e.stopPropagation(); setHoveredGroup(info.label); }}
+            onPointerOut={() => setHoveredGroup(null)}
+          >
+            <animated.meshStandardMaterial
+              color={color}
+              emissive="#1D4ED8"
+              emissiveIntensity={emissiveIntensity}
+              roughness={0.5}
+              metalness={0.6}
             />
-          );
-        })}
-      </group>
-    </Center>
+          </animated.mesh>
+        );
+      })}
+    </group>
   );
 }
 

@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Component, GPU, CPU, Motherboard, RAM, Disk, Case, PSU, Cooling } = require('../models/Component');
+const { Component, GPU, CPU, Motherboard, RAM, Disk, Case, PSU, Cooling, Service } = require('../models/Component');
 const Offer = require('../models/Offer');
 const { updateComponentStats } = require('../utils/statsCalculator');
 // IMPORT MIDDLEWARE OCHRONNEGO
@@ -22,7 +22,10 @@ router.get('/', async (req, res) => {
         // 1. Filtr podstawowy: Ukrywanie niedostępnych (tylko dla klienta)
         // Inicjalizujemy obiekt dla 'stats.lowestPrice', żeby móc do niego dopisywać
         if (user === 'true') {
-            filter['stats.lowestPrice'] = { $gt: 0 };
+            filter.$or = [
+                { 'stats.lowestPrice': { $gt: 0 } }, // Części z ofertami
+                { type: 'Service' }                  // Usługi (zawsze dostępne)
+            ];
         }
 
         // 2. Filtr Typu
@@ -103,6 +106,7 @@ router.post('/', protectAdmin, async (req, res) => {
             case 'Case': newComponent = new Case(data); break;
             case 'PSU': newComponent = new PSU(data); break;
             case 'Cooling': newComponent = new Cooling(data); break;
+            case 'Service': newComponent = new Service(data); break;
             default: return res.status(400).json({ error: "Nieznany typ podzespołu" });
         }
 
@@ -247,6 +251,7 @@ router.post('/import', protectAdmin, async (req, res) => {
                 case 'Case': Model = Case; break;
                 case 'PSU': Model = PSU; break;
                 case 'Cooling': Model = Cooling; break;
+                case 'Service': newComponent = new Service(data); break;
                 default:
                     console.warn(`Pominięto nieznany typ: ${type}`);
                     continue;
