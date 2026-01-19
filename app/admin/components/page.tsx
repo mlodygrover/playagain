@@ -1,8 +1,6 @@
-
-export const dynamic = 'force-dynamic';
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -30,10 +28,11 @@ const Input = ({ label, name, val, set, type = "text", placeholder, required = f
     </div>
 );
 
-export default function ComponentsManager() {
+// --- 1. KOMPONENT Z LOGIKĄ (NIE EKSPORTOWANY DOMYŚLNIE) ---
+function ComponentsContent() {
     const { token } = useAuth();
     const router = useRouter();
-    const searchParams = useSearchParams();
+    const searchParams = useSearchParams(); // To wymaga Suspense przy budowaniu
 
     const [components, setComponents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -49,7 +48,7 @@ export default function ComponentsManager() {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    // --- 1. INICJALIZACJA STANU ---
+    // INICJALIZACJA STANU
     const [filters, setFilters] = useState({
         search: searchParams.get("search") || "",
         type: searchParams.get("type") || "ALL",
@@ -73,7 +72,7 @@ export default function ComponentsManager() {
         return s.toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
     };
 
-    // --- POBIERANIE MAPY PŁYT ---
+    // POBIERANIE MAPY PŁYT
     useEffect(() => {
         fetchMoboMap();
     }, []);
@@ -92,7 +91,7 @@ export default function ComponentsManager() {
         }
     };
 
-    // --- 2. LOGIKA AKTUALIZACJI URL I DEBOUNCE ---
+    // LOGIKA AKTUALIZACJI URL I DEBOUNCE
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedFilters(filters);
@@ -110,7 +109,7 @@ export default function ComponentsManager() {
         return () => clearTimeout(handler);
     }, [filters, router]);
 
-    // --- 3. POBIERANIE DANYCH + SORTOWANIE FRONTENDOWE ---
+    // POBIERANIE DANYCH + SORTOWANIE FRONTENDOWE
     useEffect(() => {
         fetchComponents();
     }, [debouncedFilters]);
@@ -127,7 +126,7 @@ export default function ComponentsManager() {
             const res = await fetch(`${API_URL}/api/components?${params.toString()}`);
             let data = await res.json();
 
-            // --- LOGIKA SORTOWANIA CLIENT-SIDE ---
+            // LOGIKA SORTOWANIA CLIENT-SIDE
             if (debouncedFilters.sortBy && Array.isArray(data)) {
                 const [sortKey, sortDir] = debouncedFilters.sortBy.split('-');
                 const multiplier = sortDir === 'asc' ? 1 : -1;
@@ -163,12 +162,11 @@ export default function ComponentsManager() {
         }
     };
 
-    // --- 4. PRZELICZANIE STATYSTYK (SELEKTYWNE LUB PEŁNE) ---
+    // PRZELICZANIE STATYSTYK
     const handleRecalculateStats = async () => {
         if (!token) return alert("Brak autoryzacji.");
 
         const count = selectedIds.size;
-        const mode = count > 0 ? 'selected' : 'all';
         const msg = count > 0
             ? `Przeliczyć statystyki dla ${count} zaznaczonych elementów?`
             : `Czy na pewno chcesz przeliczyć statystyki dla WSZYSTKICH komponentów? Może to chwilę potrwać.`;
@@ -201,7 +199,7 @@ export default function ComponentsManager() {
         }
     };
 
-    // --- HANDLERY UI ---
+    // HANDLERY UI
     const handleFilterChange = (key: string, value: string) => setFilters(prev => ({ ...prev, [key]: value }));
     const clearFilters = () => setFilters({ search: "", type: "ALL", minPrice: "", maxPrice: "", sortBy: "lowestPrice-asc" });
 
@@ -227,7 +225,7 @@ export default function ComponentsManager() {
         else { const allIds = components.map(c => c._id); setSelectedIds(new Set(allIds)); }
     };
 
-    // --- AKCJE ADMINA ---
+    // AKCJE ADMINA
     const handleCreateMissingMobos = async () => {
         if (!token) return alert("Brak autoryzacji.");
         const selectedCpus = components.filter(c => selectedIds.has(c._id) && c.type === 'CPU' && c.socket);
@@ -272,7 +270,6 @@ export default function ComponentsManager() {
             const res = await fetch(`${API_URL}/api/admin/generate-ai-offers`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                // Przekazujemy parametr 'ai' do backendu
                 body: JSON.stringify({
                     componentIds: Array.from(selectedIds),
                     ai: useAi
@@ -470,7 +467,6 @@ export default function ComponentsManager() {
                 <div className="flex justify-between items-center mb-6">
                     <div><h1 className="text-3xl font-black uppercase tracking-tight">Baza Części</h1><p className="text-zinc-500 text-sm">Zarządzaj definicjami podzespołów</p></div>
                     <div className="flex gap-3">
-                        {/* PRZYCISK PRZELICZANIA STATYSTYK */}
                         <button
                             onClick={handleRecalculateStats}
                             disabled={isRecalculating}
@@ -490,7 +486,6 @@ export default function ComponentsManager() {
                     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-700 p-4 rounded-lg shadow-2xl z-50 flex items-center gap-6 animate-in slide-in-from-bottom-4">
                         <span className="font-mono text-sm text-zinc-300">Zaznaczono: <strong className="text-white">{selectedIds.size}</strong></span>
                         <div className="h-6 w-px bg-zinc-700" />
-                        {/* Przycisk 1: Pełne AI + eBay (Domyślny) */}
                         <button
                             onClick={() => handleGenerateOffers(true)}
                             disabled={isGenerating}
@@ -500,7 +495,6 @@ export default function ComponentsManager() {
                             {isGenerating ? "Praca..." : "Generuj (AI + eBay)"}
                         </button>
 
-                        {/* Przycisk 2: Tylko eBay (Szybki) */}
                         <button
                             onClick={() => handleGenerateOffers(false)}
                             disabled={isGenerating}
@@ -525,7 +519,6 @@ export default function ComponentsManager() {
 
                     <div className="flex gap-2"><div><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Cena Od</label><input type="number" value={filters.minPrice} onChange={(e) => handleFilterChange("minPrice", e.target.value)} className="w-24 bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none" /></div><div><label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block">Cena Do</label><input type="number" value={filters.maxPrice} onChange={(e) => handleFilterChange("maxPrice", e.target.value)} className="w-24 bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none" /></div></div>
 
-                    {/* --- DROPDOWN SORTOWANIA --- */}
                     <div className="min-w-[180px]">
                         <label className="text-[10px] uppercase text-zinc-500 font-bold mb-1 block flex items-center gap-1"><ArrowUpDown className="w-3 h-3" /> Sortuj według</label>
                         <select value={filters.sortBy} onChange={(e) => handleFilterChange("sortBy", e.target.value)} className="w-full bg-black border border-zinc-700 px-3 py-2 text-sm text-white rounded outline-none">
@@ -553,7 +546,6 @@ export default function ComponentsManager() {
                         const mySocketKey = normalizeSocket(comp.socket);
                         const hasMobo = comp.type === 'CPU' && comp.socket && socketMoboMap[mySocketKey];
 
-                        // Obliczenie współczynnika zmienności (CV) do wyświetlenia w UI
                         const cv = comp.stats?.averagePrice > 0
                             ? Math.ceil((comp.stats?.standardDeviation / comp.stats?.averagePrice) * 100)
                             : 0;
@@ -598,7 +590,6 @@ export default function ComponentsManager() {
                                                 Min: {comp.stats?.lowestPrice} zł
                                             </span>
 
-                                            {/* NOWE POLE: BASE PRICE (WYŚWIETLANIE) */}
                                             <span className="text-zinc-400 font-bold border-l border-r border-zinc-700 px-2" title="Cena bazowa (używana do wyceny PC)">
                                                 Base: <span className="text-white">{comp.stats?.basePrice || 0} zł</span>
                                             </span>
@@ -626,7 +617,6 @@ export default function ComponentsManager() {
                     })}
                 </div>
 
-                {/* --- MODAL DODAWANIA / EDYCJI --- */}
                 {isModalOpen && (
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
                         <div className="bg-zinc-900 border border-zinc-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl animate-in zoom-in-95 duration-200">
@@ -641,7 +631,6 @@ export default function ComponentsManager() {
                                     </button>
                                 </div>
 
-                                {/* Podstawowe Pola */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="col-span-2 md:col-span-1">
                                         <label className="block text-xs font-mono text-zinc-500 uppercase mb-1">Typ Komponentu</label>
@@ -663,7 +652,6 @@ export default function ComponentsManager() {
                                 <Input label="Wykluczone słowa (po przecinku)" name="blacklistedKeywords" val={formData} set={setFormData} placeholder="uszkodzona, pudełko, wentylator..." />
                                 <Input label="URL Obrazka" name="image" val={formData} set={setFormData} placeholder="https://..." />
 
-                                {/* Pola Specyficzne dla Typu */}
                                 <div className="bg-black/30 p-4 rounded border border-zinc-800/50 space-y-4">
                                     <h3 className="text-xs font-mono text-zinc-400 uppercase font-bold mb-2">Specyfikacja Techniczna: {type}</h3>
                                     {renderSpecificFields()}
@@ -680,7 +668,6 @@ export default function ComponentsManager() {
                     </div>
                 )}
 
-                {/* --- MODAL IMPORTU JSON --- */}
                 {isImportModalOpen && (
                     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
                         <div className="bg-zinc-900 border border-zinc-700 w-full max-w-2xl rounded-xl shadow-2xl animate-in zoom-in-95 duration-200 p-6 space-y-6">
@@ -729,5 +716,14 @@ export default function ComponentsManager() {
                 )}
             </div>
         </div>
+    );
+}
+
+// --- 2. GŁÓWNY KOMPONENT EKSPORTOWANY (WRAPPER) ---
+export default function ComponentsManager() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center">Ładowanie...</div>}>
+            <ComponentsContent />
+        </Suspense>
     );
 }
