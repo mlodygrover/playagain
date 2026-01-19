@@ -9,11 +9,11 @@ const authRoute = require('./routes/auth');
 const ordersRoute = require('./routes/orders');
 const usersRoute = require('./routes/users');
 const componentsRoute = require('./routes/components');
-
+const chatRoutes = require('./routes/chatRoutes'); // <--- IMPORT
 const app = express();
 
 // --- MIDDLEWARE ---
-app.use(cors()); 
+app.use(cors());
 app.use(express.json()); // Obsługa JSON (dla Frontendu)
 app.use(express.urlencoded({ extended: true })); // Obsługa formularzy (dla Tpay)
 
@@ -29,6 +29,7 @@ app.use('/api/orders', ordersRoute);
 app.use('/api/users', usersRoute);
 app.use('/api/components', componentsRoute);
 app.use('/api/ebay-test', require('./routes/ebayTest'));
+app.use('/api/chat', chatRoutes); // <--- REJESTRACJA
 // Testowy route
 app.get('/', (req, res) => {
     res.send('PlayAgain API is running...');

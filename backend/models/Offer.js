@@ -12,15 +12,21 @@ const OfferSchema = new mongoose.Schema({
   currency: { type: String, default: 'PLN' },
   url: { type: String, required: true },
   imageUrl: { type: String },
+
+  // --- NOWE POLA ---
+  condition: { type: String, default: 'Used' }, // np. 'New', 'Used', 'Refurbished'
+  location: { type: String, default: 'PL' },    // np. 'DE', 'FR', 'IT' (Kraj wysyłki)
+  deliveryEstimation: { type: String },         // np. '2023-11-15' lub '3-5 dni'
+  // -----------------
   
-  // Czy oferta jest aktywna (czy scraper ją znalazł przy ostatnim przebiegu)
+  // Czy oferta jest aktywna
   isActive: { type: Boolean, default: true }, 
   
   foundAt: { type: Date, default: Date.now },
   lastChecked: { type: Date, default: Date.now }
 });
 
-// Indeks, żebyśmy nie dodawali dubli (ta sama platforma + to samo ID oferty = duplikat)
+// Indeks unikalności
 OfferSchema.index({ platform: 1, externalId: 1 }, { unique: true });
 
 module.exports = mongoose.model('Offer', OfferSchema);

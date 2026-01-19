@@ -8,7 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   Cpu, MemoryStick, Fan, Box, Check, MonitorPlay,
   ShoppingBag, PackageOpen, Plus, Minus, ChevronDown, ChevronUp,
-  Sparkles, CircuitBoard, Zap, HardDrive, SlidersHorizontal, Search as SearchIcon, X
+  Sparkles, CircuitBoard, Zap, HardDrive, SlidersHorizontal, Search as SearchIcon, X,
+  ArrowDownNarrowWide, ArrowUpNarrowWide
 } from "lucide-react";
 import { Chatbot } from "@/components/Chatbox";
 
@@ -160,78 +161,41 @@ const PriceHistogramSlider = ({ items, minPrice, maxPrice, currentMin, currentMa
 
 const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }: any) => (
   <div className={`relative w-full border-b last:border-b-0 border-zinc-800 transition-all duration-200 group ${isExpanded ? "bg-zinc-900" : "hover:bg-zinc-900/40 bg-black"}`}>
-    {/* GŁÓWNY PASEK PRODUKTU */}
     <div onClick={onToggleExpand} className="flex items-center justify-between p-2 sm:p-4 cursor-pointer gap-2 h-14 sm:h-auto">
-
-      {/* Pasek zaznaczenia */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors ${isSelected ? "bg-blue-600" : "bg-transparent group-hover:bg-zinc-700"}`} />
-
-      {/* LEWA STRONA: Nazwa i Cena */}
       <div className="flex flex-col justify-center flex-grow min-w-0 pl-2">
-        {/* Nazwa - priorytet widoczności */}
-        <h3 className={`text-xs sm:text-sm font-medium truncate pr-2 ${isSelected ? "text-blue-400" : "text-zinc-300"}`}>
-          {item.name}
-        </h3>
-
-        {/* Cena i Status - mniejsza czcionka pod spodem */}
+        <h3 className={`text-xs sm:text-sm font-medium truncate pr-2 ${isSelected ? "text-blue-400" : "text-zinc-300"}`}>{item.name}</h3>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs sm:text-sm font-mono text-zinc-400 font-bold leading-none">
-            {item.price} zł
-          </span>
-          {isSelected && (
-            <span className="text-[9px] uppercase tracking-wider text-blue-500 font-mono leading-none">
-              [INSTALLED]
-            </span>
-          )}
+          <span className="text-xs sm:text-sm font-mono text-zinc-400 font-bold leading-none">{item.price} zł</span>
+          {isSelected && <span className="text-[9px] uppercase tracking-wider text-blue-500 font-mono leading-none">[INSTALLED]</span>}
         </div>
       </div>
-
-      {/* PRAWA STRONA: Akcje */}
       <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-
-        {/* Przycisk Plus/Minus - mniejszy na mobile */}
         <button
           onClick={(e) => { e.stopPropagation(); onSelect(); }}
           className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border rounded transition-all duration-200 z-10 
-            ${isSelected
-              ? "bg-blue-600 border-blue-600 text-white hover:bg-red-600 hover:border-red-600"
-              : "border-zinc-700 text-zinc-500 hover:border-blue-500 hover:text-blue-500 hover:bg-zinc-800"
-            }`}
+            ${isSelected ? "bg-blue-600 border-blue-600 text-white hover:bg-red-600 hover:border-red-600" : "border-zinc-700 text-zinc-500 hover:border-blue-500 hover:text-blue-500 hover:bg-zinc-800"}`}
         >
           {isSelected ? <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
         </button>
-
-        {/* Strzałka rozwijania */}
         <div className="text-zinc-600 w-6 flex justify-center sm:pl-2 sm:border-l border-zinc-800">
           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
       </div>
     </div>
-
-    {/* TREŚĆ ROZWINIĘTA */}
     {isExpanded && (
       <div className="p-3 pt-0 pl-4 sm:pl-6 pr-3 border-t border-zinc-800/50 bg-zinc-900/50 animate-in slide-in-from-top-1 fade-in duration-200">
         <div className="flex flex-row gap-3 sm:gap-4 mt-3">
-          {/* Mniejszy obrazek na mobile */}
           <div className="w-16 h-16 sm:w-24 sm:h-24 bg-black border border-zinc-800 flex items-center justify-center flex-shrink-0 rounded-sm">
-            {item.image ? (
-              <img src={item.image} alt={item.name} className="object-cover w-full h-full opacity-90" />
-            ) : (
-              <PackageOpen className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-700" />
-            )}
+            {item.image ? <img src={item.image} alt={item.name} className="object-cover w-full h-full opacity-90" /> : <PackageOpen className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-700" />}
           </div>
-
           <div className="flex-grow space-y-2">
             <div className="flex flex-wrap gap-1.5">
               {item.specs.map((spec: string, i: number) => (
-                <span key={i} className="text-[9px] sm:text-[10px] uppercase font-mono px-1.5 py-0.5 border border-zinc-700 text-zinc-500 bg-zinc-950 rounded-sm">
-                  {spec}
-                </span>
+                <span key={i} className="text-[9px] sm:text-[10px] uppercase font-mono px-1.5 py-0.5 border border-zinc-700 text-zinc-500 bg-zinc-950 rounded-sm">{spec}</span>
               ))}
             </div>
-            <p className="text-[10px] sm:text-xs text-zinc-500 leading-relaxed max-w-md">
-              Komponent zweryfikowany pod kątem kompatybilności.
-            </p>
+            <p className="text-[10px] sm:text-xs text-zinc-500 leading-relaxed max-w-md">Komponent zweryfikowany pod kątem kompatybilności.</p>
           </div>
         </div>
       </div>
@@ -299,7 +263,8 @@ const SummaryPanel = ({ categories, selections, totalPrice, onCategoryClick }: a
   );
 };
 
-function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
+// --- GŁÓWNY KONTENT KONFIGURATORA ---
+function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenChat: () => void, isChatOpen: boolean, onCloseChat: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -309,16 +274,15 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
-  // Stan filtrów
   const [filters, setFilters] = useState<Record<string, {
     search: string;
     minPrice: number;
     maxPrice: number;
     manufacturers: string[];
-    isOpen: boolean
+    isOpen: boolean;
+    sortOrder: 'asc' | 'desc' | null;
   }>>({});
 
-  // 1. Logika wykrywania Socketu z wybranego CPU
   const selectedCpuId = selections['cpu'];
   const selectedCpuSocket = useMemo(() => {
     if (!selectedCpuId) return null;
@@ -337,23 +301,34 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
         const mappedCategories = CATEGORY_DEFINITIONS.map(def => {
           const items = data
             .filter((item: any) => item.type === def.apiType)
-            .map((item: any) => ({
-              id: item._id,
-              name: item.name,
-              chipset: item.chipset ? item.chipset.toUpperCase() : item.name.split(' ')[0].toUpperCase(),
-              socket: item.socket,
-              formFactor: item.formFactor,
-              price: Math.ceil(11*(Math.max(item.stats.averagePrice - item.stats.standardDeviation, item.stats.lowestPrice + item.stats.standardDeviation))/10) + 5 - Math.ceil(11*(Math.max(item.stats.averagePrice - item.stats.standardDeviation, item.stats.lowestPrice + item.stats.standardDeviation))/10) % 5,
-              image: item.image,
-              specs: generateSpecs(item)
-            }));
-
+            .map((item: any) => {
+              let chipset = item.chipset ? item.chipset.toUpperCase() : item.name.split(' ')[0].toUpperCase();
+              if (def.id === 'gpu') {
+                const fullName = (item.name + " " + (item.chipset || "")).toUpperCase();
+                if (fullName.includes("NVIDIA") || fullName.includes("GEFORCE") || fullName.includes("RTX") || fullName.includes("GTX")) {
+                  chipset = "NVIDIA";
+                } else if (fullName.includes("AMD") || fullName.includes("RADEON") || fullName.includes("RX")) {
+                  chipset = "AMD";
+                } else if (fullName.includes("INTEL") || fullName.includes("ARC")) {
+                  chipset = "INTEL";
+                }
+              }
+              return {
+                id: item._id,
+                name: item.name,
+                chipset: chipset,
+                socket: item.socket,
+                formFactor: item.formFactor,
+                price: item.stats.basePrice > 0 ? item.stats.basePrice : item.stats.averagePrice,
+                image: item.image,
+                specs: generateSpecs(item)
+              };
+            });
           return { ...def, items: items };
         });
 
         setCategories(mappedCategories);
 
-        // Inicjalizacja filtrów
         const initialFilters: any = {};
         mappedCategories.forEach(cat => {
           if (cat.items.length > 0) {
@@ -363,25 +338,23 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
               minPrice: Math.min(...prices),
               maxPrice: Math.max(...prices),
               manufacturers: [],
-              isOpen: false
+              isOpen: false,
+              sortOrder: 'asc'
             };
           }
         });
         setFilters(initialFilters);
-
       } catch (err) { console.error(err); } finally { setLoading(false); }
     };
     fetchData();
   }, []);
 
-  // Synchronizacja URL -> State
   useEffect(() => {
     const currentParams: Record<string, string> = {};
     searchParams.forEach((value, key) => { currentParams[key] = value; });
     setSelections(currentParams);
   }, [searchParams]);
 
-  // Funkcja aktualizacji wyboru (MISSING FUNCTION)
   const updateSelection = (category: string, itemId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (params.get(category) === itemId) { params.delete(category); } else { params.set(category, itemId); }
@@ -414,11 +387,7 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
   const toggleCategoryCollapse = (catId: string) => setCollapsedCategories(prev => ({ ...prev, [catId]: !prev[catId] }));
   const toggleFilterPanel = (catId: string) => setFilters(prev => ({ ...prev, [catId]: { ...prev[catId], isOpen: !prev[catId]?.isOpen } }));
   const updateFilter = (catId: string, field: string, value: any) => setFilters(prev => ({ ...prev, [catId]: { ...prev[catId], [field]: value } }));
-
-  const updatePriceRange = (catId: string, min: number, max: number) => {
-    setFilters(prev => ({ ...prev, [catId]: { ...prev[catId], minPrice: min, maxPrice: max } }));
-  };
-
+  const updatePriceRange = (catId: string, min: number, max: number) => setFilters(prev => ({ ...prev, [catId]: { ...prev[catId], minPrice: min, maxPrice: max } }));
   const toggleManufacturer = (catId: string, brand: string) => {
     setFilters(prev => {
       const currentBrands = prev[catId]?.manufacturers || [];
@@ -427,11 +396,27 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
     });
   };
 
+  // === PRZYGOTOWANIE DANYCH DLA AI (Wewnątrz komponentu) ===
+  const aiInventory = useMemo(() => {
+    const items: any[] = [];
+    categories.forEach(cat => {
+      cat.items.forEach((item: any) => {
+        items.push({
+          id: item.id,
+          name: item.name,
+          type: cat.id,
+          price: item.price
+        });
+      });
+    });
+    return items;
+  }, [categories]);
+
   if (loading) return <div className="flex h-[50vh] w-full items-center justify-center font-mono text-zinc-500 animate-pulse">INITIALIZING DATABASE CONNECTION...</div>;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
-      {/* LEWA KOLUMNA (SCENA 3D) */}
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start relative">
+      {/* LEWA KOLUMNA */}
       <div className="lg:col-span-4 lg:sticky lg:top-20 space-y-4">
         <div className="aspect-square w-full bg-black border border-zinc-800 relative group overflow-hidden">
           <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-blue-600 z-10" />
@@ -453,7 +438,6 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
         </div>
 
         {categories.map((category) => {
-          // 1. Filtracja Płyt Głównych (zależność od CPU)
           let categoryItems = category.items;
           let blockReason = null;
 
@@ -467,7 +451,6 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
             }
           }
 
-          // 2. Filtry Standardowe
           const catPrices = categoryItems.map((i: any) => i.price);
           const absoluteMin = catPrices.length > 0 ? Math.min(...catPrices) : 0;
           const absoluteMax = catPrices.length > 0 ? Math.max(...catPrices) : 5000;
@@ -477,23 +460,26 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
             minPrice: absoluteMin,
             maxPrice: absoluteMax,
             manufacturers: [],
-            isOpen: false
+            isOpen: false,
+            sortOrder: 'asc'
           };
 
           const availableChipsets = Array.from(new Set(categoryItems.map((i: any) => i.chipset))).filter(Boolean).sort() as string[];
 
-          const filteredItems = categoryItems.filter((item: any) => {
+          let filteredItems = categoryItems.filter((item: any) => {
             const matchesSearch = item.name.toLowerCase().includes(currentFilter.search.toLowerCase());
             const matchesPrice = item.price >= currentFilter.minPrice && item.price <= currentFilter.maxPrice;
             const matchesBrand = currentFilter.manufacturers.length > 0 ? currentFilter.manufacturers.includes(item.chipset) : true;
             return matchesSearch && matchesPrice && matchesBrand;
           });
 
+          if (currentFilter.sortOrder === 'asc') filteredItems.sort((a: any, b: any) => a.price - b.price);
+          else if (currentFilter.sortOrder === 'desc') filteredItems.sort((a: any, b: any) => b.price - a.price);
+
           const isCollapsed = collapsedCategories[category.id];
 
           return (
             <section key={category.id} id={`section-${category.id}`} className="scroll-mt-24 transition-all duration-300 border border-zinc-800 bg-zinc-950/30">
-              {/* NAGŁÓWEK */}
               <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-zinc-900/50 transition-colors select-none" onClick={() => toggleCategoryCollapse(category.id)}>
                 <div className="text-zinc-500">{isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}</div>
                 <div className={`p-1.5 rounded bg-zinc-900 border border-zinc-800 ${selections[category.id] ? "text-blue-500 border-blue-900/30" : "text-zinc-600"}`}>{category.icon}</div>
@@ -508,7 +494,6 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
 
               {!isCollapsed && (
                 <div className="animate-in slide-in-from-top-2 duration-300">
-                  {/* BLOKADA DLA MOBO */}
                   {blockReason && (
                     <div className="p-8 text-center border-t border-zinc-800 bg-red-950/10">
                       <div className="inline-flex items-center justify-center p-3 bg-red-900/20 rounded-full mb-3"><Cpu className="w-6 h-6 text-red-500" /></div>
@@ -517,7 +502,6 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
                     </div>
                   )}
 
-                  {/* PANEL FILTRÓW */}
                   {!blockReason && currentFilter.isOpen && (
                     <div className="bg-zinc-900/80 border-y border-zinc-800 p-6 animate-in slide-in-from-top-2 fade-in backdrop-blur-sm space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -530,11 +514,17 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
                               {currentFilter.search && <button onClick={() => updateFilter(category.id, 'search', "")} className="absolute right-3 top-2.5"><X className="w-4 h-4 text-zinc-500 hover:text-white" /></button>}
                             </div>
                           </div>
-                          {availableChipsets.length > 0 && (
-                            <div>
-                              <label className="text-[10px] text-zinc-500 uppercase font-bold mb-2 block">
+                          <div>
+                            <div className="flex justify-between items-end mb-2">
+                              <label className="text-[10px] text-zinc-500 uppercase font-bold">
                                 {category.id === 'gpu' ? 'Producent GPU' : category.id === 'cpu' ? 'Producent CPU' : 'Producent / Marka'}
                               </label>
+                              <div className="flex gap-1">
+                                <button onClick={() => updateFilter(category.id, 'sortOrder', 'asc')} className={`px-2 py-1 text-[9px] uppercase border rounded flex items-center gap-1 ${currentFilter.sortOrder === 'asc' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-black border-zinc-800 text-zinc-500 hover:text-white'}`}><ArrowDownNarrowWide className="w-3 h-3" /> Najtańsze</button>
+                                <button onClick={() => updateFilter(category.id, 'sortOrder', 'desc')} className={`px-2 py-1 text-[9px] uppercase border rounded flex items-center gap-1 ${currentFilter.sortOrder === 'desc' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-black border-zinc-800 text-zinc-500 hover:text-white'}`}><ArrowUpNarrowWide className="w-3 h-3" /> Najdroższe</button>
+                              </div>
+                            </div>
+                            {availableChipsets.length > 0 && (
                               <div className="flex flex-wrap gap-2">
                                 {availableChipsets.map((chipset) => {
                                   const isActive = currentFilter.manufacturers.includes(chipset);
@@ -547,8 +537,8 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
                                   return <button key={chipset} onClick={() => toggleManufacturer(category.id, chipset)} className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider border rounded transition-all ${colorClass}`}>{chipset}</button>
                                 })}
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                         <div className="space-y-1">
                           <div className="flex justify-between items-center">
@@ -561,9 +551,8 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
                     </div>
                   )}
 
-                  {/* LISTA PRODUKTÓW */}
                   {!blockReason && (
-                    <div className="bg-black">
+                    <div className="bg-black max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
                       {filteredItems.length > 0 ? (
                         filteredItems.map((item: any) => (
                           <ProductTile key={item.id} item={item} isSelected={selections[category.id] === item.id} isExpanded={expandedItemId === item.id} onToggleExpand={() => setExpandedItemId(prev => prev === item.id ? null : item.id)} onSelect={() => updateSelection(category.id, item.id)} />
@@ -582,12 +571,20 @@ function ConfiguratorContent({ onOpenChat }: { onOpenChat: () => void }) {
           );
         })}
       </div>
+
+      {/* --- TU JEST CHATBOT --- */}
+      <Chatbot
+        externalOpen={isChatOpen}
+        onClose={onCloseChat}
+        inventory={aiInventory}
+      />
     </div>
   );
 }
 
 export default function ConfiguratorPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-blue-600 selection:text-white">
       <nav className="fixed top-0 w-full z-40 bg-black/90 backdrop-blur-md border-b border-zinc-800 h-16 flex items-center px-6 justify-between">
@@ -595,9 +592,14 @@ export default function ConfiguratorPage() {
         <div className="flex gap-4"><button className="text-xs font-mono text-zinc-400 hover:text-white uppercase transition">Share Build</button><button className="text-xs font-mono text-zinc-400 hover:text-white uppercase transition">Support</button></div>
       </nav>
       <main className="pt-24 px-4 md:px-8 max-w-[1600px] mx-auto">
-        <Suspense fallback={<div className="text-white font-mono p-10">LOADING CONFIGURATION...</div>}><ConfiguratorContent onOpenChat={() => setIsChatOpen(true)} /></Suspense>
+        <Suspense fallback={<div className="text-white font-mono p-10">LOADING CONFIGURATION...</div>}>
+          <ConfiguratorContent
+            onOpenChat={() => setIsChatOpen(true)}
+            isChatOpen={isChatOpen}
+            onCloseChat={() => setIsChatOpen(false)}
+          />
+        </Suspense>
       </main>
-      <Chatbot externalOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 }

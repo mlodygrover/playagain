@@ -38,11 +38,7 @@ router.post('/generate-ai-offers', protectAdmin, async (req, res) => {
       return res.status(400).json({ error: "Wymagana tablica componentIds" });
     }
 
-    const results = {
-      processed: 0,
-      offersCreated: 0,
-      errors: []
-    };
+    const results = { processed: 0, offersCreated: 0, errors: [] };
 
     for (const id of componentIds) {
       const component = await Component.findById(id);
@@ -58,6 +54,7 @@ router.post('/generate-ai-offers', protectAdmin, async (req, res) => {
         // --- KROK 1: AI ---
         if (ai !== false) {
           try {
+            // ... (Twoja logika AI bez zmian) ...
             if (component.type === 'Motherboard') {
               if (component.socket && component.formFactor) {
                 aiOffers = await fetchMotherboardOffers(component.socket, component.formFactor);
@@ -81,51 +78,101 @@ router.post('/generate-ai-offers', protectAdmin, async (req, res) => {
         // --- KROK 2: EBAY ---
         try {
           const categoryId = EBAY_CATEGORIES[component.type];
-          
-          if (categoryId && fetchEbayOffers) {
-            // fetchEbayOffers zwraca już obiekty z polem 'url' (nie itemWebUrl)
-            const ebayRaw = await fetchEbayOffers(component.searchQuery || component.name, categoryId);
-            
+
+          if (fetchEbayOffers) {
+            let ebayRaw = await fetchEbayOffers(component.searchQuery || component.name, categoryId, component.type == "Motherboard" || component.type == "Disk" ? true : false);
+
+            if (ebayRaw.length === 0) {
+              const EU_COUNTRIES_LIST = [
+                "PL", "DE", "FR", "IT", "ES", "NL", "BE", "AT", "SE", "DK",
+                "FI", "IE", "PT", "CZ", "GR", "HU", "RO", "SK", "BG", "HR",
+                "SI", "LT", "LV", "EE", "LU", "CY", "MT"
+              ].join("|");
+              console.log(`   🔎 Pusto. Ponawiam szukanie (tryb forceNew) dla: ${component.name}`);
+              ebayRaw = await fetchEbayOffers(component.searchQuery || component.name, categoryId, true, EU_COUNTRIES_LIST);
+            }
+
             ebayOffers = ebayRaw.map(item => ({
               title: item.title,
               price: parseFloat(item.totalPrice || item.price),
-              url: item.url, // <--- POPRAWKA: Tutaj był błąd (item.itemWebUrl -> item.url)
+              url: item.url,
               platform: "eBay",
               description: `Stan: ${item.condition} | Lokalizacja: ${item.location || 'PL'}`,
               externalId: `ebay-${item.id}`
             }));
-            
+
             console.log(`   -> eBay znalazł: ${ebayOffers.length} ofert.`);
           }
         } catch (ebayError) {
           console.error(`   ⚠️ Błąd eBay dla ${component.name}:`, ebayError.message);
         }
 
-        // --- KROK 3: ŁĄCZENIE I ZAPIS ---
-        // Dodajemy filtr .filter(o => o.url), aby usunąć ewentualne wadliwe oferty
-        const allNewOffers = [...aiOffers, ...ebayOffers].filter(o => o.url && o.url.startsWith('http'));
+        // --- KROK 3: ŁĄCZENIE I ZAPIS (ZMIENIONE NA UPSERT) ---
 
-        if (allNewOffers.length > 0) {
-          await Offer.deleteMany({ componentId: component._id });
+        // Filtrowanie niepoprawnych URL
+        let allNewOffers = [...aiOffers, ...ebayOffers].filter(o => o.url && o.url.startsWith('http'));
 
-          const offersToSave = allNewOffers.map(offer => ({
+        // Deduplikacja w pamięci (JS) - usuwa duplikaty w ramach TEGO zapytania
+        const uniqueOffersMap = new Map();
+        allNewOffers.forEach(offer => {
+          const uniqueKey = `${offer.platform}-${offer.externalId}`;
+          if (!uniqueOffersMap.has(uniqueKey)) {
+            uniqueOffersMap.set(uniqueKey, offer);
+          }
+        });
+        const uniqueOffers = Array.from(uniqueOffersMap.values());
+
+        if (uniqueOffers.length > 0) {
+
+          // A. CLEANUP (Sprzątanie)
+          // Usuwamy z bazy oferty przypisane do TEGO komponentu, których NIE MA w nowym pobraniu.
+          // Dzięki temu usuwamy "martwe" oferty (sprzedane/zakończone), ale nie dotykamy ofert innych komponentów.
+          const newExternalIds = uniqueOffers.map(o => o.externalId);
+          await Offer.deleteMany({
             componentId: component._id,
-            title: offer.title || component.name,
-            price: offer.price,
-            url: offer.url,
-            platform: offer.platform || "Web",
-            description: offer.description || offer.specs || null,
-            externalId: offer.externalId || `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            isActive: true
+            externalId: { $nin: newExternalIds }
+          });
+
+          // B. BULK WRITE (UPSERT)
+          // To jest klucz do sukcesu. Zamiast insertMany, przygotowujemy listę operacji.
+          const bulkOps = uniqueOffers.map(offer => ({
+            updateOne: {
+              // Szukamy oferty po unikalnym ID i platformie
+              filter: { platform: offer.platform, externalId: offer.externalId },
+              // Ustawiamy nowe dane
+              update: {
+                $set: {
+                  componentId: component._id, // Przypisujemy do aktualnego komponentu
+                  title: offer.title || component.name,
+                  price: offer.price,
+                  url: offer.url,
+                  description: offer.description || offer.specs || null,
+                  isActive: true,
+                  // Przekazujemy nowe dane do bazy
+                  condition: offer.condition || "Used",
+                  location: offer.location || "PL",
+                  deliveryEstimation: offer.deliveryEstimation, // Zapisze datę z eBaya
+
+                  updatedAt: new Date()
+                }
+              },
+              // WAŻNE: Jeśli nie istnieje -> stwórz. Jeśli istnieje -> zaktualizuj.
+              upsert: true
+            }
           }));
 
-          await Offer.insertMany(offersToSave);
-          await updateComponentStats(component._id);
-          console.log(`   ✅ ZAKTUALIZOWANO BAZĘ: ${offersToSave.length} ofert.`);
-          results.offersCreated += offersToSave.length;
+          // Wykonujemy operacje w bazie
+          const bulkRes = await Offer.bulkWrite(bulkOps);
 
-        } else {
-          console.log(`   ⛔ BRAK NOWYCH OFERT. Stare oferty zostały zachowane.`);
+          await updateComponentStats(component._id);
+
+          const totalTouched = (bulkRes.upsertedCount || 0) + (bulkRes.modifiedCount || 0);
+          console.log(`   ✅ BAZA ZSYNCHRONIZOWANA:`);
+          console.log(`      - Dodano nowych: ${bulkRes.upsertedCount}`);
+          console.log(`      - Zaktualizowano: ${bulkRes.modifiedCount}`);
+
+          results.offersCreated += totalTouched;
+
         }
 
         results.processed++;
@@ -143,7 +190,6 @@ router.post('/generate-ai-offers', protectAdmin, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // ==========================================
 // ROUTE: TWORZENIE SZABLONÓW PŁYT
 // ==========================================
@@ -190,7 +236,7 @@ router.post('/update-all-stats', protectAdmin, async (req, res) => {
     } else {
       console.log("🔄 Aktualizacja statystyk WSZYSTKICH komponentów...");
     }
-    
+
     const components = await Component.find(filter, '_id name');
     const updatePromises = components.map(comp => updateComponentStats(comp._id));
     await Promise.all(updatePromises);

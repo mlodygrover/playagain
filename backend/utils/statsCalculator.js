@@ -10,7 +10,7 @@ async function updateComponentStats(componentId) {
         });
 
         const now = new Date();
-
+        
         // SCENARIUSZ A: Brak ofert (wyzerowanie)
         if (offers.length === 0) {
             await Component.findByIdAndUpdate(componentId, {
@@ -77,7 +77,7 @@ async function updateComponentStats(componentId) {
                 averagePrice: parseFloat(avg.toFixed(2)),
                 lowestPrice: min,
                 highestPrice: max,
-                basePrice: parseFloat(basePrice.toFixed(2)), // <--- Zapisujemy wyliczoną cenę bazową
+                basePrice: Math.ceil(11*parseFloat(basePrice.toFixed(2))/10), // <--- Zapisujemy wyliczoną cenę bazową
                 standardDeviation: parseFloat(stdDev.toFixed(2)),
                 offersCount: offers.length,
                 lastUpdate: now
