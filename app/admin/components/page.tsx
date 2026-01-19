@@ -594,7 +594,12 @@ function ComponentsContent() {
                                         <div className="flex gap-4 text-xs text-zinc-500 font-mono mt-1">
                                             <span className={`${comp.stats?.lowestPrice > 0 ? 'text-green-500' : 'text-zinc-600'} font-bold`}>Min: {comp.stats?.lowestPrice} zł</span>
                                             <span className="text-zinc-400 font-bold border-l border-r border-zinc-700 px-2" title="Cena bazowa">Base: <span className="text-white">{comp.stats?.basePrice || 0} zł</span></span>
-                                            <span className="flex items-center gap-1" title={`CV: ${cv}%`}><TrendingUp className="w-3 h-3" /> ±{comp.stats?.standardDeviation} zł</span>
+                                            <span className="flex items-center gap-1" title={`Współczynnik zmienności: ${cv}%`}>
+                                                <TrendingUp className="w-3 h-3" /> ±{comp.stats?.standardDeviation} zł
+                                                <span className={`ml-1 px-1 rounded font-bold ${cv > 25 ? 'text-red-400 bg-red-900/30' : cv > 15 ? 'text-yellow-400 bg-yellow-900/30' : 'text-zinc-500'}`}>
+                                                    ({cv}%)
+                                                </span>
+                                            </span>
                                             <span className="text-zinc-500">Ofert: {comp.stats?.offersCount || 0}</span>
                                         </div>
                                     </div>
