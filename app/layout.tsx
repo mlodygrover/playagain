@@ -35,9 +35,9 @@ export const metadata: Metadata = {
 
   // --- 2. USTAWIENIA IKON (LOGO W PASKU I GOOGLE) ---
   icons: {
-    icon: "/logo.svg", // Ikona w karcie przeglądarki i wynikach Google
-    shortcut: "/logo.svg",
-    apple: "/logo.svg", // Ikona dla iPhone/iPad
+    icon: "/logo2.svg", // Ikona w karcie przeglądarki i wynikach Google
+    shortcut: "/logo2.svg",
+    apple: "/logo2.svg", // Ikona dla iPhone/iPad
   },
 
   // Social Media (Facebook, Discord, LinkedIn)

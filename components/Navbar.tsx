@@ -22,13 +22,11 @@ export function Navbar() {
           <Link href="/" className="flex items-center gap-3 group z-50" onClick={closeMenu}>
             {/* ZMIANA: Usunięto div z literą P, wstawiono obrazek */}
             <img 
-              src="/logo.svg" 
+              src="/logo3.svg" 
               alt="PlayAgain Logo" 
-              className="w-16 h-16 object-contain" 
+              className="w-60 h-16 object-contain" 
             />
-            <span className="font-bold text-lg tracking-tight uppercase text-white">
-              PlayAgain<span className="text-zinc-600 group-hover:text-blue-500 transition-colors"></span>
-            </span>
+          
           </Link>
 
           {/* DESKTOP MENU */}
