@@ -5,19 +5,23 @@ const nodemailer = require('nodemailer');
 const { protectAdmin } = require('../middleware/authMiddleware'); // Zakładam, że masz ten import
 const verify = require('../middleware/auth');
 // --- KONFIGURACJA TRANSPORTERA EMAIL (BREVO) ---
+// --- KONFIGURACJA TRANSPORTERA EMAIL (BREVO - POPRAWIONA DLA PORTU 587) ---
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 465, // Preferujemy 465
-  secure: true, // WAŻNE: Dla portu 465 ustaw true (SSL), dla 587 false (STARTTLS)
+  host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
+  port: 587, // Port 587 jest standardem dla Brevo
+  secure: false, // WAŻNE: Dla portu 587 musi być false (używa STARTTLS)
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  // --- FIX NA TIMEOUTY (RENDER/NODE) ---
-  family: 4, // Wymusza użycie IPv4 (rozwiązuje problem ETIMEDOUT)
-  connectionTimeout: 10000, // Czekaj max 10 sekund na połączenie
-  greetingTimeout: 5000,    // Czekaj max 5 sekund na powitanie serwera
-  socketTimeout: 10000,     // Czekaj max 10 sekund na brak aktywności
+  // --- USTAWIENIA DLA STABILNOŚCI ---
+  tls: {
+    ciphers: 'SSLv3', // Pomaga przy problemach z wersją szyfrowania
+    rejectUnauthorized: false // (Opcjonalnie) Ignoruje błędy certyfikatów w dev
+  },
+  connectionTimeout: 10000, 
+  greetingTimeout: 5000,
+  socketTimeout: 10000,
 });
 
 // Opcjonalnie: Weryfikacja przy starcie (pomoże w debugowaniu w logach Rendera)
