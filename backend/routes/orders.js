@@ -2,14 +2,14 @@ const router = require('express').Router();
 const Order = require('../models/Order');
 const axios = require('axios');
 const nodemailer = require('nodemailer');
-const { protectAdmin } = require('../middleware/authMiddleware'); // Zakładam, że masz ten import
+const { protectAdmin } = require('../middleware/authMiddleware'); 
 const verify = require('../middleware/auth');
+
 // --- KONFIGURACJA TRANSPORTERA EMAIL (BREVO) ---
-// --- KONFIGURACJA TRANSPORTERA EMAIL (BREVO - POPRAWIONA DLA PORTU 587) ---
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port: 587, // Port 587 jest standardem dla Brevo
-  secure: false, // WAŻNE: Dla portu 587 musi być false (używa STARTTLS)
+  port: 587, // Port 587 jest standardem dla Brevo i STARTTLS
+  secure: false, // WAŻNE: Dla portu 587 musi być false (STARTTLS)
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -17,19 +17,19 @@ const transporter = nodemailer.createTransport({
   // --- USTAWIENIA DLA STABILNOŚCI ---
   tls: {
     ciphers: 'SSLv3', // Pomaga przy problemach z wersją szyfrowania
-    rejectUnauthorized: false // (Opcjonalnie) Ignoruje błędy certyfikatów w dev
+    rejectUnauthorized: false // Ignoruje błędy certyfikatów w dev/test
   },
   connectionTimeout: 10000, 
   greetingTimeout: 5000,
   socketTimeout: 10000,
 });
 
-// Opcjonalnie: Weryfikacja przy starcie (pomoże w debugowaniu w logach Rendera)
+// Weryfikacja połączenia SMTP przy starcie
 transporter.verify(function (error, success) {
   if (error) {
-    console.log("❌ Błąd połączenia SMTP:", error);
+    console.log("❌ Błąd połączenia SMTP (Orders):", error.message);
   } else {
-    console.log("✅ Serwer SMTP gotowy do pracy.");
+    console.log("✅ Serwer SMTP gotowy do pracy (Orders).");
   }
 });
 
@@ -37,7 +37,7 @@ transporter.verify(function (error, success) {
 async function sendAdminNotification(order) {
   try {
     const mailOptions = {
-      from: `"PlayAgain System" <${process.env.EMAIL_FROM}>`, // no-reply@ketelman.com
+      from: `"PlayAgain System" <${process.env.EMAIL_FROM}>`, 
       to: 'wiczjan@gmail.com', // Twój adres docelowy
       subject: `💰 Nowe opłacone zamówienie #${order._id.toString().slice(-6)}`,
       html: `
@@ -61,8 +61,6 @@ async function sendAdminNotification(order) {
   }
 }
 
-
-module.exports = router;
 // Funkcja pomocnicza do pobierania Tokena Tpay
 async function getTpayToken() {
   try {
@@ -82,7 +80,6 @@ router.post('/', async (req, res) => {
   try {
     const { customerDetails, items, totalAmount, userId } = req.body;
 
-    // 1. Zapisz zamówienie w bazie (Status: PENDING)
     const newOrder = new Order({
       user: userId || null,
       customerDetails,
@@ -92,35 +89,27 @@ router.post('/', async (req, res) => {
     });
     const savedOrder = await newOrder.save();
 
-    // 2. Pobierz token Tpay
     const accessToken = await getTpayToken();
 
-    // 3. Utwórz transakcję w Tpay
-    // 3. Utwórz transakcję w Tpay
     const transactionRes = await axios.post(
       `${process.env.TPAY_API_URL}/transactions`,
       {
         amount: totalAmount,
         description: `Zamówienie #${savedOrder._id}`,
         hiddenDescription: savedOrder._id.toString(),
-
         payer: {
           email: customerDetails.email,
           name: `${customerDetails.firstName} ${customerDetails.lastName}`,
           address: customerDetails.address,
           city: customerDetails.city,
           code: customerDetails.zipCode,
-          // TU NIE DAJEMY URLS! Tpay ignoruje je tutaj w nowym API.
         },
-
         callbacks: {
-          // TUTAJ JEST POPRAWNE MIEJSCE:
           payerUrls: {
             success: `${process.env.BASE_URL}/sukces?orderId=${savedOrder._id}`,
             error: `${process.env.BASE_URL}/koszyk?error=payment_failed`
           },
           notification: {
-            // Adres, na który Tpay wyśle potwierdzenie w tle
             url: `${process.env.NOTIFICATION_URL}/api/orders/webhook/payment-update`,
             email: customerDetails.email
           }
@@ -129,11 +118,9 @@ router.post('/', async (req, res) => {
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
-    // 4. Zapisz ID transakcji Tpay w bazie (opcjonalnie)
     savedOrder.paymentId = transactionRes.data.transactionId;
     await savedOrder.save();
 
-    // 5. Zwróć link do płatności do Frontendu
     res.status(201).json({
       message: "Zamówienie utworzone",
       orderId: savedOrder._id,
@@ -145,11 +132,11 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: "Błąd podczas tworzenia płatności." });
   }
 });
+
 // 2. WEBHOOK (Powiadomienia z Tpay)
 router.post('/webhook/payment-update', async (req, res) => {
   try {
     console.log("🔔 Otrzymano webhook z Tpay. Body:", req.body);
-
     const { tr_status, tr_error, tr_crc, tr_id } = req.body;
 
     if (tr_status === 'TRUE' && tr_error === 'none') {
@@ -160,15 +147,12 @@ router.post('/webhook/payment-update', async (req, res) => {
           order.paymentId = tr_id;
         }
 
-        // Sprawdzamy czy status się zmienia na PAID (żeby nie wysyłać maili dubli)
         if (order.status !== 'PAID') {
           order.status = 'PAID';
           order.paidAt = new Date();
           await order.save();
 
-          console.log(`✅ Zamówienie ${order._id} zostało opłacone. (123)`);
-
-          // <--- WYSYŁKA MAILA PRZEZ BREVO ---
+          console.log(`✅ Zamówienie ${order._id} zostało opłacone.`);
           sendAdminNotification(order);
 
         } else {
@@ -178,7 +162,6 @@ router.post('/webhook/payment-update', async (req, res) => {
         console.error(`⚠️ Nie znaleziono zamówienia dla CRC: ${tr_crc}`);
       }
     }
-
     res.status(200).send('TRUE');
   } catch (err) {
     console.error("❌ Webhook Error:", err);
@@ -186,74 +169,51 @@ router.post('/webhook/payment-update', async (req, res) => {
   }
 });
 
-// GET /api/orders/my-orders - Pobiera zamówienia zalogowanego użytkownika
+// GET /api/orders/my-orders
 router.get('/my-orders', verify, async (req, res) => {
-  console.log("Probuje pobrac dla", req.user.id)
   try {
-    // Szukamy zamówień, gdzie pole `user` równa się ID z tokena
-    // Sortujemy malejąco po dacie (najnowsze na górze)
-    const orders = await Order.find({ user: req.user.id })
-      .sort({ createdAt: -1 });
-
+    const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
-    console.error("Błąd pobierania zamówień:", err);
     res.status(500).json({ error: "Nie udało się pobrać historii zamówień." });
   }
 });
 
-// GET /api/orders/all - Admin widzi WSZYSTKO
-// Używamy tylko protectAdmin, bo on robi też weryfikację tokena
+// GET /api/orders/all
 router.get('/all', protectAdmin, async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate('user', 'email')
-      .sort({ createdAt: -1 });
+    const orders = await Order.find().populate('user', 'email').sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// PUT /api/orders/:id/status - Admin zmienia status
+// PUT /api/orders/:id/status
 router.put('/:id/status', protectAdmin, async (req, res) => {
   try {
     const { status } = req.body;
-
-    // Walidacja statusów (opcjonalnie)
     const validStatuses = ['PENDING', 'PAID', 'SHIPPED', 'CANCELLED'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: "Nieprawidłowy status" });
-    }
+    if (!validStatuses.includes(status)) return res.status(400).json({ error: "Nieprawidłowy status" });
 
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true } // Zwraca zaktualizowany dokument
-    );
-
-    if (!order) {
-      return res.status(404).json({ error: "Nie znaleziono zamówienia" });
-    }
+    const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!order) return res.status(404).json({ error: "Nie znaleziono zamówienia" });
 
     res.json(order);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-// DELETE /api/orders/:id - Usuwa zamówienie z bazy (Tylko Admin)
+
+// DELETE /api/orders/:id
 router.delete('/:id', protectAdmin, async (req, res) => {
   try {
     const order = await Order.findByIdAndDelete(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({ error: "Zamówienie nie zostało znalezione." });
-    }
-
+    if (!order) return res.status(404).json({ error: "Zamówienie nie zostało znalezione." });
     res.json({ message: "Zamówienie zostało trwale usunięte." });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Błąd serwera podczas usuwania." });
   }
 });
+
 module.exports = router;
