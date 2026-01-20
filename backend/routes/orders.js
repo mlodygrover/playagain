@@ -7,20 +7,25 @@ const verify = require('../middleware/auth');
 // --- KONFIGURACJA TRANSPORTERA EMAIL (BREVO) ---
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: false, // Dla portu 587 musi być false (używa STARTTLS)
+  port: Number(process.env.SMTP_PORT) || 465, // Preferujemy 465
+  secure: true, // WAŻNE: Dla portu 465 ustaw true (SSL), dla 587 false (STARTTLS)
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  // --- FIX NA TIMEOUTY (RENDER/NODE) ---
+  family: 4, // Wymusza użycie IPv4 (rozwiązuje problem ETIMEDOUT)
+  connectionTimeout: 10000, // Czekaj max 10 sekund na połączenie
+  greetingTimeout: 5000,    // Czekaj max 5 sekund na powitanie serwera
+  socketTimeout: 10000,     // Czekaj max 10 sekund na brak aktywności
 });
 
-// Weryfikacja połączenia SMTP przy starcie (opcjonalne, ale pomocne)
+// Opcjonalnie: Weryfikacja przy starcie (pomoże w debugowaniu w logach Rendera)
 transporter.verify(function (error, success) {
   if (error) {
-    console.log("❌ Błąd konfiguracji SMTP:", error);
+    console.log("❌ Błąd połączenia SMTP:", error);
   } else {
-    console.log("✅ Serwer SMTP gotowy do wysyłania wiadomości.");
+    console.log("✅ Serwer SMTP gotowy do pracy.");
   }
 });
 
