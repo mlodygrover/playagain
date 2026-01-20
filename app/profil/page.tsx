@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 const server_port = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
+
 export default function ProfilePage() {
   const { user, token, logout } = useAuth();
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function ProfilePage() {
   
   // Dane z API
   const [profileData, setProfileData] = useState({ firstName: "", lastName: "", email: "" });
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]); // Inicjalizacja pustą tablicą jest kluczowa
   
   // Formularze
   const [passwordForm, setPasswordForm] = useState({ oldPassword: "", newPassword: "" });
@@ -37,18 +38,30 @@ export default function ProfilePage() {
         const userRes = await fetch(`${server_port}/api/users/me`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
-        const userData = await userRes.json();
-        setProfileData(userData);
+        
+        if (userRes.ok) {
+            const userData = await userRes.json();
+            setProfileData(userData);
+        }
 
         // Pobierz zamówienia
         const ordersRes = await fetch(`${server_port}/api/orders/my-orders`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
+        
         const ordersData = await ordersRes.json();
-        setOrders(ordersData);
+
+        // --- POPRAWKA: SPRAWDZENIE CZY DANE TO TABLICA ---
+        if (Array.isArray(ordersData)) {
+            setOrders(ordersData);
+        } else {
+            console.warn("API zwróciło nietablicowe dane dla zamówień:", ordersData);
+            setOrders([]); // Fallback do pustej tablicy, aby .map() nie wywalił błędu
+        }
 
       } catch (err) {
-        console.error(err);
+        console.error("Błąd pobierania danych:", err);
+        setOrders([]); // W razie błędu sieci ustaw pustą tablicę
       } finally {
         setLoading(false);
       }
@@ -221,7 +234,8 @@ export default function ProfilePage() {
                 <Package className="w-5 h-5 text-blue-500" /> Historia Zamówień
               </h3>
 
-              {orders.length === 0 ? (
+              {/* POPRAWKA: Sprawdzamy czy to tablica i czy ma elementy */}
+              {!Array.isArray(orders) || orders.length === 0 ? (
                 <div className="text-center py-12 border border-zinc-800 border-dashed text-zinc-500">
                   Brak zamówień.
                 </div>
@@ -231,13 +245,13 @@ export default function ProfilePage() {
                     <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 pb-4 border-b border-zinc-800/50">
                       <div>
                         <span className="text-[10px] uppercase text-zinc-500 font-mono">ID Zamówienia</span>
-                        <p className="font-mono text-sm text-zinc-300">#{order._id.slice(-6)}</p>
+                        <p className="font-mono text-sm text-zinc-300">#{order._id ? order._id.slice(-6) : '???'}</p>
                       </div>
                       <div className="flex items-center gap-4 mt-2 md:mt-0">
                         <div className="text-right">
                           <span className="text-[10px] uppercase text-zinc-500 font-mono block">Data</span>
                           <span className="text-sm text-zinc-300">
-                            {new Date(order.createdAt).toLocaleDateString()}
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : '-'}
                           </span>
                         </div>
                         <div className={`px-3 py-1 rounded text-[10px] font-bold uppercase border ${
@@ -251,7 +265,8 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="space-y-2">
-                      {order.items.map((item: any, idx: number) => (
+                      {/* POPRAWKA: Optional chaining dla items */}
+                      {order.items?.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <div className="flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"/>
