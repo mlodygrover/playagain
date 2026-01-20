@@ -15,14 +15,17 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-xl border-b border-zinc-800 h-16">
+      <nav className="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-xl border-b border-zinc-800 h-18">
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 h-full flex items-center justify-between">
           
           {/* LOGO */}
           <Link href="/" className="flex items-center gap-3 group z-50" onClick={closeMenu}>
-            <div className="w-8 h-8 bg-blue-600 flex items-center justify-center font-black italic text-black group-hover:bg-white transition-colors">
-              P
-            </div>
+            {/* ZMIANA: Usunięto div z literą P, wstawiono obrazek */}
+            <img 
+              src="/logo.svg" 
+              alt="PlayAgain Logo" 
+              className="w-16 h-16 object-contain" 
+            />
             <span className="font-bold text-lg tracking-tight uppercase text-white">
               PlayAgain<span className="text-zinc-600 group-hover:text-blue-500 transition-colors"></span>
             </span>
@@ -31,7 +34,6 @@ export function Navbar() {
           {/* DESKTOP MENU */}
           <div className="hidden md:flex items-center gap-8">
             <NavLink href="/konfigurator">Konfigurator </NavLink>
-            {/* ZMIANA: Zamiast Podzespoły -> Gotowe Zestawy */}
             <NavLink href="/gotowe-konfiguracje">Gotowe Zestawy</NavLink> 
             <NavLink href="/o-nas">O Nas</NavLink>
           </div>
@@ -148,7 +150,6 @@ export function Navbar() {
 
             {user && <MobileLink href="/profil" onClick={closeMenu}>Twój Profil</MobileLink>}
             <MobileLink href="/konfigurator" onClick={closeMenu}>Konfigurator </MobileLink>
-            {/* ZMIANA: Zamiast Podzespoły -> Gotowe Zestawy */}
             <MobileLink href="/gotowe-konfiguracje" onClick={closeMenu}>Gotowe Zestawy</MobileLink>
             <MobileLink href="/koszyk" onClick={closeMenu}>Twój Koszyk ({items.length})</MobileLink>
           </div>
