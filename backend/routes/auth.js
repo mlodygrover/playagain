@@ -3,37 +3,54 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 const verify = require('../middleware/auth');
 
-// --- KONFIGURACJA TRANSPORTERA EMAIL (BREVO - IDENTYCZNA JAK W ORDERS) ---
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-    port: 587, // Port 587 jest standardem dla Brevo i STARTTLS
-    secure: false, // WAŻNE: Dla portu 587 musi być false (STARTTLS)
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-    tls: {
-        ciphers: 'SSLv3',
-        rejectUnauthorized: false
-    },
-    connectionTimeout: 10000, 
-    greetingTimeout: 5000,
-    socketTimeout: 10000,
-});
+// --- FUNKCJA POMOCNICZA: WYSYŁANIE MAILA PRZEZ API BREVO ---
+async function sendEmailViaApi(to, subject, htmlContent) {
+    try {
+        const apiKey = process.env.BREVO_API_KEY;
+        
+        // Sprawdź czy klucz istnieje
+        if (!apiKey) {
+            console.error("❌ BŁĄD: Brak BREVO_API_KEY w pliku .env");
+            return;
+        }
 
-// Weryfikacja połączenia SMTP przy starcie
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log("❌ Błąd połączenia SMTP (Auth):", error.message);
-  } else {
-    console.log("✅ Serwer SMTP gotowy do pracy (Auth).");
-  }
-});
+        // Adres nadawcy MUSI być zweryfikowany w Brevo!
+        const senderEmail = process.env.EMAIL_FROM || "no-reply@playagain.store";
+        const senderName = "PlayAgain Team";
 
-// 1. REJESTRACJA (Z WYSYŁKĄ EMAILA)
+        const response = await axios.post('https://api.brevo.com/v3/smtp/email', {
+            sender: { name: senderName, email: senderEmail },
+            to: [{ email: to }],
+            subject: subject,
+            htmlContent: htmlContent
+        }, {
+            headers: {
+                'api-key': apiKey,
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+            }
+        });
+
+        // Logujemy sukces wraz z ID wiadomości z Brevo - to dowód, że wyszło
+        console.log(`✅ Brevo API Success: Email do ${to} przyjęty. MessageID: ${response.data.messageId}`);
+    
+    } catch (error) {
+        console.error("❌ Błąd wysyłania emaila API:");
+        if (error.response) {
+            // Serwer odpowiedział kodem błędu (np. 400, 401)
+            console.error("Status:", error.response.status);
+            console.error("Dane:", JSON.stringify(error.response.data, null, 2));
+        } else {
+            // Błąd sieciowy
+            console.error(error.message);
+        }
+    }
+}
+
+// 1. REJESTRACJA
 router.post('/register', async (req, res) => {
     try {
         const { email, password, firstName, lastName } = req.body;
@@ -58,30 +75,28 @@ router.post('/register', async (req, res) => {
         const verifyLink = `${process.env.BASE_URL}/verify?token=${verifyToken}`;
 
         // Wyślij Email
-        await transporter.sendMail({
-            from: `"PlayAgain Team" <${process.env.EMAIL_FROM}>`, 
-            to: email,
-            subject: 'Weryfikacja konta PlayAgain',
-            html: `
-                <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
-                  <div style="text-align: center; margin-bottom: 20px;">
-                     <h1 style="color: #2563EB;">Witaj w PlayAgain! 🎮</h1>
-                  </div>
-                  <p>Dzięki za rejestrację. Aby aktywować konto i dokończyć konfigurację PC, kliknij poniżej:</p>
-                  <div style="text-align: center; margin: 30px 0;">
-                    <a href="${verifyLink}" style="background-color: #2563EB; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
-                      Zweryfikuj Email
+        await sendEmailViaApi(
+            email,
+            'Weryfikacja konta PlayAgain',
+            `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                <h2 style="color: #2563EB;">Witaj ${firstName}!</h2>
+                <p>Dziękujemy za rejestrację. Aby aktywować konto, kliknij poniższy przycisk:</p>
+                <div style="margin: 30px 0;">
+                    <a href="${verifyLink}" style="background-color: #2563EB; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                        Aktywuj Konto
                     </a>
-                  </div>
-                  <p style="color: #666; font-size: 12px; text-align: center;">Jeśli to nie Ty zakładałeś konto, zignoruj tę wiadomość.</p>
                 </div>
-            `,
-        });
-        res.status(201).json({ message: "Rejestracja udana! Sprawdź skrzynkę email, aby aktywować konto." });
+                <p style="color: #666; font-size: 12px;">Jeśli przycisk nie działa, wklej ten link do przeglądarki:<br>${verifyLink}</p>
+            </div>
+            `
+        );
+
+        res.status(201).json({ message: "Rejestracja udana! Sprawdź skrzynkę email." });
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Błąd serwera przy rejestracji." });
+        console.error("Register Error:", err);
+        res.status(500).json({ error: "Błąd serwera." });
     }
 });
 

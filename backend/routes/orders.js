@@ -1,63 +1,57 @@
 const router = require('express').Router();
 const Order = require('../models/Order');
 const axios = require('axios');
-const nodemailer = require('nodemailer');
-const { protectAdmin } = require('../middleware/authMiddleware'); 
+const { protectAdmin } = require('../middleware/authMiddleware');
 const verify = require('../middleware/auth');
 
-// --- KONFIGURACJA TRANSPORTERA EMAIL (BREVO) ---
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port: 587, // Port 587 jest standardem dla Brevo i STARTTLS
-  secure: false, // WAŻNE: Dla portu 587 musi być false (STARTTLS)
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  // --- USTAWIENIA DLA STABILNOŚCI ---
-  tls: {
-    ciphers: 'SSLv3', // Pomaga przy problemach z wersją szyfrowania
-    rejectUnauthorized: false // Ignoruje błędy certyfikatów w dev/test
-  },
-  connectionTimeout: 10000, 
-  greetingTimeout: 5000,
-  socketTimeout: 10000,
-});
-
-// Weryfikacja połączenia SMTP przy starcie
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log("❌ Błąd połączenia SMTP (Orders):", error.message);
-  } else {
-    console.log("✅ Serwer SMTP gotowy do pracy (Orders).");
-  }
-});
-
-// Funkcja pomocnicza do wysyłania maila
+// --- FUNKCJA POMOCNICZA: POWIADOMIENIE ADMINA PRZEZ API BREVO ---
 async function sendAdminNotification(order) {
   try {
-    const mailOptions = {
-      from: `"PlayAgain System" <${process.env.EMAIL_FROM}>`, 
-      to: 'wiczjan@gmail.com', // Twój adres docelowy
-      subject: `💰 Nowe opłacone zamówienie #${order._id.toString().slice(-6)}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-          <h2 style="color: #2563eb;">Otrzymano nową płatność!</h2>
-          <p><strong>Numer zamówienia:</strong> ${order._id}</p>
-          <p><strong>Klient:</strong> ${order.customerDetails.firstName} ${order.customerDetails.lastName}</p>
-          <p><strong>Email klienta:</strong> ${order.customerDetails.email}</p>
-          <p><strong>Kwota:</strong> <span style="font-size: 1.2em; font-weight: bold;">${order.totalAmount} PLN</span></p>
-          <p><strong>Status:</strong> <span style="color: green; font-weight: bold;">OPŁACONE (PAID)</span></p>
-          <hr style="border: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 0.9em; color: #666;">Wiadomość wygenerowana automatycznie przez system PlayAgain.</p>
-        </div>
-      `,
-    };
+    const apiKey = process.env.BREVO_API_KEY;
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`📧 Wysłano powiadomienie email. MessageID: ${info.messageId}`);
+    // Sprawdzenie czy klucz istnieje
+    if (!apiKey) {
+      console.error("❌ BŁĄD: Brak BREVO_API_KEY w pliku .env");
+      return;
+    }
+
+    const senderEmail = process.env.EMAIL_FROM || "no-reply@playagain.store";
+    const senderName = "PlayAgain System";
+
+    const response = await axios.post('https://api.brevo.com/v3/smtp/email', {
+        sender: { name: senderName, email: senderEmail },
+        to: [{ email: "wiczjan@gmail.com", name: "Administrator" }],
+        subject: `💰 Nowe opłacone zamówienie #${order._id.toString().slice(-6)}`,
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #2563eb;">Otrzymano nową płatność!</h2>
+            <p><strong>Numer zamówienia:</strong> ${order._id}</p>
+            <p><strong>Klient:</strong> ${order.customerDetails.firstName} ${order.customerDetails.lastName}</p>
+            <p><strong>Email klienta:</strong> ${order.customerDetails.email}</p>
+            <p><strong>Kwota:</strong> <span style="font-size: 1.2em; font-weight: bold;">${order.totalAmount} PLN</span></p>
+            <p><strong>Status:</strong> <span style="color: green; font-weight: bold;">OPŁACONE (PAID)</span></p>
+            <hr style="border: 1px solid #eee; margin: 20px 0;" />
+            <p style="font-size: 0.9em; color: #666;">Wiadomość wygenerowana automatycznie przez system PlayAgain.</p>
+          </div>
+        `
+    }, {
+        headers: {
+            'api-key': apiKey,
+            'Content-Type': 'application/json',
+            'accept': 'application/json'
+        }
+    });
+
+    console.log(`📧 Admin powiadomiony. ID wiadomości: ${response.data.messageId}`);
+
   } catch (error) {
-    console.error("❌ Błąd wysyłania emaila:", error);
+    console.error("❌ Błąd wysyłania emaila do admina (API):");
+    if (error.response) {
+        console.error("Status:", error.response.status);
+        console.error("Dane:", JSON.stringify(error.response.data, null, 2));
+    } else {
+        console.error(error.message);
+    }
   }
 }
 
@@ -153,7 +147,9 @@ router.post('/webhook/payment-update', async (req, res) => {
           await order.save();
 
           console.log(`✅ Zamówienie ${order._id} zostało opłacone.`);
-          sendAdminNotification(order);
+          
+          // Wysyłka maila do admina przez API Brevo
+          await sendAdminNotification(order);
 
         } else {
           console.log(`ℹ️ Zamówienie ${order._id} było już opłacone wcześniej.`);
