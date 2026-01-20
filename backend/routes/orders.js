@@ -157,7 +157,7 @@ router.post('/webhook/payment-update', async (req, res) => {
           order.paidAt = new Date();
           await order.save();
 
-          console.log(`✅ Zamówienie ${order._id} zostało opłacone!`);
+          console.log(`✅ Zamówienie ${order._id} zostało opłacone. (123)`);
 
           // <--- WYSYŁKA MAILA PRZEZ BREVO ---
           sendAdminNotification(order);
