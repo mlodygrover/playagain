@@ -15,25 +15,32 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-xl border-b border-zinc-800 h-18">
+      <nav 
+        className="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-xl border-b border-zinc-800 h-18"
+        aria-label="Główna nawigacja sklepu PlayAgain"
+      >
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 h-full flex items-center justify-between">
           
-          {/* LOGO */}
-          <Link href="/" className="flex items-center gap-3 group z-50" onClick={closeMenu}>
-            {/* ZMIANA: Usunięto div z literą P, wstawiono obrazek */}
+          {/* LOGO - Ważne dla SEO marki */}
+          <Link 
+            href="/" 
+            className="flex items-center gap-3 group z-50" 
+            onClick={closeMenu}
+            title="PlayAgain - Strona Główna Sklepu Komputerowego"
+          >
+            {/* Alt tag z nazwą firmy */}
             <img 
               src="/logo3.svg" 
-              alt="PlayAgain Logo" 
+              alt="PlayAgain Logo - Używane Komputery Gamingowe" 
               className="w-60 h-16 object-contain" 
             />
-          
           </Link>
 
-          {/* DESKTOP MENU */}
+          {/* DESKTOP MENU - Linki z TITLE */}
           <div className="hidden md:flex items-center gap-8">
-            <NavLink href="/konfigurator">Konfigurator </NavLink>
-            <NavLink href="/gotowe-konfiguracje">Gotowe Zestawy</NavLink> 
-            <NavLink href="/o-nas">O Nas</NavLink>
+            <NavLink href="/konfigurator" title="Skonfiguruj własny komputer PC w PlayAgain">Konfigurator PC 3D</NavLink>
+            <NavLink href="/gotowe-konfiguracje" title="Zobacz gotowe zestawy komputerowe PlayAgain">Gotowe Zestawy</NavLink> 
+            <NavLink href="/o-nas" title="Dowiedz się więcej o marce PlayAgain">O Nas</NavLink>
           </div>
 
           {/* ACTION ICONS */}
@@ -43,6 +50,7 @@ export function Navbar() {
              {isAdmin && (
                <Link 
                  href="/admin" 
+                 title="Panel Administratora PlayAgain"
                  className="hidden sm:flex items-center gap-2 text-xs font-bold text-red-500 hover:text-red-400 uppercase tracking-widest transition-colors mr-4 border border-red-900/30 bg-red-900/10 px-3 py-1.5 rounded"
                >
                  <ShieldAlert className="w-4 h-4" /> Admin
@@ -55,7 +63,7 @@ export function Navbar() {
                  <Link 
                     href="/profil" 
                     className="text-right group/profile cursor-pointer"
-                    title="Przejdź do profilu"
+                    title={`Profil użytkownika ${user.firstName || user.email} w PlayAgain`}
                  >
                    <span className="block text-[10px] text-zinc-500 uppercase font-bold group-hover/profile:text-blue-500 transition-colors">
                      Zalogowany
@@ -67,7 +75,8 @@ export function Navbar() {
 
                  <button 
                    onClick={logout} 
-                   title="Wyloguj"
+                   title="Wyloguj się ze sklepu PlayAgain"
+                   aria-label="Wyloguj się"
                    className="p-2 hover:bg-zinc-800 rounded-full transition-colors group"
                  >
                    <LogOut className="w-4 h-4 text-zinc-500 group-hover:text-red-500" />
@@ -76,6 +85,7 @@ export function Navbar() {
              ) : (
                <Link 
                  href="/login" 
+                 title="Zaloguj się do konta PlayAgain"
                  className="hidden sm:flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-widest transition-colors mr-2 border-r border-zinc-800 pr-4"
                >
                  <UserIcon className="w-4 h-4" /> Logowanie
@@ -83,7 +93,12 @@ export function Navbar() {
              )}
 
              {/* KOSZYK */}
-             <Link href="/koszyk" className="flex text-xs font-mono text-zinc-400 hover:text-white uppercase transition items-center gap-2 group">
+             <Link 
+                href="/koszyk" 
+                title="Twój koszyk w sklepie PlayAgain"
+                aria-label={`Koszyk z zakupami, liczba produktów: ${items.length}`}
+                className="flex text-xs font-mono text-zinc-400 hover:text-white uppercase transition items-center gap-2 group"
+             >
                <ShoppingBag className="w-5 h-5 group-hover:text-blue-500 transition-colors" />
                {items.length > 0 && (
                  <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold animate-in zoom-in">
@@ -95,6 +110,7 @@ export function Navbar() {
              {/* CTA */}
              <Link 
                href="/konfigurator"
+               title="Rozpocznij konfigurację komputera w PlayAgain"
                className="hidden sm:block bg-white text-black text-xs font-bold px-5 py-2 uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all skew-x-[-10deg]"
              >
                <span className="skew-x-[10deg] inline-block">Zbuduj PC</span>
@@ -104,6 +120,8 @@ export function Navbar() {
              <button 
                 className="md:hidden text-white p-2 hover:bg-zinc-800 rounded transition-colors" 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? "Zamknij menu" : "Otwórz menu"}
+                aria-expanded={isMobileMenuOpen}
              >
                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
              </button>
@@ -119,23 +137,22 @@ export function Navbar() {
           <div className="mb-6 pb-6 border-b border-zinc-800">
             {user ? (
                <div className="flex items-center justify-between">
-                 <Link href="/profil" onClick={closeMenu} className="group">
+                 <Link href="/profil" onClick={closeMenu} className="group" title="Twój profil PlayAgain">
                    <p className="text-xs text-zinc-500 uppercase group-hover:text-blue-500 transition-colors">Witaj</p>
                    <p className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{user.firstName || user.email}</p>
                  </Link>
                  <button onClick={logout} className="text-red-500 text-xs uppercase font-bold border border-zinc-800 px-3 py-2">Wyloguj</button>
                </div>
             ) : (
-               <Link href="/login" onClick={closeMenu} className="flex items-center gap-2 text-blue-500 font-bold uppercase">
+               <Link href="/login" onClick={closeMenu} className="flex items-center gap-2 text-blue-500 font-bold uppercase" title="Zaloguj się do PlayAgain">
                  <UserIcon className="w-5 h-5" /> Zaloguj się / Rejestracja
                </Link>
             )}
           </div>
 
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4">Nawigacja</p>
+            <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4">Nawigacja PlayAgain</p>
             
-            {/* ADMIN (MOBILE) */}
             {isAdmin && (
               <Link 
                 href="/admin" 
@@ -147,7 +164,7 @@ export function Navbar() {
             )}
 
             {user && <MobileLink href="/profil" onClick={closeMenu}>Twój Profil</MobileLink>}
-            <MobileLink href="/konfigurator" onClick={closeMenu}>Konfigurator </MobileLink>
+            <MobileLink href="/konfigurator" onClick={closeMenu}>Konfigurator PC</MobileLink>
             <MobileLink href="/gotowe-konfiguracje" onClick={closeMenu}>Gotowe Zestawy</MobileLink>
             <MobileLink href="/koszyk" onClick={closeMenu}>Twój Koszyk ({items.length})</MobileLink>
           </div>
@@ -156,6 +173,7 @@ export function Navbar() {
             <Link 
                href="/konfigurator"
                onClick={closeMenu}
+               title="Uruchom konfigurator PC PlayAgain"
                className="w-full bg-blue-600 text-white font-bold text-center py-4 uppercase tracking-widest hover:bg-blue-500 transition-colors flex items-center justify-center gap-2"
              >
                Rozpocznij Konfigurację <ArrowRight className="w-4 h-4" />
@@ -169,8 +187,12 @@ export function Navbar() {
 }
 
 // Helpers
-const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
-  <Link href={href} className="text-xs font-mono text-zinc-400 hover:text-blue-500 uppercase tracking-widest transition-colors relative group">
+const NavLink = ({ href, children, title }: { href: string; children: React.ReactNode; title?: string }) => (
+  <Link 
+    href={href} 
+    title={title}
+    className="text-xs font-mono text-zinc-400 hover:text-blue-500 uppercase tracking-widest transition-colors relative group"
+  >
     {children}
     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full" />
   </Link>

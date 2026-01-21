@@ -5,42 +5,33 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
-import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 // --- 1. KONFIGURACJA GŁÓWNA SEO ---
 export const metadata: Metadata = {
-  // Ważne: Ustawienie domeny bazowej naprawia linki kanoniczne i OG Image
-  metadataBase: new URL("https://playagain.store"), 
+  metadataBase: new URL("https://playagain.store"),
 
-  title: {
-    default: "PlayAgain | Używane Komputery Gamingowe i Konfigurator 3D",
-    template: "%s | PlayAgain Store" // Na podstronach będzie: "Tytuł Strony | PlayAgain Store"
-  },
-  
-  description: "Zbuduj wymarzony komputer gamingowy taniej o 40%. PlayAgain oferuje certyfikowany sprzęt refurbished z gwarancją 24 miesiące. Skorzystaj z konfiguratora PC 3D.",
-  
+  title: "Konfigurator PC 3D | Złóż Tani Komputer Gamingowy z Części Używanych",
+  description: "Pierwszy w Polsce konfigurator używanych komputerów gamingowych. Zbuduj PC w 3D taniej o 40%. Gwarancja 24 miesiące, części refurbished, RTX i Intel/AMD.",
   keywords: [
-    "konfigurator pc", 
-    "komputery używane", 
-    "refurbished pc", 
-    "tanie granie", 
-    "sklep komputerowy", 
-    "rtx używane", 
-    "playagain",
-    "komputery gamingowe poznań"
+    "konfigurator komputera",
+    "konfigurator pc",
+    "używane komputery gamingowe",
+    "składanie komputera online",
+    "tani komputer do gier",
+    "konfigurator pc 3d",
+    "części używane z gwarancją",
+    "komputery refurbished"
   ],
 
-  // --- 2. USTAWIENIA IKON (LOGO W PASKU I GOOGLE) ---
   icons: {
-    icon: "/logo2.svg", // Ikona w karcie przeglądarki i wynikach Google
+    icon: "/logo2.svg",
     shortcut: "/logo2.svg",
-    apple: "/logo2.svg", // Ikona dla iPhone/iPad
+    apple: "/logo2.svg",
   },
 
-  // Social Media (Facebook, Discord, LinkedIn)
   openGraph: {
     title: "PlayAgain - Next Gen Refurbished",
     description: "Wydajność klasy premium za ułamek ceny. Sprawdź nasze zestawy i interaktywny konfigurator.",
@@ -50,7 +41,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.jpg", // Upewnij się, że masz plik og-image.jpg w folderze public (1200x630px)
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "PlayAgain Store - Konfigurator PC",
@@ -58,15 +49,13 @@ export const metadata: Metadata = {
     ],
   },
 
-  // Twitter Cards
   twitter: {
     card: "summary_large_image",
     title: "PlayAgain | Tanie Komputery Gamingowe",
     description: "Zbuduj swój PC w 3D. Gwarancja 24m. Oszczędź do 40%.",
-    images: ["/og-image.jpg"], // To samo zdjęcie co wyżej
+    images: ["/og-image.jpg"],
   },
 
-  // Roboty indeksujące
   robots: {
     index: true,
     follow: true,
@@ -80,7 +69,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Optymalizacja widoku mobilnego
 export const viewport: Viewport = {
   themeColor: "#000000",
   width: "device-width",
@@ -88,12 +76,12 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-// --- 3. DANE STRUKTURALNE (SCHEMA.ORG) ---
-// To pomaga Google zrozumieć, że to Sklep i przypisać logo do marki
+// --- 3. DANE STRUKTURALNE SKLEPU (GLOBALNE) ---
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "Store",
+  "@type": "ComputerStore", // Precyzyjny typ
   "name": "PlayAgain",
+  "alternateName": "PlayAgain Store",
   "url": "https://playagain.store",
   "logo": "https://playagain.store/logo.svg",
   "image": "https://playagain.store/og-image.jpg",
@@ -101,24 +89,30 @@ const jsonLd = {
   "openingHoursSpecification": {
     "@type": "OpeningHoursSpecification",
     "dayOfWeek": [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday"
+      "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
     ],
     "opens": "09:00",
     "closes": "17:00"
   },
-  // Opcjonalnie: adres, jeśli masz fizyczny
-  // "address": {
-  //   "@type": "PostalAddress",
-  //   "streetAddress": "Ulica",
-  //   "addressLocality": "Poznań",
-  //   "postalCode": "60-000",
-  //   "addressCountry": "PL"
-  // },
-  "priceRange": "$$"
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "ul. Cybernetyki 10",
+    "addressLocality": "Warszawa",
+    "postalCode": "02-677",
+    "addressCountry": "PL"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "52.1795",
+    "longitude": "21.0000"
+  },
+  "priceRange": "$$",
+  // Linki do Social Media (Ważne dla Brand Authority)
+  "sameAs": [
+    "https://www.facebook.com/playagainstore",
+    "https://www.instagram.com/playagainstore",
+    "https://www.tiktok.com/@playagainstore"
+  ]
 };
 
 export default function RootLayout({
@@ -129,7 +123,6 @@ export default function RootLayout({
   return (
     <html lang="pl" className={`${inter.variable} ${mono.variable}`}>
       <head>
-        {/* Wstrzyknięcie danych strukturalnych JSON-LD */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
