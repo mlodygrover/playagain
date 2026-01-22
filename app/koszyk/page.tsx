@@ -2,7 +2,7 @@
 
 import { useCart } from "@/context/CartContext";
 import { Trash2, ArrowRight, ShoppingBag, Package } from "lucide-react";
-import Link from "next/link"; // Upewnij się, że Link jest zaimportowany
+import Link from "next/link";
 
 export default function CartPage() {
   const { items, removeFromCart, totalPrice } = useCart();
@@ -38,9 +38,9 @@ export default function CartPage() {
         {/* LISTA PRODUKTÓW */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <div key={item.id} className="bg-zinc-900/30 border border-zinc-800 p-6 flex flex-col sm:flex-row gap-6 group hover:border-zinc-700 transition-colors">
+            /* ZMIANA 1: Używamy unikalnego cartEntryId jako klucza */
+            <div key={item.cartEntryId} className="bg-zinc-900/30 border border-zinc-800 p-6 flex flex-col sm:flex-row gap-6 group hover:border-zinc-700 transition-colors">
               
-              {/* Ikona / Obrazek */}
               <div className="w-20 h-20 bg-black border border-zinc-800 flex items-center justify-center flex-shrink-0">
                 {item.type === "custom_build" ? (
                   <Package className="w-8 h-8 text-blue-500" />
@@ -49,7 +49,6 @@ export default function CartPage() {
                 )}
               </div>
 
-              {/* Info */}
               <div className="flex-grow">
                 <div className="flex justify-between items-start mb-2">
                   <div>
@@ -61,7 +60,6 @@ export default function CartPage() {
                   <p className="font-mono text-lg font-bold text-white">{item.price} PLN</p>
                 </div>
 
-                {/* Lista komponentów (jeśli to zestaw PC) */}
                 {item.components && (
                   <ul className="mt-4 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-zinc-400 border-t border-zinc-800 pt-3">
                     {item.components.map((comp, idx) => (
@@ -74,7 +72,8 @@ export default function CartPage() {
                 )}
 
                 <button 
-                  onClick={() => removeFromCart(item.id)}
+                  /* ZMIANA 2: Usuwamy przekazując cartEntryId */
+                  onClick={() => removeFromCart(item.cartEntryId)}
                   className="text-xs text-red-500 hover:text-red-400 flex items-center gap-1 mt-auto"
                 >
                   <Trash2 className="w-3 h-3" /> Usuń
@@ -84,7 +83,7 @@ export default function CartPage() {
           ))}
         </div>
 
-        {/* PODSUMOWANIE (Sticky) */}
+        {/* PODSUMOWANIE */}
         <div className="lg:col-span-1">
           <div className="bg-zinc-950 border border-zinc-800 p-6 sticky top-24">
             <h2 className="font-bold text-xl mb-6 uppercase">Podsumowanie</h2>
@@ -109,7 +108,6 @@ export default function CartPage() {
               <span className="text-2xl font-black text-blue-500 font-mono">{totalPrice} PLN</span>
             </div>
 
-            {/* --- ZMIANA: PRZYCISK ZAMIENIONY NA LINK DO /platnosc --- */}
             <Link 
               href="/platnosc"
               className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 text-center block"
@@ -122,7 +120,6 @@ export default function CartPage() {
             </p>
           </div>
         </div>
-
       </div>
     </div>
   );

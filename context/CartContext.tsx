@@ -2,21 +2,20 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-// Definicja pojedynczego produktu w koszyku
-// Może to być pojedyncza część LUB cały skonfigurowany PC
 export type CartItem = {
-  id: string; // Unikalne ID wpisu w koszyku (np. timestamp)
+  cartEntryId: string; // UNIKALNE ID dla wpisu w koszyku
+  id: string;          // ID produktu z bazy danych
   name: string;
   price: number;
   image?: string | null;
   type: "single_part" | "custom_build";
-  components?: string[]; // Lista nazw komponentów (dla zestawu PC)
+  components?: string[];
 };
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (item: CartItem) => void;
-  removeFromCart: (id: string) => void;
+  addToCart: (item: Omit<CartItem, "cartEntryId">) => void; // Przy dodawaniu nie musisz podawać cartEntryId
+  removeFromCart: (cartEntryId: string) => void; // Usuwamy po unikalnym ID wpisu
   clearCart: () => void;
   totalPrice: number;
 }
@@ -26,25 +25,42 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
-  // Opcjonalnie: Ładowanie z LocalStorage przy starcie
   useEffect(() => {
     const savedCart = localStorage.getItem("playagain_cart");
     if (savedCart) {
-      setItems(JSON.parse(savedCart));
+      try {
+        setItems(JSON.parse(savedCart));
+      } catch (e) {
+        console.error("Błąd parsowania koszyka", e);
+      }
     }
   }, []);
 
-  // Zapisywanie do LocalStorage przy zmianach
   useEffect(() => {
     localStorage.setItem("playagain_cart", JSON.stringify(items));
   }, [items]);
 
-  const addToCart = (item: CartItem) => {
-    setItems((prev) => [...prev, item]);
+  // Funkcja dodawania generuje teraz unikalny klucz dla każdego wpisu
+  const addToCart = (item: Omit<CartItem, "cartEntryId">) => {
+    const newItem: CartItem = {
+      ...item,
+      cartEntryId: `${item.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    };
+    setItems((prev) => [...prev, newItem]);
   };
 
-  const removeFromCart = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  // Funkcja usuwania filtruje po cartEntryId zamiast zwykłym id produktu
+  const removeFromCart = (cartEntryId: string) => {
+    setItems((prev) => {
+      // Znajdujemy indeks pierwszego elementu o tym ID wpisu
+      const index = prev.findIndex(item => item.cartEntryId === cartEntryId);
+      if (index !== -1) {
+        const newItems = [...prev];
+        newItems.splice(index, 1); // Usuwa dokładnie jeden element
+        return newItems;
+      }
+      return prev;
+    });
   };
 
   const clearCart = () => setItems([]);

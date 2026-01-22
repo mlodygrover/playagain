@@ -1,92 +1,94 @@
 import { 
   ShieldCheck, Recycle, Cpu, Activity, 
-  Terminal, Server, Globe, Wrench 
+  Terminal, Server, Globe, Wrench, Boxes, History, Lightbulb
 } from "lucide-react";
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-blue-600 selection:text-white pt-24 pb-20">
       
-      {/* 1. HERO - MANIFESTO */}
-      <section className="max-w-4xl mx-auto px-6 text-center mb-24">
-        <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 border border-zinc-800 text-xs font-mono text-zinc-500 uppercase tracking-widest">
-          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          Mission Log: 2026
+      {/* 1. HERO - MANIFEST MARKI */}
+      <section className="max-w-4xl mx-auto px-6 mb-32">
+        <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 border border-blue-900/30 bg-blue-950/20 text-xs font-mono text-blue-400 uppercase tracking-widest rounded-full">
+          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+          Technologia w obiegu zamkniętym
         </div>
         <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-8 leading-tight">
-          Nie produkujemy. <br/>
-          <span className="text-blue-600">My przywracamy.</span>
+          Definiujemy <br/>
+          <span className="text-blue-600">wydajność na nowo.</span>
         </h1>
-        <p className="text-xl text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-          Przemysł technologiczny generuje 50 milionów ton elektrośmieci rocznie. 
-          PlayAgain to nasza odpowiedź. Bierzemy topowy sprzęt, który został "skreślony", 
-          i przywracamy mu wydajność fabryczną.
-        </p>
+        <div className="space-y-6 text-xl text-zinc-400 leading-relaxed max-w-3xl">
+          <p>
+            <span className="text-white font-bold">PlayAgain</span> to rzemieślnicza manufaktura komputerowa, która powstała z przekonania, że najwyższa wydajność nie musi oznaczać ciągłej produkcji nowych elektrośmieci. Wierzymy, że najlepszy komputer to taki, który już istnieje, ale potrzebuje inżynierskiej precyzji, by wrócić do gry.
+          </p>
+          <p>
+            Działamy na styku pasji do hardware'u i idei <span className="text-white border-b border-blue-600">Circular Economy</span>. Nie jesteśmy zwykłym sklepem – jesteśmy zespołem, który bierze na warsztat sprawdzone podzespoły klasy premium i przywraca im sprawność fabryczną, często przewyższając standardy rynkowe.
+          </p>
+        </div>
       </section>
 
-      {/* 2. STATYSTYKI (GRID) */}
-      <section className="border-y border-zinc-800 bg-zinc-950/50 mb-24">
-        <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-zinc-800">
-          <StatBox 
-            label="Zaoszczędzone CO2" 
-            value="12,500 kg" 
-            desc="Tyle dwutlenku węgla nie trafiło do atmosfery dzięki naszym klientom." 
+      {/* 2. EKOSYSTEM HOLDINGU */}
+      <section className="max-w-[1600px] mx-auto px-6 mb-32">
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-xs font-mono text-blue-500 uppercase tracking-[0.3em] mb-4">Zaplecze Technologiczne</h2>
+            <h3 className="text-3xl md:text-4xl font-black uppercase mb-6 italic">Część ekosystemu Ketelman Holding</h3>
+            <p className="text-zinc-400 leading-relaxed mb-8">
+              PlayAgain nie funkcjonuje w izolacji. Jako integralna część grupy <span className="text-white font-bold">Ketelman Holding</span>, korzystamy z zaawansowanej infrastruktury diagnostycznej, globalnego zaplecza logistycznego oraz interdyscyplinarnej wiedzy ekspertów IT. To połączenie rzemieślniczej dbałości o detal z bezpieczeństwem i stabilnością dużej grupy kapitałowej.
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 border border-zinc-800 rounded-xl bg-black/40">
+                <span className="block text-white font-bold mb-1 font-mono">Ketelman.com</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider">Venture Building & Tech</span>
+              </div>
+              <div className="p-4 border border-zinc-800 rounded-xl bg-black/40">
+                <span className="block text-white font-bold mb-1 font-mono">DraftnGo.com</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider">AI Sports Analytics</span>
+              </div>
+            </div>
+          </div>
+          <div className="relative aspect-video bg-zinc-950 rounded-2xl border border-zinc-800 flex items-center justify-center overflow-hidden group">
+             <div className="absolute inset-0 bg-blue-600/5 mix-blend-overlay group-hover:bg-transparent transition-colors"></div>
+             <Boxes className="w-32 h-32 text-zinc-800 group-hover:text-blue-900 transition-all duration-700" />
+             <div className="absolute bottom-4 left-4 font-mono text-[10px] text-zinc-600 uppercase">Holding Infrastructure Access</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. FILARY OPERACYJNE */}
+      <section className="max-w-5xl mx-auto px-6 mb-32">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-black uppercase tracking-tighter">Protokół PlayAgain</h2>
+          <div className="w-20 h-1 bg-blue-600 mx-auto mt-4"></div>
+        </div>
+
+        <div className="space-y-24">
+          <SectionItem 
+            icon={<History className="w-12 h-12 text-blue-500" />}
+            title="Selekcja Hardware"
+            desc="Każdy komponent w naszych zestawach przechodzi rygorystyczną weryfikację. Nie szukamy okazji – szukamy jednostek o udokumentowanej stabilności i potencjale cieplnym, które po procesie renowacji zaoferują wydajność identyczną z nowymi odpowiednikami."
           />
-          <StatBox 
-            label="Odnowione Jednostki" 
-            value="3,400+" 
-            desc="Komputery, które wróciły do gry zamiast trafić na wysypisko." 
+          <SectionItem 
+            icon={<Lightbulb className="w-12 h-12 text-yellow-500" />}
+            title="Optymalizacja i Modernizacja"
+            desc="Przywrócenie sprawności to dopiero początek. W PlayAgain optymalizujemy każdy zestaw: stosujemy markowe pasty o wysokiej przewodności, modernizujemy systemy chłodzenia i aktualizujemy oprogramowanie układowe (BIOS), aby zapewnić maksymalną kulturę pracy."
+            reverse
           />
-          <StatBox 
-            label="Średnia Oszczędność" 
-            value="35%" 
-            desc="Tyle średnio zostaje w kieszeni klienta w porównaniu do nowego sprzętu." 
+          <SectionItem 
+            icon={<ShieldCheck className="w-12 h-12 text-green-500" />}
+            title="Standard Gwarancyjny"
+            desc="Budujemy markę opartą na zaufaniu. Każdy odnowiony komputer objęty jest pełną, 24-miesięczną gwarancją. Nasz model operacyjny zakłada, że technologia odnowiona (refurbished) musi być równie niezawodna, co fabrycznie nowa."
           />
         </div>
       </section>
 
-      {/* 3. PROCES RENOWACJI (Timeline) */}
-      <section className="max-w-5xl mx-auto px-6 mb-24">
-        <div className="mb-12">
-          <h2 className="text-3xl font-bold uppercase tracking-tight mb-2">Protokół Odnowy</h2>
-          <p className="text-zinc-500 font-mono text-sm">// JAK ZAPEWNIAMY JAKOŚĆ?</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ProcessCard 
-            number="01" 
-            title="Selekcja i Czyszczenie" 
-            icon={<Recycle className="w-6 h-6" />}
-            text="Sprzęt trafia do myjki ultradźwiękowej. Usuwamy każdy pyłek kurzu z radiatorów i PCB. Wymieniamy pasty termoprzewodzące na Thermal Grizzly."
-          />
-          <ProcessCard 
-            number="02" 
-            title="Diagnostyka Hardware" 
-            icon={<Activity className="w-6 h-6" />}
-            text="Sprawdzamy kondensatory, sekcje zasilania i pamięci VRAM. Używamy profesjonalnych kamer termowizyjnych, by wykryć hotspoty."
-          />
-          <ProcessCard 
-            number="03" 
-            title="Stress Testy 24h" 
-            icon={<Terminal className="w-6 h-6" />}
-            text="Każde GPU i CPU przechodzi 24-godzinną pętlę w benchmarkach (FurMark, Cinebench, OCCT). Jeśli sprzęt ma paść - padnie u nas, nie u Ciebie."
-          />
-          <ProcessCard 
-            number="04" 
-            title="Certyfikacja i Bios" 
-            icon={<ShieldCheck className="w-6 h-6" />}
-            text="Wgrywamy najnowszy stabilny BIOS, ustawiamy krzywe wentylatorów dla ciszy i naklejamy plombę gwarancyjną PlayAgain™."
-          />
-        </div>
-      </section>
-
-      {/* 4. WARTOŚCI (Grid mniejszy) */}
-      <section className="max-w-[1600px] mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <ValueCard icon={<Globe className="w-5 h-5 text-blue-500" />} title="Eco-Friendly" />
-          <ValueCard icon={<Wrench className="w-5 h-5 text-blue-500" />} title="Serwis Door-to-Door" />
-          <ValueCard icon={<Server className="w-5 h-5 text-blue-500" />} title="Wsparcie 24/7" />
-          <ValueCard icon={<Cpu className="w-5 h-5 text-blue-500" />} title="Części Premium" />
+      {/* 4. CTA */}
+      <section className="max-w-4xl mx-auto px-6 text-center py-20 border-t border-zinc-800">
+        <h2 className="text-3xl font-bold mb-6 italic">Gotowy na nową rundę?</h2>
+        <p className="text-zinc-500 mb-10">Dołącz do społeczności graczy, którzy stawiają na inteligentną wydajność.</p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/konfigurator" className="px-10 py-4 bg-white text-black font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">Konfigurator 3D</a>
+            <a href="/gotowe-konfiguracje" className="px-10 py-4 border border-zinc-800 font-black uppercase tracking-widest hover:border-white transition-all">Gotowe Zestawy</a>
         </div>
       </section>
 
@@ -96,34 +98,14 @@ export default function AboutPage() {
 
 // --- KOMPONENTY POMOCNICZE ---
 
-const StatBox = ({ label, value, desc }: { label: string, value: string, desc: string }) => (
-  <div className="p-10 text-center group hover:bg-zinc-900 transition-colors">
-    <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-3">{label}</p>
-    <p className="text-5xl md:text-6xl font-black text-white mb-4 group-hover:text-blue-500 transition-colors">{value}</p>
-    <p className="text-zinc-400 text-sm leading-relaxed max-w-xs mx-auto">{desc}</p>
-  </div>
-);
-
-const ProcessCard = ({ number, title, text, icon }: any) => (
-  <div className="bg-zinc-900/30 border border-zinc-800 p-8 flex gap-6 hover:border-blue-600/50 transition-colors group">
-    <div className="flex-shrink-0 flex flex-col items-center gap-2">
-      <span className="text-4xl font-black text-zinc-800 group-hover:text-blue-900 transition-colors">{number}</span>
-      <div className="w-10 h-10 bg-zinc-900 flex items-center justify-center border border-zinc-800 text-zinc-400 group-hover:text-blue-400 group-hover:border-blue-500/30">
-        {icon}
-      </div>
+const SectionItem = ({ icon, title, desc, reverse = false }: any) => (
+  <div className={`flex flex-col ${reverse ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-12 group`}>
+    <div className="flex-shrink-0 bg-zinc-900/50 w-32 h-32 md:w-48 md:h-48 rounded-full flex items-center justify-center border border-zinc-800 group-hover:border-blue-600/50 transition-all duration-500 shadow-2xl">
+      {icon}
     </div>
-    <div>
-      <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">{title}</h3>
-      <p className="text-sm text-zinc-400 leading-relaxed">
-        {text}
-      </p>
+    <div className={reverse ? 'text-right' : 'text-left'}>
+      <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 uppercase tracking-tight">{title}</h3>
+      <p className="text-zinc-400 text-lg leading-relaxed">{desc}</p>
     </div>
-  </div>
-);
-
-const ValueCard = ({ icon, title }: any) => (
-  <div className="border border-zinc-800 p-6 flex items-center gap-4 bg-black hover:bg-zinc-900 transition-colors">
-    {icon}
-    <span className="font-bold text-zinc-300 uppercase tracking-wide text-sm">{title}</span>
   </div>
 );
