@@ -77,7 +77,7 @@ export default function AboutPage() {
           <SectionItem 
             icon={<ShieldCheck className="w-12 h-12 text-green-500" />}
             title="Standard Gwarancyjny"
-            desc="Budujemy markę opartą na zaufaniu. Każdy odnowiony komputer objęty jest pełną, 24-miesięczną gwarancją. Nasz model operacyjny zakłada, że technologia odnowiona (refurbished) musi być równie niezawodna, co fabrycznie nowa."
+            desc="Budujemy markę opartą na zaufaniu. Nasz model operacyjny zakłada, że technologia odnowiona musi być równie niezawodna, co fabrycznie nowa."
           />
         </div>
       </section>

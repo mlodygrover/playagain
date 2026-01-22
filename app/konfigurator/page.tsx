@@ -530,7 +530,7 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
       <div className="lg:col-span-8 flex flex-col gap-4 pb-20">
         <div className="border-b border-zinc-800 pb-6 mb-4">
           <h1 className="text-4xl font-black uppercase tracking-tighter italic text-white mb-2">Configurator <span className="text-blue-600">V.2.0</span></h1>
-          <p className="text-zinc-500 font-mono text-sm max-w-xl">// LIVE PRICES FROM DATABASE. <br />// ONLY AVAILABLE COMPONENTS SHOWN.</p>
+          <p className="text-zinc-500 font-mono text-sm max-w-xl">// CENY LIVE Z BAZY DANYCH <br />// WIDOCZNE TYLKO DOSTĘPNE KOMPONENTY.</p>
         </div>
 
         {categories.map((category) => {

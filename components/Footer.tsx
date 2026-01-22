@@ -1,44 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { 
-  ArrowRight, 
-  Twitter, 
-  Instagram, 
-  Mail, 
+import {
+  ArrowRight,
+  Twitter,
+  Instagram,
+  Mail,
   ExternalLink,
   MapPin,
-  Building2 
+  Building2
 } from "lucide-react";
 
 export function Footer() {
   return (
     <footer className="bg-black border-t border-zinc-800 pt-16 pb-8" aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">Stopka serwisu PlayAgain Store</h2>
-      
+
       <div className="max-w-[1600px] mx-auto px-6">
-        
+
         {/* RZĄD GÓRNY: LOGO & KETELMAN HOLDING (BARDZO WYEKSPONOWANY) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          
+
           {/* 1. MARKA I LOGO */}
           <div className="space-y-6 flex flex-col justify-center">
             <Link href="/" className="block w-fit opacity-90 hover:opacity-100 transition-opacity" aria-label="Strona główna PlayAgain">
-              <img 
-                src="/logo3.svg" 
-                alt="PlayAgain Logo" 
+              <img
+                src="/logo3.svg"
+                alt="PlayAgain Logo"
                 className="h-12 w-auto object-contain"
               />
             </Link>
-            
+
             <p className="text-zinc-400 text-sm leading-relaxed max-w-md">
-              Lider rynku elektroniki odnowionej. Projektujemy wydajne <strong>komputery gamingowe</strong> w oparciu o technologię obiegu zamkniętego. 
-              Maksymalna wydajność, gwarancja 24 miesiące.
+              Wierzymy w rewolucję rynku używanej elektroniki. Projektujemy wydajne <strong>komputery gamingowe</strong> w oparciu o technologię obiegu zamkniętego.
+              Maksymalizujemy wydajność, minimalizujemy cenę.
             </p>
 
             <div className="flex gap-4 pt-2">
-                <SocialIcon href="https://twitter.com/playagainstore" label="Twitter" icon={<Twitter className="w-4 h-4" />} />
-                <SocialIcon href="https://instagram.com/playagainstore" label="Instagram" icon={<Instagram className="w-4 h-4" />} />
+              <SocialIcon href="https://twitter.com/playagainstore" label="Twitter" icon={<Twitter className="w-4 h-4" />} />
+              <SocialIcon href="https://instagram.com/playagainstore" label="Instagram" icon={<Instagram className="w-4 h-4" />} />
             </div>
           </div>
 
@@ -47,9 +47,9 @@ export function Footer() {
             <div className="space-y-4 text-center md:text-left">
               <p className="text-[10px] uppercase tracking-[0.2em] text-blue-500 font-mono font-bold">Holding</p>
               <div className="opacity-90 group-hover:opacity-100 transition-opacity">
-                <img 
-                  src="/ketelman.svg" 
-                  alt="Ketelman Holding Logo" 
+                <img
+                  src="/ketelman.svg"
+                  alt="Ketelman Holding Logo"
                   className="h-12 w-auto object-contain mx-auto md:mx-0"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
@@ -59,13 +59,13 @@ export function Footer() {
                 <span className="hidden text-3xl font-black text-white uppercase tracking-tighter italic">Ketelman<span className="font-light not-italic">Holding</span></span>
               </div>
               <p className="text-sm text-zinc-400 max-w-sm leading-relaxed">
-                PlayAgain jest dumną częścią ekosystemu <strong>Ketelman Holding</strong>. 
+                PlayAgain jest dumną częścią ekosystemu <strong>Ketelman Holding</strong>.
                 Wspólnie budujemy przyszłość zrównoważonej technologii.
               </p>
             </div>
 
             <div className="w-full md:w-auto flex flex-col gap-3 min-w-[200px]">
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 font-mono text-center md:text-left">Grupa Kapitałowa</p>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-600 font-mono text-center md:text-left">Pozostałe projekty</p>
               <ExternalProjectLink href="https://ketelman.com" name="Ketelman.com" />
               <ExternalProjectLink href="https://draftngo.com" name="DraftnGo.com" />
             </div>
@@ -74,7 +74,7 @@ export function Footer() {
 
         {/* RZĄD DOLNY: NAWIGACJA & KONTAKT */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 border-b border-zinc-800 pb-12">
-          
+
           {/* 3. NAWIGACJA */}
           <div className="flex flex-col justify-start">
             <h3 className="font-mono text-xs font-bold text-white uppercase tracking-widest mb-8 border-l-2 border-blue-600 pl-4">/ Sklep & Info</h3>
@@ -85,9 +85,9 @@ export function Footer() {
                 <FooterLink href="/o-nas">O marce PlayAgain</FooterLink>
               </ul>
               <ul className="space-y-3">
-                <FooterLink href="/status">Status Zamówienia</FooterLink>
-                <FooterLink href="/gwarancja">Warunki Gwarancji</FooterLink>
-                <FooterLink href="/kontakt">Kontakt</FooterLink>
+                <FooterLink href="/regulamin">Regulamin</FooterLink>
+                <FooterLink href="/regulamin">Polityka prywatności</FooterLink>
+                <FooterLink href="/regulamin">Kontakt</FooterLink>
               </ul>
             </div>
           </div>
@@ -95,7 +95,7 @@ export function Footer() {
           {/* 4. KONTAKT I DANE (NAP) */}
           <div itemScope itemType="http://schema.org/Organization">
             <h3 className="font-mono text-xs font-bold text-white uppercase tracking-widest mb-8 border-l-2 border-zinc-700 pl-4">/ Biuro & Wsparcie</h3>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
               {/* Adres */}
               <div className="flex items-start gap-4" itemProp="address" itemScope itemType="http://schema.org/PostalAddress">
@@ -122,7 +122,7 @@ export function Footer() {
                   <Building2 className="w-4 h-4 text-zinc-500 group-hover:scale-110 transition-transform" />
                   <div>
                     <span className="block text-[10px] text-zinc-600 uppercase font-bold tracking-wider">Holding / B2B</span>
-                    <span className="text-sm text-zinc-400 font-mono group-hover:text-white transition-colors">info@ketelman.com</span>
+                    <span className="text-sm text-zinc-400 font-mono group-hover:text-white transition-colors">wiczynski@ketelman.com</span>
                   </div>
                 </a>
               </div>
@@ -158,8 +158,8 @@ export function Footer() {
 
 const FooterLink = ({ href, children, highlight }: { href: string; children: React.ReactNode; highlight?: boolean }) => (
   <li>
-    <Link 
-      href={href} 
+    <Link
+      href={href}
       className={`text-sm flex items-center gap-2 transition-all duration-200 group ${highlight ? 'text-white font-bold' : 'text-zinc-400 hover:text-white'}`}
     >
       <ArrowRight className={`w-3 h-3 text-blue-600 transition-transform ${highlight ? 'opacity-100' : 'opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0'}`} />
@@ -169,9 +169,9 @@ const FooterLink = ({ href, children, highlight }: { href: string; children: Rea
 );
 
 const ExternalProjectLink = ({ href, name }: { href: string, name: string }) => (
-  <a 
-    href={href} 
-    target="_blank" 
+  <a
+    href={href}
+    target="_blank"
     rel="noopener noreferrer"
     className="flex items-center justify-between bg-black/40 border border-zinc-800/50 hover:border-blue-600/50 p-3 rounded-xl transition-all group"
   >
@@ -183,8 +183,8 @@ const ExternalProjectLink = ({ href, name }: { href: string, name: string }) => 
 );
 
 const SocialIcon = ({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) => (
-  <a 
-    href={href} 
+  <a
+    href={href}
     aria-label={label}
     target="_blank"
     rel="noopener noreferrer"
