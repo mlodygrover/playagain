@@ -5,15 +5,16 @@ const { generateChatResponse } = require('../services/chatService');
 // POST /api/chat
 router.post('/', async (req, res) => {
   try {
-    const { messages, inventory } = req.body;
+    // Pobieramy currentConfiguration z body
+    const { messages, inventory, currentConfiguration } = req.body;
 
     // Walidacja podstawowa
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: "Wymagana jest tablica 'messages'." });
     }
 
-    // Wywołanie logiki biznesowej
-    const reply = await generateChatResponse(messages, inventory || []);
+    // Wywołanie logiki biznesowej z przekazaniem konfiguracji
+    const reply = await generateChatResponse(messages, inventory || [], currentConfiguration || {});
 
     // Odpowiedź do frontendu
     res.json({ reply });

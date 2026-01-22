@@ -5,15 +5,16 @@ import { X, Send, Bot, User, Sparkles, Loader2, AlertCircle } from "lucide-react
 import { useRouter, useSearchParams } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
+
 interface ChatbotProps {
   externalOpen?: boolean;
   onClose?: () => void;
-  // Przekazujemy uproszczoną listę produktów, aby AI wiedziało co mamy
   inventory: Array<{
     id: string;
     name: string;
-    type: string; // np. 'gpu', 'cpu' (zmapowane z API type na ID kategorii)
+    type: string;
     price: number;
+    socket?: string; // <--- DODAJ TĘ LINIJKĘ (opcjonalne, bo np. GPU nie ma socketu)
   }>;
 }
 
@@ -44,56 +45,39 @@ export function Chatbot({ externalOpen = false, onClose, inventory }: ChatbotPro
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
+
   // --- LOGIKA WYKONYWANIA KOMEND ---
-  const executeCommand = (category: string, id: string) => {
-    console.log(`🤖 AI zmienia: ${category} -> ${id}`);
-
-    // Pobieramy aktualne parametry URL
-    const currentParams = new URLSearchParams(searchParams.toString());
-
-    // Ustawiamy nową wartość
-    currentParams.set(category, id);
-
-    // Aktualizujemy URL bez przeładowania strony (shallow routing)
-    router.replace(`?${currentParams.toString()}`, { scroll: false });
-  };
-
+  // --- LOGIKA WYKONYWANIA KOMEND ---
   const processResponse = (fullResponse: string) => {
-    // 1. Podział odpowiedzi
-    const parts = fullResponse.split(/\*\*commands\*\*/i);
+    // ZMIANA: Dodano :? co oznacza "dwukropek jest opcjonalny"
+    // Flaga 'i' sprawia, że wielkość liter nie ma znaczenia (Commands vs commands)
+    const parts = fullResponse.split(/\*\*commands:?\*\*/i);
+
     const textForUser = parts[0].trim();
-    const commandsBlock = parts[1];
+    const commandsBlock = parts[1]; // Teraz to zadziała nawet jak AI doda dwukropek
 
     if (commandsBlock) {
-      // 2. Inicjalizacja parametrów na bazie OBECNEGO stanu URL
-      // Używamy searchParams.toString(), żeby mieć kopię, na której będziemy pracować
       const newParams = new URLSearchParams(searchParams.toString());
       let hasChanges = false;
-
-      // 3. Wyciąganie wszystkich komend
+      // Regex do wyciągania komend pozostaje ten sam
       const regex = /setComponent\s*\(\s*["']([^"']+)["']\s*,\s*["']([^"']+)["']\s*\)/g;
       let match;
 
       while ((match = regex.exec(commandsBlock)) !== null) {
-        const category = match[1]; // np. 'gpu'
-        const id = match[2];       // np. '12345'
-
+        const category = match[1];
+        const id = match[2];
         console.log(`🤖 AI ustawia: ${category} -> ${id}`);
-
-        // 4. Aplikowanie zmian do TEGO SAMEGO obiektu params
         newParams.set(category, id);
         hasChanges = true;
       }
 
-      // 5. Wykonanie router.replace TYLKO RAZ, jeśli były zmiany
       if (hasChanges) {
-        console.log("🚀 Aktualizacja URL:", newParams.toString());
         router.replace(`?${newParams.toString()}`, { scroll: false });
       }
     }
-
     return textForUser;
   };
+
 
   const handleSendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
@@ -104,7 +88,17 @@ export function Chatbot({ externalOpen = false, onClose, inventory }: ChatbotPro
     setIsLoading(true);
 
     try {
-      // Przygotowanie historii rozmowy (ostatnie 6 wiadomości dla kontekstu)
+      // 1. Budowanie kontekstu obecnej konfiguracji
+      // Mapujemy ID z URL na nazwy produktów, żeby AI rozumiało co to za części
+      const currentConfig: Record<string, string> = {};
+
+      searchParams.forEach((value, key) => {
+        // Szukamy produktu w inventory po ID
+        const item = inventory.find((i) => i.id === value);
+        // Zapisujemy: "gpu": "NVIDIA RTX 3060" (zamiast samego ID)
+        currentConfig[key] = item ? item.name : value;
+      });
+
       const contextMessages = messages.slice(-6).map(m => ({
         role: m.sender === "user" ? "user" : "assistant",
         content: m.text
@@ -116,7 +110,8 @@ export function Chatbot({ externalOpen = false, onClose, inventory }: ChatbotPro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: contextMessages,
-          inventory: inventory // Wysyłamy kontekst produktów do AI
+          inventory: inventory,
+          currentConfiguration: currentConfig // <--- WYSYŁAMY KONFIGURACJĘ
         }),
       });
 
@@ -124,9 +119,8 @@ export function Chatbot({ externalOpen = false, onClose, inventory }: ChatbotPro
 
       const data = await res.json();
       const cleanText = processResponse(data.reply);
-      console.log(data)
       setMessages((prev) => [...prev, { text: cleanText, sender: "bot" }]);
-
+      console.log(data)
     } catch (error) {
       console.error(error);
       setMessages((prev) => [...prev, { text: "Ups, coś przerwało mi połączenie. Spróbuj ponownie.", sender: "bot" }]);
@@ -135,10 +129,22 @@ export function Chatbot({ externalOpen = false, onClose, inventory }: ChatbotPro
     }
   };
 
+
   return (
     <>
+      {/* 1. TŁO (BACKDROP) TYLKO NA MOBILE */}
+      {/* Pojawia się tylko gdy isOpen jest true. Klasa sm:hidden ukrywa to na desktopie */}
+      {isOpen && (
+        <div
+          onClick={handleToggle}
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-40 sm:hidden animate-in fade-in duration-300"
+        />
+      )}
+
+      {/* PRZYCISK TOGGLE */}
       <button
         onClick={handleToggle}
+        // Zwiększyłem z-index na z-50, żeby był nad tłem na mobile
         className={`fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-[0_0_30px_rgba(37,99,235,0.6)] transition-all duration-500 group ${isOpen
           ? "bg-zinc-900 border border-zinc-700 rotate-90"
           : "bg-gradient-to-tr from-blue-600 to-purple-600 hover:scale-110"
@@ -154,9 +160,32 @@ export function Chatbot({ externalOpen = false, onClose, inventory }: ChatbotPro
         )}
       </button>
 
+      {/* GŁÓWNE OKNO CZATU */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-[90vw] sm:w-96 h-[60vh] max-h-[600px] bg-zinc-950/95 backdrop-blur-xl border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-40 animate-in slide-in-from-bottom-10 fade-in duration-300 origin-bottom-right">
+        <div className={`
+            fixed 
+            z-50 
+            flex flex-col overflow-hidden 
+            bg-zinc-950/95 backdrop-blur-xl border border-zinc-800 
+            shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300
+            
+            /* STYLOWANIE MOBILE (Center + Większe) */
+            bottom-24 
+            left-1/2 -translate-x-1/2 
+            w-[95vw] 
+            h-[65vh] 
+            rounded-2xl
 
+            /* STYLOWANIE DESKTOP (Prawy róg + Mniejsze) */
+            sm:left-auto sm:translate-x-0 
+            sm:right-6 
+            sm:w-96 
+            sm:h-[60vh] sm:max-h-[600px]
+            sm:rounded-3xl
+            sm:origin-bottom-right
+        `}>
+
+          {/* HEADER */}
           <div className="p-4 border-b border-zinc-800 bg-gradient-to-r from-blue-900/20 to-purple-900/20 flex items-center gap-3">
             <div className="w-10 h-10 bg-black/50 rounded-full flex items-center justify-center border border-white/10 shadow-inner">
               <Bot className="w-6 h-6 text-blue-400" />
@@ -172,6 +201,7 @@ export function Chatbot({ externalOpen = false, onClose, inventory }: ChatbotPro
             </div>
           </div>
 
+          {/* MESSAGES AREA */}
           <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex gap-3 ${msg.sender === "user" ? "flex-row-reverse" : "flex-row animate-in fade-in slide-in-from-left-2"}`}>
@@ -199,6 +229,7 @@ export function Chatbot({ externalOpen = false, onClose, inventory }: ChatbotPro
             <div ref={messagesEndRef} />
           </div>
 
+          {/* INPUT AREA */}
           <div className="p-4 border-t border-zinc-800 bg-black/40 backdrop-blur-sm">
             <div className="flex gap-2 relative">
               <input
@@ -208,7 +239,8 @@ export function Chatbot({ externalOpen = false, onClose, inventory }: ChatbotPro
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder="Np. tani zestaw do CS:GO..."
                 disabled={isLoading}
-                className="flex-grow bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-600 pr-12 disabled:opacity-50"
+                // Na mobile wyłączamy domyślny zoom przy focusie ustawiając font-size na 16px (text-base)
+                className="flex-grow bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-base sm:text-sm text-white focus:outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-600 pr-12 disabled:opacity-50"
               />
               <button onClick={handleSendMessage} disabled={isLoading} className="absolute right-2 top-1.5 bg-blue-600 hover:bg-blue-500 text-white p-1.5 rounded-lg transition-all shadow-lg hover:shadow-blue-500/30 disabled:opacity-50">
                 <Send className="w-4 h-4" />

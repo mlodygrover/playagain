@@ -136,7 +136,7 @@ export default async function LandingPage() {
           <PathCard
             href="/konfigurator"
             icon={<Settings2 className="w-10 h-10 md:w-12 md:h-12 text-blue-500" />}
-            title="Custom Build 3D"
+            title="Konfigurator"
             desc="Pełna kontrola. Wybierz każdą część w naszym interaktywnym konfiguratorze."
             label="Skonfiguruj"
           />
@@ -151,8 +151,8 @@ export default async function LandingPage() {
           <PathCard
             href="/gotowe-konfiguracje"
             icon={<Wrench className="w-10 h-10 md:w-12 md:h-12 text-green-500" />}
-            title="Baza Modyfikacji"
-            desc="Każdy zestaw możesz edytować. Podoba Ci się 'Cyber Starter', ale chcesz lepsze GPU?"
+            title="Dostosuj gotowca"
+            desc="Każdy zestaw możesz edytować. Podoba Ci się nasza jednostka, ale chcesz lepsze GPU?"
             label="Modyfikuj"
           />
         </div>
@@ -181,8 +181,8 @@ export default async function LandingPage() {
             <StepCard
               number="01"
               icon={<Settings2 />}
-              title="Pełna Personalizacja 3D"
-              desc="Nasz konfigurator komputera 3D pozwala Ci zobaczyć każdy element. Wybierasz obudowę, kartę graficzną, procesor i chłodzenie w czasie rzeczywistym."
+              title="Pełna Personalizacja"
+              desc="Nasz konfigurator komputera pozwala Ci zobaczyć każdy element. Wybierasz obudowę, kartę graficzną, procesor i reszte komponentów w czasie rzeczywistym."
             />
             <StepCard
               number="02"
@@ -210,7 +210,7 @@ export default async function LandingPage() {
             <div className="prose prose-invert prose-zinc max-w-none grid grid-cols-1 md:grid-cols-2 gap-8 text-sm md:text-base leading-relaxed">
               <div>
                 <p>
-                  Rynek sprzętu komputerowego zmienia się dynamicznie, a ceny nowych kart graficznych potrafią przyprawić o zawrót głowy. Nasz <strong>konfigurator PC</strong> to odpowiedź na potrzeby graczy, którzy szukają maksymalnej wydajności bez przepłacania. Dzięki wykorzystaniu <strong className="text-white">części używanych (refurbished)</strong>, jesteśmy w stanie zaoferować zestawy komputerowe tańsze nawet o 40% względem nowych odpowiedników, zachowując przy tym pełną, 24-miesięczną gwarancję.
+                  Rynek sprzętu komputerowego zmienia się dynamicznie, a ceny nowych kart graficznych potrafią przyprawić o zawrót głowy. Nasz <strong>konfigurator PC</strong> to odpowiedź na potrzeby graczy, którzy szukają maksymalnej wydajności bez przepłacania. Dzięki wykorzystaniu <strong className="text-white">części używanych (odnowionych)</strong>, jesteśmy w stanie zaoferować zestawy komputerowe odczuwalnie tańsze względem nowych odpowiedników, zachowując przy tym nieporównywalną wiarygodność w porównaniu do portali aukcyjnych.
                 </p>
                 <p className="mt-4">
                   <strong>Składanie komputera</strong> w PlayAgain jest intuicyjne. Nie musisz martwić się o to, czy procesor będzie pasował do płyty głównej. Nasz system, wspierany przez sztuczną inteligencję, blokuje niekompatybilne połączenia. To najbezpieczniejszy sposób na <strong>tani komputer gamingowy</strong>, który poradzi sobie z najnowszymi tytułami AAA.
@@ -218,10 +218,10 @@ export default async function LandingPage() {
               </div>
               <div>
                 <p>
-                  W przeciwieństwie do aukcji internetowych, u nas nie kupujesz "kota w worku". Każda część – od procesora Intel/AMD po karty RTX – przechodzi rygorystyczne testy w naszym laboratorium w Poznaniu. <strong>Konfigurator zestawów komputerowych</strong> PlayAgain daje Ci wolność wyboru, ale zdejmuje z Ciebie ryzyko awarii.
+                  W przeciwieństwie do aukcji internetowych, u nas nie kupujesz "kota w worku". Każda część – od procesora Intel/AMD po karty RTX - jest odnawiana oraz testowana zgodnie z zamówieniem. <strong>Konfigurator zestawów komputerowych</strong> PlayAgain daje Ci wolność wyboru, ale zdejmuje z Ciebie ryzyko awarii.
                 </p>
                 <p className="mt-4">
-                  Oferujemy również gotowe zestawy, ale to właśnie własna konfiguracja daje najwięcej satysfakcji. Sprawdź nasz <strong>kreator PC</strong>, zobacz jak zmienia się cena w czasie rzeczywistym (Live Pricing) i zamów maszynę złożoną przez profesjonalistów. Dołącz do rewolucji Circular Economy w gamingu.
+                  Oferujemy również gotowe zestawy, ale to właśnie własna konfiguracja daje najwięcej satysfakcji, tym bardziej, ze zawsze do pomocy gotowy jest nasz <strong>cyfrowy asystent</strong>. Sprawdź nasz <strong>kreator PC</strong>,  zobacz jak zmienia się cena w czasie rzeczywistym (Live Pricing) i zamów maszynę złożoną przez profesjonalistów. Dołącz do rewolucji Circular Economy w gamingu.
                 </p>
               </div>
             </div>

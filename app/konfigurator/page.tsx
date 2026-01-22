@@ -38,7 +38,7 @@ const CATEGORY_DEFINITIONS = [
   { id: "cool", apiType: "Cooling", name: "Chłodzenie CPU", icon: <Fan className="w-4 h-4" /> },
   { id: "case", apiType: "Case", name: "Obudowa PC", icon: <Box className="w-4 h-4" /> },
   // --- NOWOŚĆ: SEKCJA USŁUG ---
-  { id: "service", apiType: "Service", name: "Usługi i Montaż", icon: <Wrench className="w-4 h-4" /> }, 
+  { id: "service", apiType: "Service", name: "Usługi i Montaż", icon: <Wrench className="w-4 h-4" /> },
 ];
 
 const generateSpecs = (item: any) => {
@@ -82,9 +82,9 @@ const generateSpecs = (item: any) => {
       break;
     // --- NOWOŚĆ: SPECYFIKACJA USŁUG ---
     case 'Service':
-       if (item.serviceType) specs.push(item.serviceType);
-       if (item.duration) specs.push(`Czas: ${item.duration}h`);
-       break;
+      if (item.serviceType) specs.push(item.serviceType);
+      if (item.duration) specs.push(`Czas: ${item.duration}h`);
+      break;
   }
   return specs;
 };
@@ -204,7 +204,7 @@ const ProductTile = ({ item, isSelected, isExpanded, onToggleExpand, onSelect }:
             </div>
             {/* Opis dla usług jest w item.description, dla części generyczny */}
             <p className="text-[10px] sm:text-xs text-zinc-500 leading-relaxed max-w-md">
-                {item.description || "Komponent zweryfikowany pod kątem kompatybilności."}
+              {item.description || "Komponent zweryfikowany pod kątem kompatybilności."}
             </p>
           </div>
         </div>
@@ -251,7 +251,7 @@ const SummaryPanel = ({ categories, selections, totalPrice, onCategoryClick }: a
         {categories.map((category: any) => {
           const selectedItemId = selections[category.id];
           const selectedItem = category.items.find((i: any) => i.id === selectedItemId);
-          
+
           // Dla usług nie pokazujemy "/// EMPTY", jeśli nic nie wybrano - po prostu nie pokazujemy wiersza
           // Ale jeśli to główny komponent, to pokazujemy "/// EMPTY"
           if (category.id === 'service' && !selectedItem) return null;
@@ -330,7 +330,7 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
               }
               // Dla usług chipsetem jest serviceType
               if (def.id === 'service') {
-                  chipset = item.serviceType || "SERVICE";
+                chipset = item.serviceType || "SERVICE";
               }
 
               return {
@@ -378,10 +378,81 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
     searchParams.forEach((value, key) => { currentParams[key] = value; });
     setSelections(currentParams);
   }, [searchParams]);
+  // ... (istniejące useEffecty) ...
+
+  // --- NOWOŚĆ: AUTOMATYCZNE WYBIERANIE MONTAŻU ---
+  useEffect(() => {
+    // 1. Jeśli kategorie się jeszcze nie załadowały, nic nie rób
+    if (categories.length === 0) return;
+
+    // 2. Sprawdź, czy usługa jest już wybrana w URL
+    const currentServiceId = searchParams.get('service');
+
+    // 3. Jeśli NIE ma wybranej usługi, wybierz domyślną
+    if (!currentServiceId) {
+      const serviceCategory = categories.find(c => c.id === 'service');
+
+      // Sprawdź czy kategoria usług istnieje i czy ma jakieś produkty
+      if (serviceCategory && serviceCategory.items.length > 0) {
+
+        // Wybieramy pierwszą usługę z listy (zakładamy, że to "Montaż Standard")
+        // Możesz tu też poszukać konkretnej po nazwie: 
+        // const defaultService = serviceCategory.items.find((i: any) => i.name.includes("Standard")) || serviceCategory.items[0];
+        const defaultService = serviceCategory.items[0];
+
+        // Aktualizujemy URL (to wywoła odświeżenie stanu selections)
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('service', defaultService.id);
+        router.replace(`?${params.toString()}`, { scroll: false });
+      }
+    }
+  }, [categories, searchParams, router]);
+
+  // ... (reszta kodu) ...
 
   const updateSelection = (category: string, itemId: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (params.get(category) === itemId) { params.delete(category); } else { params.set(category, itemId); }
+
+    // Sprawdzamy czy użytkownik ODZNACZA aktualny element
+    const isDeselecting = params.get(category) === itemId;
+
+    // Standardowa logika toggle (zaznacz/odznacz)
+    if (isDeselecting) {
+      params.delete(category);
+    } else {
+      params.set(category, itemId);
+    }
+
+    // --- LOGIKA KOMPATYBILNOŚCI CPU <-> MOBO ---
+    if (category === 'cpu') {
+      if (isDeselecting) {
+        // SCENARIUSZ 1: Użytkownik usuwa procesor całkowicie -> Usuwamy płytę główną
+        params.delete('mobo');
+      } else {
+        // SCENARIUSZ 2: Użytkownik zmienia procesor na inny
+        // Musimy sprawdzić czy nowy procesor pasuje do starej płyty (ten sam socket)
+
+        // 1. Znajdź dane nowego procesora
+        const cpuCategory = categories.find(c => c.id === 'cpu');
+        const newCpuItem = cpuCategory?.items.find((i: any) => i.id === itemId);
+
+        // 2. Znajdź ID aktualnie wybranej płyty głównej (jeśli jest)
+        const currentMoboId = params.get('mobo');
+
+        if (currentMoboId && newCpuItem) {
+          const moboCategory = categories.find(c => c.id === 'mobo');
+          const currentMoboItem = moboCategory?.items.find((i: any) => i.id === currentMoboId);
+
+          // 3. Porównaj Sockety
+          // Jeśli sockety są różne (np. zmiana z Intel LGA1700 na AMD AM4), usuwamy płytę
+          if (currentMoboItem && newCpuItem.socket !== currentMoboItem.socket) {
+            params.delete('mobo');
+          }
+          // Jeśli sockety są takie same -> nic nie robimy (płyta zostaje zaznaczona)
+        }
+      }
+    }
+
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
@@ -428,7 +499,9 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
           id: item.id,
           name: item.name,
           type: cat.id,
-          price: item.price
+          price: item.price,
+          // Dodajemy socket, jeśli istnieje (głównie dla CPU i MOBO)
+          socket: item.socket || null
         });
       });
     });
@@ -510,7 +583,7 @@ function ConfiguratorContent({ onOpenChat, isChatOpen, onCloseChat }: { onOpenCh
                 <div className="flex items-center gap-4">
                   {category.id !== 'service' && (
                     <button onClick={(e) => { e.stopPropagation(); if (isCollapsed) toggleCategoryCollapse(category.id); toggleFilterPanel(category.id); }} className={`text-xs flex items-center gap-1 uppercase font-mono transition-colors p-2 rounded hover:bg-zinc-800 ${currentFilter.isOpen ? 'text-blue-400' : 'text-zinc-500 hover:text-white'}`}>
-                        <SlidersHorizontal className="w-3.5 h-3.5" /><span className="hidden sm:inline">Filters</span>
+                      <SlidersHorizontal className="w-3.5 h-3.5" /><span className="hidden sm:inline">Filters</span>
                     </button>
                   )}
                   {selections[category.id] && <div className="flex items-center gap-2 text-xs font-mono text-blue-500 bg-blue-900/10 px-2 py-1 rounded border border-blue-500/20"><Check className="w-3 h-3" />SELECTED</div>}

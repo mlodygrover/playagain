@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 // 1. Definiujemy adres API (lub importujemy go)
 const server_port = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
-console.log(server_port)
 interface User {
     id: string;
     email: string;

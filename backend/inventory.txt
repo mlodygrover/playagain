@@ -1,0 +1,1024 @@
+[
+  {
+    "id": "6968f1bcfd011f4bdc35c2f5",
+    "name": "AMD Radeon HD 7970",
+    "type": "gpu",
+    "price": 175,
+    "socket": null
+  },
+  {
+    "id": "6968f1bcfd011f4bdc35c2f3",
+    "name": "AMD Radeon R9 280X",
+    "type": "gpu",
+    "price": 121,
+    "socket": null
+  },
+  {
+    "id": "6968f1bbfd011f4bdc35c2dd",
+    "name": "NVIDIA GeForce GTX 960 4GB",
+    "type": "gpu",
+    "price": 132,
+    "socket": null
+  },
+  {
+    "id": "6968f1bbfd011f4bdc35c2e1",
+    "name": "NVIDIA GeForce GTX 750 Ti",
+    "type": "gpu",
+    "price": 110,
+    "socket": null
+  },
+  {
+    "id": "6968f1bbfd011f4bdc35c2d5",
+    "name": "NVIDIA GeForce GTX 1050 Ti",
+    "type": "gpu",
+    "price": 132,
+    "socket": null
+  },
+  {
+    "id": "6968f1bbfd011f4bdc35c2d3",
+    "name": "NVIDIA GeForce GTX 1060 3GB",
+    "type": "gpu",
+    "price": 219,
+    "socket": null
+  },
+  {
+    "id": "6968f1bcfd011f4bdc35c2f1",
+    "name": "AMD Radeon R9 290X",
+    "type": "gpu",
+    "price": 770,
+    "socket": null
+  },
+  {
+    "id": "6968f1bcfd011f4bdc35c2eb",
+    "name": "AMD Radeon RX 570 4GB",
+    "type": "gpu",
+    "price": 209,
+    "socket": null
+  },
+  {
+    "id": "6968f1bbfd011f4bdc35c2e3",
+    "name": "NVIDIA GeForce GTX 660",
+    "type": "gpu",
+    "price": 193,
+    "socket": null
+  },
+  {
+    "id": "6968f1bcfd011f4bdc35c2e9",
+    "name": "AMD Radeon RX 570 8GB",
+    "type": "gpu",
+    "price": 307,
+    "socket": null
+  },
+  {
+    "id": "6968f1bbfd011f4bdc35c2df",
+    "name": "NVIDIA GeForce GTX 780 Ti",
+    "type": "gpu",
+    "price": 347,
+    "socket": null
+  },
+  {
+    "id": "6968f1bcfd011f4bdc35c2ef",
+    "name": "AMD Radeon R9 390X",
+    "type": "gpu",
+    "price": 253,
+    "socket": null
+  },
+  {
+    "id": "6968f1bcfd011f4bdc35c2ed",
+    "name": "AMD Radeon RX 480 8GB",
+    "type": "gpu",
+    "price": 297,
+    "socket": null
+  },
+  {
+    "id": "6968f1bcfd011f4bdc35c2f7",
+    "name": "AMD Radeon RX 550",
+    "type": "gpu",
+    "price": 325,
+    "socket": null
+  },
+  {
+    "id": "6968f1bafd011f4bdc35c2d1",
+    "name": "NVIDIA GeForce GTX 1060 6GB",
+    "type": "gpu",
+    "price": 396,
+    "socket": null
+  },
+  {
+    "id": "6968f1bbfd011f4bdc35c2e5",
+    "name": "AMD Radeon RX 590",
+    "type": "gpu",
+    "price": 434,
+    "socket": null
+  },
+  {
+    "id": "6968f1bbfd011f4bdc35c2d9",
+    "name": "NVIDIA GeForce GTX 980",
+    "type": "gpu",
+    "price": 428,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013e2",
+    "name": "Radeon RX Vega 64",
+    "type": "gpu",
+    "price": 494,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013e4",
+    "name": "Radeon RX 580 8GB",
+    "type": "gpu",
+    "price": 451,
+    "socket": null
+  },
+  {
+    "id": "6968f1bbfd011f4bdc35c2d7",
+    "name": "NVIDIA GeForce GTX 980 Ti",
+    "type": "gpu",
+    "price": 460,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013ee",
+    "name": "Arc A380",
+    "type": "gpu",
+    "price": 495,
+    "socket": null
+  },
+  {
+    "id": "6968f1bbfd011f4bdc35c2db",
+    "name": "NVIDIA GeForce GTX 970",
+    "type": "gpu",
+    "price": 517,
+    "socket": null
+  },
+  {
+    "id": "6968f1bcfd011f4bdc35c2e7",
+    "name": "AMD Radeon RX 580 8GB",
+    "type": "gpu",
+    "price": 534,
+    "socket": null
+  },
+  {
+    "id": "696970cb8ac26e55c3b97ab5",
+    "name": "NVIDIA GeForce RTX 2060 SUPER 8GB",
+    "type": "gpu",
+    "price": 550,
+    "socket": null
+  },
+  {
+    "id": "696970cb8ac26e55c3b97ab4",
+    "name": "NVIDIA GeForce RTX 2060 6GB",
+    "type": "gpu",
+    "price": 605,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013da",
+    "name": "Radeon RX 6600",
+    "type": "gpu",
+    "price": 605,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013be",
+    "name": "GeForce GTX 1080 Ti",
+    "type": "gpu",
+    "price": 616,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013dc",
+    "name": "Radeon RX 5700 XT",
+    "type": "gpu",
+    "price": 659,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013e8",
+    "name": "Arc A770",
+    "type": "gpu",
+    "price": 704,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013e0",
+    "name": "Radeon VII",
+    "type": "gpu",
+    "price": 714,
+    "socket": null
+  },
+  {
+    "id": "696970cb8ac26e55c3b97ab6",
+    "name": "NVIDIA GeForce RTX 2060 12GB",
+    "type": "gpu",
+    "price": 715,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013b8",
+    "name": "GeForce RTX 2080",
+    "type": "gpu",
+    "price": 769,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013de",
+    "name": "Radeon RX 5700",
+    "type": "gpu",
+    "price": 770,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013ec",
+    "name": "Arc A580",
+    "type": "gpu",
+    "price": 803,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013c0",
+    "name": "GeForce GTX 1080",
+    "type": "gpu",
+    "price": 789,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013d8",
+    "name": "Radeon RX 6600 XT",
+    "type": "gpu",
+    "price": 825,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013c2",
+    "name": "GeForce GTX 1070",
+    "type": "gpu",
+    "price": 853,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013ea",
+    "name": "Arc A750",
+    "type": "gpu",
+    "price": 876,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013b2",
+    "name": "GeForce RTX 3060 12GB",
+    "type": "gpu",
+    "price": 1099,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013b6",
+    "name": "GeForce RTX 2080 SUPER",
+    "type": "gpu",
+    "price": 935,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013ae",
+    "name": "GeForce RTX 3070",
+    "type": "gpu",
+    "price": 912,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013bc",
+    "name": "GeForce RTX 2070",
+    "type": "gpu",
+    "price": 935,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013a0",
+    "name": "GeForce RTX 4060",
+    "type": "gpu",
+    "price": 946,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013d6",
+    "name": "Radeon RX 6700 XT",
+    "type": "gpu",
+    "price": 990,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013cc",
+    "name": "Radeon RX 7600",
+    "type": "gpu",
+    "price": 1062,
+    "socket": null
+  },
+  {
+    "id": "696a4794b8fe3d13d1878b52",
+    "name": "GeForce RTX 3060 8GB",
+    "type": "gpu",
+    "price": 990,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013ba",
+    "name": "GeForce RTX 2070 SUPER",
+    "type": "gpu",
+    "price": 1045,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013b4",
+    "name": "GeForce RTX 2080 Ti",
+    "type": "gpu",
+    "price": 1209,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013ca",
+    "name": "Radeon RX 7700 XT",
+    "type": "gpu",
+    "price": 1430,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013b0",
+    "name": "GeForce RTX 3060 Ti",
+    "type": "gpu",
+    "price": 1232,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013d0",
+    "name": "Radeon RX 6900 XT",
+    "type": "gpu",
+    "price": 1251,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013d2",
+    "name": "Radeon RX 6800 XT",
+    "type": "gpu",
+    "price": 1595,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013ac",
+    "name": "GeForce RTX 3070 Ti",
+    "type": "gpu",
+    "price": 1375,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c0139e",
+    "name": "GeForce RTX 4060 Ti 8GB",
+    "type": "gpu",
+    "price": 1507,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013a8",
+    "name": "GeForce RTX 3080 12GB",
+    "type": "gpu",
+    "price": 1705,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013c8",
+    "name": "Radeon RX 7800 XT",
+    "type": "gpu",
+    "price": 1980,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013d4",
+    "name": "Radeon RX 6800",
+    "type": "gpu",
+    "price": 1978,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c0139c",
+    "name": "GeForce RTX 4060 Ti 16GB",
+    "type": "gpu",
+    "price": 2167,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013c6",
+    "name": "Radeon RX 7900 XT",
+    "type": "gpu",
+    "price": 2640,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c0139a",
+    "name": "GeForce RTX 4070",
+    "type": "gpu",
+    "price": 2749,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013ce",
+    "name": "Radeon RX 6950 XT",
+    "type": "gpu",
+    "price": 2397,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013aa",
+    "name": "GeForce RTX 3080 10GB",
+    "type": "gpu",
+    "price": 2475,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013a2",
+    "name": "GeForce RTX 3090 Ti",
+    "type": "gpu",
+    "price": 4069,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c01396",
+    "name": "GeForce RTX 4070 Ti",
+    "type": "gpu",
+    "price": 2860,
+    "socket": null
+  },
+  {
+    "id": "6968cf94d65fe23767c013c4",
+    "name": "Radeon RX 7900 XTX",
+    "type": "gpu",
+    "price": 3080,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013a6",
+    "name": "GeForce RTX 3080 Ti",
+    "type": "gpu",
+    "price": 3300,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c01398",
+    "name": "GeForce RTX 4070 SUPER",
+    "type": "gpu",
+    "price": 3849,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c01392",
+    "name": "GeForce RTX 4080",
+    "type": "gpu",
+    "price": 3850,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c013a4",
+    "name": "GeForce RTX 3090",
+    "type": "gpu",
+    "price": 3991,
+    "socket": null
+  },
+  {
+    "id": "6968cf93d65fe23767c01390",
+    "name": "GeForce RTX 4080 SUPER",
+    "type": "gpu",
+    "price": 4015,
+    "socket": null
+  },
+  {
+    "id": "6968cf92d65fe23767c0138e",
+    "name": "GeForce RTX 4090",
+    "type": "gpu",
+    "price": 8799,
+    "socket": null
+  },
+  {
+    "id": "696df9948ac26e55c3c95c60",
+    "name": "Intel Core i3-10100F",
+    "type": "cpu",
+    "price": 240,
+    "socket": "LGA1200"
+  },
+  {
+    "id": "69694b1df479e40ee4992e24",
+    "name": "Intel Core i5-8400",
+    "type": "cpu",
+    "price": 116,
+    "socket": "LGA1151"
+  },
+  {
+    "id": "69694b1df479e40ee4992e20",
+    "name": "Intel Core i5-9400F",
+    "type": "cpu",
+    "price": 132,
+    "socket": "LGA1151"
+  },
+  {
+    "id": "696df9948ac26e55c3c95c65",
+    "name": "AMD Ryzen 3 3300X",
+    "type": "cpu",
+    "price": 181,
+    "socket": "AM4"
+  },
+  {
+    "id": "69694b1cf479e40ee4992e1f",
+    "name": "Intel Core i7-8700K",
+    "type": "cpu",
+    "price": 435,
+    "socket": "LGA1151"
+  },
+  {
+    "id": "69694b1cf479e40ee4992e1e",
+    "name": "AMD Ryzen 5 3600",
+    "type": "cpu",
+    "price": 220,
+    "socket": "AM4"
+  },
+  {
+    "id": "69694b1df479e40ee4992e23",
+    "name": "AMD Ryzen 5 2600",
+    "type": "cpu",
+    "price": 246,
+    "socket": "AM4"
+  },
+  {
+    "id": "69694b1df479e40ee4992e21",
+    "name": "AMD Ryzen 7 2700X",
+    "type": "cpu",
+    "price": 275,
+    "socket": "AM4"
+  },
+  {
+    "id": "69694b1df479e40ee4992e22",
+    "name": "Intel Core i7-7700K",
+    "type": "cpu",
+    "price": 330,
+    "socket": "LGA1151"
+  },
+  {
+    "id": "6968d00bd65fe23767c01420",
+    "name": "AMD Ryzen 5 5600",
+    "type": "cpu",
+    "price": 418,
+    "socket": "AM4"
+  },
+  {
+    "id": "6968d00bd65fe23767c0141e",
+    "name": "AMD Ryzen 7 5700X",
+    "type": "cpu",
+    "price": 508,
+    "socket": "AM4"
+  },
+  {
+    "id": "6968d00bd65fe23767c0141a",
+    "name": "AMD Ryzen 5 7600X",
+    "type": "cpu",
+    "price": 561,
+    "socket": "AM5"
+  },
+  {
+    "id": "6968d00bd65fe23767c01406",
+    "name": "Intel Core i7-11700K",
+    "type": "cpu",
+    "price": 625,
+    "socket": "LGA1200"
+  },
+  {
+    "id": "69720264e26e9589f0d7faa7",
+    "name": "AMD Ryzen 5 5300G",
+    "type": "cpu",
+    "price": 549,
+    "socket": "AM4"
+  },
+  {
+    "id": "6968d00bd65fe23767c01408",
+    "name": "Intel Core i5-11600K",
+    "type": "cpu",
+    "price": 558,
+    "socket": "LGA1200"
+  },
+  {
+    "id": "696df9948ac26e55c3c95c5f",
+    "name": "Intel Core i3-12100F",
+    "type": "cpu",
+    "price": 559,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "696df9948ac26e55c3c95c5e",
+    "name": "Intel Core i3-13100F",
+    "type": "cpu",
+    "price": 572,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "696df9948ac26e55c3c95c5d",
+    "name": "Intel Core i3-14100F",
+    "type": "cpu",
+    "price": 656,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "6968d00bd65fe23767c0141c",
+    "name": "AMD Ryzen 7 5800X3D",
+    "type": "cpu",
+    "price": 770,
+    "socket": "AM4"
+  },
+  {
+    "id": "6968d00bd65fe23767c0140a",
+    "name": "Intel Core i7-10700K",
+    "type": "cpu",
+    "price": 743,
+    "socket": "LGA1200"
+  },
+  {
+    "id": "6968d00bd65fe23767c01402",
+    "name": "Intel Core i7-12700K",
+    "type": "cpu",
+    "price": 770,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "6968d00bd65fe23767c01418",
+    "name": "AMD Ryzen 7 7700X",
+    "type": "cpu",
+    "price": 879,
+    "socket": "AM5"
+  },
+  {
+    "id": "6968d00bd65fe23767c01412",
+    "name": "AMD Ryzen 5 9600X",
+    "type": "cpu",
+    "price": 825,
+    "socket": "AM5"
+  },
+  {
+    "id": "6968d00bd65fe23767c01400",
+    "name": "Intel Core i9-12900K",
+    "type": "cpu",
+    "price": 1484,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "6968d00bd65fe23767c013fe",
+    "name": "Intel Core i5-13600K",
+    "type": "cpu",
+    "price": 981,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "6968d00bd65fe23767c01410",
+    "name": "AMD Ryzen 7 9700X",
+    "type": "cpu",
+    "price": 1012,
+    "socket": "AM5"
+  },
+  {
+    "id": "6968d00bd65fe23767c013fa",
+    "name": "Intel Core i9-13900K",
+    "type": "cpu",
+    "price": 1429,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "6968d00bd65fe23767c013f6",
+    "name": "Intel Core i7-14700K",
+    "type": "cpu",
+    "price": 1265,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "6968d00bd65fe23767c013fc",
+    "name": "Intel Core i7-13700K",
+    "type": "cpu",
+    "price": 1320,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "6968d00bd65fe23767c01404",
+    "name": "Intel Core i5-12600K",
+    "type": "cpu",
+    "price": 1170,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "6968d00bd65fe23767c01414",
+    "name": "AMD Ryzen 9 7900X",
+    "type": "cpu",
+    "price": 1264,
+    "socket": "AM5"
+  },
+  {
+    "id": "6968d00bd65fe23767c013f4",
+    "name": "Intel Core i9-14900K",
+    "type": "cpu",
+    "price": 1760,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "6968d00bd65fe23767c013f8",
+    "name": "Intel Core i5-14600K",
+    "type": "cpu",
+    "price": 1565,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "6968d00bd65fe23767c0140e",
+    "name": "AMD Ryzen 9 9900X",
+    "type": "cpu",
+    "price": 1771,
+    "socket": "AM5"
+  },
+  {
+    "id": "6968d00bd65fe23767c0140c",
+    "name": "AMD Ryzen 9 9950X",
+    "type": "cpu",
+    "price": 2639,
+    "socket": "AM5"
+  },
+  {
+    "id": "6968d00bd65fe23767c01416",
+    "name": "AMD Ryzen 7 7800X3D",
+    "type": "cpu",
+    "price": 2239,
+    "socket": "AM5"
+  },
+  {
+    "id": "69694b6b814816d5b1407ee2",
+    "name": "LGA1151 Micro-ATX",
+    "type": "mobo",
+    "price": 165,
+    "socket": "LGA1151"
+  },
+  {
+    "id": "69690ed76186f67ddafff7db",
+    "name": "LGA1700 Micro-ATX",
+    "type": "mobo",
+    "price": 313,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "696909310055b64172b47736",
+    "name": "LGA1200 ATX",
+    "type": "mobo",
+    "price": 340,
+    "socket": "LGA1200"
+  },
+  {
+    "id": "69690cf26186f67ddafff74a",
+    "name": "AM4 Micro-ATX",
+    "type": "mobo",
+    "price": 371,
+    "socket": "AM4"
+  },
+  {
+    "id": "69690ed76186f67ddafff7d8",
+    "name": "LGA1700 ATX",
+    "type": "mobo",
+    "price": 372,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "696909310055b64172b4773c",
+    "name": "LGA1200 Mini-ITX",
+    "type": "mobo",
+    "price": 414,
+    "socket": "LGA1200"
+  },
+  {
+    "id": "69690cf26186f67ddafff747",
+    "name": "AM4 ATX",
+    "type": "mobo",
+    "price": 415,
+    "socket": "AM4"
+  },
+  {
+    "id": "696909310055b64172b47739",
+    "name": "LGA1200 Micro-ATX",
+    "type": "mobo",
+    "price": 429,
+    "socket": "LGA1200"
+  },
+  {
+    "id": "69694b6b814816d5b1407edf",
+    "name": "LGA1151 ATX",
+    "type": "mobo",
+    "price": 469,
+    "socket": "LGA1151"
+  },
+  {
+    "id": "69690e9b6186f67ddafff7bf",
+    "name": "AM5 Micro-ATX",
+    "type": "mobo",
+    "price": 511,
+    "socket": "AM5"
+  },
+  {
+    "id": "69690e9b6186f67ddafff7bc",
+    "name": "AM5 ATX",
+    "type": "mobo",
+    "price": 673,
+    "socket": "AM5"
+  },
+  {
+    "id": "69690cf36186f67ddafff74d",
+    "name": "AM4 Mini-ITX",
+    "type": "mobo",
+    "price": 713,
+    "socket": "AM4"
+  },
+  {
+    "id": "69690ed76186f67ddafff7de",
+    "name": "LGA1700 Mini-ITX",
+    "type": "mobo",
+    "price": 1184,
+    "socket": "LGA1700"
+  },
+  {
+    "id": "69690e9b6186f67ddafff7c2",
+    "name": "AM5 Mini-ITX",
+    "type": "mobo",
+    "price": 1394,
+    "socket": "AM5"
+  },
+  {
+    "id": "696960cf8ac26e55c3b96100",
+    "name": "Pamięć RAM 8GB DDR4 3200MHz ",
+    "type": "ram",
+    "price": 109,
+    "socket": null
+  },
+  {
+    "id": "696960cf8ac26e55c3b960ff",
+    "name": "Pamięć RAM 8GB DDR4 3000MHz",
+    "type": "ram",
+    "price": 110,
+    "socket": null
+  },
+  {
+    "id": "696960cf8ac26e55c3b96101",
+    "name": "Zestaw RAM 16GB DDR4 3000MHz ",
+    "type": "ram",
+    "price": 242,
+    "socket": null
+  },
+  {
+    "id": "696960cf8ac26e55c3b96104",
+    "name": "Zestaw RAM 32GB DDR4 3200MHz",
+    "type": "ram",
+    "price": 462,
+    "socket": null
+  },
+  {
+    "id": "696960cf8ac26e55c3b96102",
+    "name": "Zestaw RAM 16GB DDR4 3200MHz ",
+    "type": "ram",
+    "price": 495,
+    "socket": null
+  },
+  {
+    "id": "696960cf8ac26e55c3b96103",
+    "name": "Zestaw RAM 16GB DDR4 3600MHz ",
+    "type": "ram",
+    "price": 355,
+    "socket": null
+  },
+  {
+    "id": "696960cf8ac26e55c3b96105",
+    "name": "Zestaw RAM 32GB DDR4 3600MHz",
+    "type": "ram",
+    "price": 418,
+    "socket": null
+  },
+  {
+    "id": "696964728ac26e55c3b967ae",
+    "name": "Dysk HDD 1TB ",
+    "type": "disk",
+    "price": 39,
+    "socket": null
+  },
+  {
+    "id": "696964728ac26e55c3b967af",
+    "name": "Dysk HDD 2TB",
+    "type": "disk",
+    "price": 247,
+    "socket": null
+  },
+  {
+    "id": "696964728ac26e55c3b967a9",
+    "name": "Dysk SSD M.2 NVMe 512GB",
+    "type": "disk",
+    "price": 255,
+    "socket": null
+  },
+  {
+    "id": "696964728ac26e55c3b967ac",
+    "name": "Dysk SSD SATA 512GB 2.5\"",
+    "type": "disk",
+    "price": 274,
+    "socket": null
+  },
+  {
+    "id": "696964728ac26e55c3b967ad",
+    "name": "Dysk SSD SATA 1TB ",
+    "type": "disk",
+    "price": 365,
+    "socket": null
+  },
+  {
+    "id": "696964728ac26e55c3b967aa",
+    "name": "Dysk SSD M.2 NVMe 1TB",
+    "type": "disk",
+    "price": 468,
+    "socket": null
+  },
+  {
+    "id": "696964728ac26e55c3b967ab",
+    "name": "Dysk SSD M.2 NVMe 2TB",
+    "type": "disk",
+    "price": 710,
+    "socket": null
+  },
+  {
+    "id": "69696f888ac26e55c3b978dd",
+    "name": "Zasilacz ATX 350W (Biurowy)",
+    "type": "psu",
+    "price": 132,
+    "socket": null
+  },
+  {
+    "id": "69696f888ac26e55c3b978de",
+    "name": "Zasilacz ATX 500W 80+ Bronze (Gaming)",
+    "type": "psu",
+    "price": 165,
+    "socket": null
+  },
+  {
+    "id": "69696f888ac26e55c3b978df",
+    "name": "Zasilacz ATX 700W 80+ Gold (High-End)",
+    "type": "psu",
+    "price": 198,
+    "socket": null
+  },
+  {
+    "id": "69696ae48ac26e55c3b971f0",
+    "name": "Chłodzenie Boxowe (Intel/AMD Standard)",
+    "type": "cool",
+    "price": 50,
+    "socket": null
+  },
+  {
+    "id": "69696ae48ac26e55c3b971f1",
+    "name": "Endorfy Spartan 5 ",
+    "type": "cool",
+    "price": 44,
+    "socket": null
+  },
+  {
+    "id": "69696ae48ac26e55c3b971f2",
+    "name": "Endorfy Fera 5 ",
+    "type": "cool",
+    "price": 110,
+    "socket": null
+  },
+  {
+    "id": "69696ae48ac26e55c3b971f3",
+    "name": "Chłodzenie Wodne AIO 240mm",
+    "type": "cool",
+    "price": 165,
+    "socket": null
+  },
+  {
+    "id": "6971f3b52615109672d22059",
+    "name": "Akyga AK995BK",
+    "type": "case",
+    "price": 121,
+    "socket": null
+  },
+  {
+    "id": "6971f4d72615109672d220ba",
+    "name": "KRUX Vako White RGB",
+    "type": "case",
+    "price": 187,
+    "socket": null
+  },
+  {
+    "id": "6971f6312615109672d220d5",
+    "name": "Krux Nadir",
+    "type": "case",
+    "price": 215,
+    "socket": null
+  },
+  {
+    "id": "696e56123d0181844acdb9d5",
+    "name": "Montaż i odnowa części",
+    "type": "service",
+    "price": 95,
+    "socket": null
+  }
+]
