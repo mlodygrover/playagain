@@ -6,16 +6,13 @@ import { MonitorPlay, ArrowRight, Cpu, Zap, Loader } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://playagain.onrender.com";
 
-// 1. Define Interface for Component (part of a Prebuilt)
 interface Component {
     _id: string;
     name: string;
     type: string;
     price: number;
-    // Add other fields if necessary
 }
 
-// 2. Define Interface for Prebuilt Computer
 interface Prebuilt {
     _id: string;
     name: string;
@@ -23,12 +20,11 @@ interface Prebuilt {
     category: string;
     image?: string;
     description?: string;
-    components: Component[]; // Array of populated component objects
+    components: Component[];
 }
 
 export default function PrebuiltsPage() {
-    // 3. Type the state correctly
-    const [prebuilts, setPrebuilts] = useState<Prebuilt[]>([]); 
+    const [prebuilts, setPrebuilts] = useState<Prebuilt[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +39,7 @@ export default function PrebuiltsPage() {
                 }
                 const data = await response.json();
                 setPrebuilts(data);
-            } catch (err: unknown) { // 4. Handle 'unknown' type for error
+            } catch (err: unknown) {
                 console.error("Error fetching prebuilts:", err);
                 if (err instanceof Error) {
                     setError(err.message);
@@ -58,7 +54,6 @@ export default function PrebuiltsPage() {
         fetchPrebuilts();
     }, []);
 
-    // 5. Type the helper function parameters
     const getSpec = (components: Component[], type: string): string => {
         const component = components.find((c) => c.type === type);
         return component ? component.name : "N/A";
@@ -101,12 +96,16 @@ export default function PrebuiltsPage() {
                 {/* GRID ZESTAWÓW */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {prebuilts.map((pc) => {
-                        // Extract specs dynamically
                         const cpuSpec = getSpec(pc.components, 'CPU');
                         const gpuSpec = getSpec(pc.components, 'GPU');
 
                         return (
-                            <div key={pc._id} className="group bg-zinc-900/30 border border-zinc-800 hover:border-blue-900/50 hover:bg-zinc-900/60 transition-all duration-300 flex flex-col overflow-hidden relative">
+                            // ZMIANA 1: Główny kontener jest teraz Linkiem
+                            <Link 
+                                key={pc._id} 
+                                href={`/gotowe-konfiguracje/${pc._id}`}
+                                className="group bg-zinc-900/30 border border-zinc-800 hover:border-blue-900/50 hover:bg-zinc-900/60 transition-all duration-300 flex flex-col overflow-hidden relative"
+                            >
 
                                 {/* Badge Kategorii */}
                                 <div className="absolute top-4 right-4 z-10">
@@ -139,18 +138,20 @@ export default function PrebuiltsPage() {
                                         </div>
                                     </div>
 
+                                    {/* ZMIANA 2: Usunięto błędny atrybut href z diva */}
                                     <div className="mt-auto pt-6 border-t border-zinc-800/50 flex items-center justify-between">
                                         <div className="flex flex-col">
                                             <span className="text-[10px] uppercase text-zinc-500 font-bold">Cena</span>
                                             <span className="text-xl font-bold text-white tracking-tight">{pc.price} PLN</span>
                                         </div>
 
-                                        <Link href={`/gotowe-konfiguracje/${pc._id}`} className="bg-white hover:bg-blue-600 hover:text-white text-black px-6 py-2 rounded-sm font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2">
+                                        {/* ZMIANA 3: Przycisk to teraz div (wizualnie guzik), bo Link jest na całości */}
+                                        <div className="bg-white group-hover:bg-blue-600 group-hover:text-white text-black px-6 py-2 rounded-sm font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2">
                                             Szczegóły <ArrowRight className="w-3 h-3" />
-                                        </Link>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         );
                     })}
                 </div>

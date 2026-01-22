@@ -7,14 +7,13 @@ import Link from "next/link";
 import { 
   Cpu, ShoppingBag, Users, BarChart3, 
   Settings, ShieldAlert, ArrowRight, Database, 
-  AlertTriangle
+  AlertTriangle, Monitor // <--- 1. DODANO IKONĘ MONITOR
 } from "lucide-react";
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
 
-  // 1. Zabezpieczenie: Przekieruj jeśli nie jest adminem
   useEffect(() => {
     if (!loading) {
       if (!user || !isAdmin) {
@@ -53,7 +52,7 @@ export default function AdminDashboard() {
         {/* --- GŁÓWNE SKRÓTY (GRID) --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
 
-          {/* 1. BAZA CZĘŚCI (Główny cel) */}
+          {/* 1. BAZA CZĘŚCI */}
           <DashboardCard 
             href="/admin/components"
             title="Baza Części (Components)"
@@ -63,17 +62,26 @@ export default function AdminDashboard() {
             badge="Core"
           />
 
-          {/* 2. ZAMÓWIENIA (Placeholder) */}
+          {/* --- 2. NOWOŚĆ: GOTOWE ZESTAWY --- */}
           <DashboardCard 
-            href="/admin/orders" // Utworzysz tę stronę później
+            href="/admin/prebuilts"
+            title="Gotowe Zestawy (Prebuilts)"
+            description="Twórz i edytuj gotowe komputery gamingowe. Przypisuj części z bazy, dodawaj zdjęcia i ustalaj ceny promocyjne."
+            icon={<Monitor className="w-8 h-8 text-yellow-500" />}
+            color="yellow"
+            badge="Storefront"
+          />
+
+          {/* 3. ZAMÓWIENIA */}
+          <DashboardCard 
+            href="/admin/orders" 
             title="Zamówienia"
             description="Przeglądaj napływające zamówienia, zmieniaj statusy realizacji i sprawdzaj płatności Tpay."
             icon={<ShoppingBag className="w-8 h-8 text-green-500" />}
             color="green"
-            badge="Wkrótce" // Opcjonalnie, jeśli jeszcze nie gotowe
           />
 
-          {/* 3. UŻYTKOWNICY (Placeholder) */}
+          {/* 4. UŻYTKOWNICY */}
           <DashboardCard 
             href="/admin/users" 
             title="Użytkownicy"
@@ -82,7 +90,7 @@ export default function AdminDashboard() {
             color="purple"
           />
 
-          {/* 4. KONFIGURACJA / USTAWIENIA */}
+          {/* 5. KONFIGURACJA */}
           <DashboardCard 
             href="#"
             title="Ustawienia Sklepu"
@@ -92,23 +100,22 @@ export default function AdminDashboard() {
             disabled
           />
 
-          {/* 5. RAPORTY */}
-          <div className="md:col-span-2 bg-zinc-900/20 border border-zinc-800 rounded-xl p-6 flex flex-col justify-center items-center text-center opacity-50 border-dashed">
+          {/* 6. RAPORTY */}
+          <div className="bg-zinc-900/20 border border-zinc-800 rounded-xl p-6 flex flex-col justify-center items-center text-center opacity-50 border-dashed">
              <BarChart3 className="w-12 h-12 text-zinc-700 mb-4" />
              <h3 className="text-xl font-bold uppercase text-zinc-500">Statystyki Sprzedaży</h3>
-             <p className="text-zinc-600 text-sm mt-2">Ten moduł będzie dostępny po zebraniu pierwszych 100 zamówień.</p>
+             <p className="text-zinc-600 text-sm mt-2">Dostępne po zebraniu pierwszych 100 zamówień.</p>
           </div>
 
         </div>
 
-        {/* --- SEKJA OSTRZEŻEŃ / STATUSÓW (Opcjonalne) --- */}
+        {/* --- STATUS --- */}
         <div className="bg-red-950/10 border border-red-900/30 p-6 rounded-xl flex items-start gap-4">
             <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
             <div>
                 <h4 className="text-red-400 font-bold uppercase text-sm mb-1">Status Systemu</h4>
                 <p className="text-zinc-400 text-sm">
-                    Pamiętaj, że zmiany w <strong>Bazie Części</strong> są widoczne dla klientów natychmiastowo. 
-                    Przed edycją cen upewnij się, że dane z API zewnętrznych są aktualne.
+                    Pamiętaj, że zmiany w <strong>Bazie Części</strong> oraz <strong>Gotowych Zestawach</strong> są widoczne dla klientów natychmiastowo.
                 </p>
             </div>
         </div>
@@ -118,7 +125,7 @@ export default function AdminDashboard() {
   );
 }
 
-// --- KOMPONENT KAFELKA (Reusable) ---
+// --- KOMPONENT KAFELKA ---
 interface DashboardCardProps {
     href: string;
     title: string;
@@ -131,12 +138,12 @@ interface DashboardCardProps {
 
 const DashboardCard = ({ href, title, description, icon, color, badge, disabled }: DashboardCardProps) => {
   
-  // Dynamiczne style w zależności od koloru
+  // Zaktualizowałem styl yellow, żeby miał też cień (shadow) tak jak inne
   const colorStyles = {
     blue:   "group-hover:border-blue-500/50 group-hover:bg-blue-900/10 group-hover:shadow-[0_0_30px_-10px_rgba(59,130,246,0.3)]",
     green:  "group-hover:border-green-500/50 group-hover:bg-green-900/10 group-hover:shadow-[0_0_30px_-10px_rgba(34,197,94,0.3)]",
     purple: "group-hover:border-purple-500/50 group-hover:bg-purple-900/10 group-hover:shadow-[0_0_30px_-10px_rgba(168,85,247,0.3)]",
-    yellow: "group-hover:border-yellow-500/50 group-hover:bg-yellow-900/10",
+    yellow: "group-hover:border-yellow-500/50 group-hover:bg-yellow-900/10 group-hover:shadow-[0_0_30px_-10px_rgba(234,179,8,0.3)]",
     gray:   "group-hover:border-zinc-500/50 group-hover:bg-zinc-800/50",
   };
 
@@ -175,7 +182,6 @@ const DashboardCard = ({ href, title, description, icon, color, badge, disabled 
         </p>
       </div>
 
-      {/* Dekoracyjne tło po hoverze */}
       <div className={`absolute -right-4 -bottom-4 w-24 h-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-${color}-500`} />
     </Wrapper>
   );

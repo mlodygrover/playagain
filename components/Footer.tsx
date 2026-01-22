@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { 
-  Zap, 
   ArrowRight, 
-  Github, 
   Twitter, 
   Instagram, 
   Mail, 
-  MapPin, 
-  CreditCard 
+  ExternalLink,
+  MapPin,
+  Building2 
 } from "lucide-react";
 
 export function Footer() {
@@ -19,154 +18,177 @@ export function Footer() {
       
       <div className="max-w-[1600px] mx-auto px-6">
         
-        {/* TOP SECTION: NEWSLETTER & BRAND */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16 border-b border-zinc-800 pb-12">
+        {/* RZĄD GÓRNY: LOGO & KETELMAN HOLDING (BARDZO WYEKSPONOWANY) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           
-          {/* Brand Promise - SEO Rich Text */}
-          <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 mb-6 group w-fit" aria-label="Strona główna PlayAgain - Używane Komputery Gamingowe">
-              <div className="w-8 h-8 bg-blue-600 flex items-center justify-center font-black italic text-black group-hover:scale-110 transition-transform">
-                P
-              </div>
-              <span className="font-bold text-xl tracking-tight uppercase text-white">
-                PlayAgain<span className="text-zinc-600">.store</span>
-              </span>
+          {/* 1. MARKA I LOGO */}
+          <div className="space-y-6 flex flex-col justify-center">
+            <Link href="/" className="block w-fit opacity-90 hover:opacity-100 transition-opacity" aria-label="Strona główna PlayAgain">
+              <img 
+                src="/logo3.svg" 
+                alt="PlayAgain Logo" 
+                className="h-12 w-auto object-contain"
+              />
             </Link>
             
-            <p className="text-zinc-400 max-w-md leading-relaxed text-sm">
-              <strong>PlayAgain Store</strong> to lider rynku elektroniki odnowionej (refurbished) w Polsce. 
-              Dajemy drugie życie topowym podzespołom PC, oferując <strong className="text-zinc-300">wydajne komputery gamingowe</strong> z gwarancją 24 miesiące. 
-              Oszczędzaj pieniądze i planetę, wybierając sprzęt używany klasy premium.
+            <p className="text-zinc-400 text-sm leading-relaxed max-w-md">
+              Lider rynku elektroniki odnowionej. Projektujemy wydajne <strong>komputery gamingowe</strong> w oparciu o technologię obiegu zamkniętego. 
+              Maksymalna wydajność, gwarancja 24 miesiące.
             </p>
-          </div>
 
-          {/* Newsletter Input */}
-          <div className="flex flex-col justify-center">
-            <h3 className="text-sm font-mono text-zinc-300 uppercase tracking-widest mb-4">
-              // Dołącz do społeczności PlayAgain
-            </h3>
-            <form className="flex gap-0" onSubmit={(e) => e.preventDefault()}>
-              <input 
-                type="email" 
-                placeholder="Twój adres email..." 
-                aria-label="Adres email do newslettera"
-                className="bg-zinc-900 border border-zinc-800 text-zinc-300 px-4 py-3 w-full focus:outline-none focus:border-blue-600 font-mono text-sm placeholder:text-zinc-600"
-              />
-              <button type="submit" className="bg-blue-600 text-white px-6 py-3 font-bold hover:bg-blue-500 transition-colors flex items-center gap-2">
-                ZAPISZ SIĘ <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
-            <p className="text-xs text-zinc-600 mt-3 font-mono">
-              * Otrzymuj informacje o nowych dostawach używanych kart graficznych i promocjach na zestawy PC.
-            </p>
-          </div>
-        </div>
-
-        {/* MIDDLE SECTION: LINKS GRID */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
-          
-          {/* Column 1 - Sklep */}
-          <nav aria-label="Linki do kategorii sklepu">
-            <h4 className="font-mono text-xs font-bold text-white uppercase tracking-widest mb-6">/ Sklep PlayAgain</h4>
-            <ul className="space-y-3">
-              <FooterLink href="/konfigurator" title="Skonfiguruj własny komputer PC">Konfigurator 3D PC</FooterLink>
-              <FooterLink href="/czesci/gpu">Używane Karty Graficzne</FooterLink>
-              <FooterLink href="/czesci/cpu">Procesory (CPU)</FooterLink>
-              <FooterLink href="/gotowe-konfiguracje" title="Sprawdź gotowe zestawy komputerowe">Gotowe Zestawy Gamingowe</FooterLink>
-            </ul>
-          </nav>
-
-          {/* Column 2 - Wsparcie */}
-          <nav aria-label="Linki do wsparcia klienta">
-            <h4 className="font-mono text-xs font-bold text-white uppercase tracking-widest mb-6">/ Wsparcie Klienta</h4>
-            <ul className="space-y-3">
-              <FooterLink href="/status">Status Zamówienia</FooterLink>
-              <FooterLink href="/gwarancja" title="Szczegóły gwarancji 24 miesiące">Gwarancja PlayAgain (24m)</FooterLink>
-              <FooterLink href="/zwroty">Zwroty i Reklamacje</FooterLink>
-              <FooterLink href="/faq">Częste Pytania (FAQ)</FooterLink>
-            </ul>
-          </nav>
-
-          {/* Column 3 - Firma */}
-          <nav aria-label="Informacje o firmie">
-            <h4 className="font-mono text-xs font-bold text-white uppercase tracking-widest mb-6">/ O Marce PlayAgain</h4>
-            <ul className="space-y-3">
-              <FooterLink href="/o-nas">O Nas</FooterLink>
-              <FooterLink href="/eko" title="Nasze podejście do ekologii i refurbished">Ekologia i Refurbished</FooterLink>
-              <FooterLink href="/praca">Kariera w IT</FooterLink>
-              <FooterLink href="/kontakt" title="Kontakt dla firm B2B">Współpraca B2B</FooterLink>
-            </ul>
-          </nav>
-
-          {/* Column 4: Contact - Dane teleadresowe (Ważne dla Local SEO) */}
-          <address className="not-italic">
-            <h4 className="font-mono text-xs font-bold text-white uppercase tracking-widest mb-6">/ Kontakt</h4>
-            <ul className="space-y-4 text-sm text-zinc-400">
-              <li className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-blue-500 shrink-0" aria-hidden="true" />
-                <span itemScope itemType="http://schema.org/PostalAddress">
-                  <span itemProp="name" className="block text-white font-bold mb-1">PlayAgain Store</span>
-                  <span itemProp="streetAddress">ul. Cybernetyki 10</span><br />
-                  <span itemProp="postalCode">02-677</span> <span itemProp="addressLocality">Warszawa</span>, <span itemProp="addressCountry">Polska</span>
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-blue-500 shrink-0" aria-hidden="true" />
-                <a href="mailto:hello@playagain.store" className="hover:text-white transition" title="Napisz do nas">hello@playagain.store</a>
-              </li>
-              <li className="pt-2 flex gap-4">
-                <SocialIcon href="https://twitter.com/playagainstore" label="Twitter PlayAgain" icon={<Twitter className="w-5 h-5" />} />
-                <SocialIcon href="https://instagram.com/playagainstore" label="Instagram PlayAgain" icon={<Instagram className="w-5 h-5" />} />
-                <SocialIcon href="https://github.com/playagainstore" label="GitHub PlayAgain" icon={<Github className="w-5 h-5" />} />
-              </li>
-            </ul>
-          </address>
-        </div>
-
-        {/* BOTTOM SECTION: COPYRIGHT */}
-        <div className="border-t border-zinc-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          
-          <div className="flex flex-col md:flex-row items-center gap-4 text-xs text-zinc-500 font-mono">
-            <p>&copy; {new Date().getFullYear()} PlayAgain Sp. z o.o. - Wszelkie prawa zastrzeżone.</p>
-            <div className="hidden md:block w-px h-3 bg-zinc-800" />
-            <Link href="/regulamin" className="hover:text-zinc-300">Regulamin Sklepu</Link>
-            <Link href="/prywatnosc" className="hover:text-zinc-300">Polityka Prywatności</Link>
-          </div>
-
-          <div className="flex items-center gap-2" title="Wszystkie systemy działają poprawnie">
-            <div className="flex items-center gap-2 px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-[10px] font-mono text-zinc-400 uppercase">Systems Operational</span>
+            <div className="flex gap-4 pt-2">
+                <SocialIcon href="https://twitter.com/playagainstore" label="Twitter" icon={<Twitter className="w-4 h-4" />} />
+                <SocialIcon href="https://instagram.com/playagainstore" label="Instagram" icon={<Instagram className="w-4 h-4" />} />
             </div>
           </div>
 
+          {/* 2. KETELMAN HOLDING (PEŁNA SZEROKOŚĆ PRAWEJ STRONY) */}
+          <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-8 group">
+            <div className="space-y-4 text-center md:text-left">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-blue-500 font-mono font-bold">Holding</p>
+              <div className="opacity-90 group-hover:opacity-100 transition-opacity">
+                <img 
+                  src="/ketelman.svg" 
+                  alt="Ketelman Holding Logo" 
+                  className="h-12 w-auto object-contain mx-auto md:mx-0"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <span className="hidden text-3xl font-black text-white uppercase tracking-tighter italic">Ketelman<span className="font-light not-italic">Holding</span></span>
+              </div>
+              <p className="text-sm text-zinc-400 max-w-sm leading-relaxed">
+                PlayAgain jest dumną częścią ekosystemu <strong>Ketelman Holding</strong>. 
+                Wspólnie budujemy przyszłość zrównoważonej technologii.
+              </p>
+            </div>
+
+            <div className="w-full md:w-auto flex flex-col gap-3 min-w-[200px]">
+              <p className="text-[10px] uppercase tracking-widest text-zinc-600 font-mono text-center md:text-left">Grupa Kapitałowa</p>
+              <ExternalProjectLink href="https://ketelman.com" name="Ketelman.com" />
+              <ExternalProjectLink href="https://draftngo.com" name="DraftnGo.com" />
+            </div>
+          </div>
+        </div>
+
+        {/* RZĄD DOLNY: NAWIGACJA & KONTAKT */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 border-b border-zinc-800 pb-12">
+          
+          {/* 3. NAWIGACJA */}
+          <div className="flex flex-col justify-start">
+            <h3 className="font-mono text-xs font-bold text-white uppercase tracking-widest mb-8 border-l-2 border-blue-600 pl-4">/ Sklep & Info</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <ul className="space-y-3">
+                <FooterLink href="/konfigurator" highlight>Konfigurator PC 3D</FooterLink>
+                <FooterLink href="/gotowe-konfiguracje">Gotowe Zestawy</FooterLink>
+                <FooterLink href="/o-nas">O marce PlayAgain</FooterLink>
+              </ul>
+              <ul className="space-y-3">
+                <FooterLink href="/status">Status Zamówienia</FooterLink>
+                <FooterLink href="/gwarancja">Warunki Gwarancji</FooterLink>
+                <FooterLink href="/kontakt">Kontakt</FooterLink>
+              </ul>
+            </div>
+          </div>
+
+          {/* 4. KONTAKT I DANE (NAP) */}
+          <div itemScope itemType="http://schema.org/Organization">
+            <h3 className="font-mono text-xs font-bold text-white uppercase tracking-widest mb-8 border-l-2 border-zinc-700 pl-4">/ Biuro & Wsparcie</h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              {/* Adres */}
+              <div className="flex items-start gap-4" itemProp="address" itemScope itemType="http://schema.org/PostalAddress">
+                <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 flex items-center justify-center rounded-lg shrink-0">
+                  <MapPin className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="text-sm text-zinc-300">
+                  <span className="font-bold text-white block mb-1" itemProp="name">PlayAgain</span>
+                  <span itemProp="addressLocality">Poznań</span>, <span itemProp="addressCountry">Polska</span>
+                </div>
+              </div>
+
+              {/* Maile */}
+              <div className="space-y-4">
+                <a href="mailto:kontakt@playagain.com" className="flex items-center gap-3 group">
+                  <Mail className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
+                  <div>
+                    <span className="block text-[10px] text-zinc-600 uppercase font-bold tracking-wider">Support</span>
+                    <span className="text-sm text-zinc-300 font-mono group-hover:text-blue-400 transition-colors">kontakt@playagain.com</span>
+                  </div>
+                </a>
+
+                <a href="mailto:info@ketelman.com" className="flex items-center gap-3 group">
+                  <Building2 className="w-4 h-4 text-zinc-500 group-hover:scale-110 transition-transform" />
+                  <div>
+                    <span className="block text-[10px] text-zinc-600 uppercase font-bold tracking-wider">Holding / B2B</span>
+                    <span className="text-sm text-zinc-400 font-mono group-hover:text-white transition-colors">info@ketelman.com</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* STOPKA DOLNA (COPYRIGHT) */}
+        <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] md:text-xs text-zinc-600 font-mono uppercase tracking-widest">
+          <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+            <p>&copy; {new Date().getFullYear()} PlayAgain & Ketelman Holding.</p>
+            <span className="hidden md:inline text-zinc-800">|</span>
+            <div className="flex gap-4">
+              <Link href="/polityka-prywatnosci" className="hover:text-zinc-400 transition-colors">Prywatność</Link>
+              <Link href="/regulamin" className="hover:text-zinc-400 transition-colors">Regulamin</Link>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 px-4 py-1.5 bg-zinc-900/50 border border-zinc-800/50 rounded-full">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span className="text-zinc-500">Systems Operational</span>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
 
-// Pomocniczy komponent Linku (z opcjonalnym title)
-const FooterLink = ({ href, children, title }: { href: string; children: React.ReactNode; title?: string }) => (
+// --- KOMPONENTY POMOCNICZE ---
+
+const FooterLink = ({ href, children, highlight }: { href: string; children: React.ReactNode; highlight?: boolean }) => (
   <li>
     <Link 
       href={href} 
-      title={title}
-      className="text-sm text-zinc-500 hover:text-white hover:translate-x-1 transition-all duration-200 block"
+      className={`text-sm flex items-center gap-2 transition-all duration-200 group ${highlight ? 'text-white font-bold' : 'text-zinc-400 hover:text-white'}`}
     >
+      <ArrowRight className={`w-3 h-3 text-blue-600 transition-transform ${highlight ? 'opacity-100' : 'opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0'}`} />
       {children}
     </Link>
   </li>
 );
 
-// Pomocniczy komponent Social
+const ExternalProjectLink = ({ href, name }: { href: string, name: string }) => (
+  <a 
+    href={href} 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="flex items-center justify-between bg-black/40 border border-zinc-800/50 hover:border-blue-600/50 p-3 rounded-xl transition-all group"
+  >
+    <span className="text-zinc-300 font-bold text-xs group-hover:text-white transition-colors uppercase tracking-tight">
+      {name}
+    </span>
+    <ExternalLink className="w-3 h-3 text-zinc-600 group-hover:text-blue-500 transition-colors" />
+  </a>
+);
+
 const SocialIcon = ({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) => (
   <a 
     href={href} 
     aria-label={label}
     target="_blank"
     rel="noopener noreferrer"
-    className="p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors"
+    className="w-9 h-9 flex items-center justify-center bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-500 hover:bg-zinc-800 rounded-lg transition-all shadow-sm"
   >
     {icon}
   </a>

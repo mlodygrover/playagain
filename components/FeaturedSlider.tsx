@@ -1,9 +1,9 @@
-"use client"; // Tylko ten mały fragment jest renderowany u klienta
+"use client";
 
 import Link from "next/link";
 import React, { useRef } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, MonitorPlay } from "lucide-react";
-import Image from "next/image"; // Używamy next/image!
+import Image from "next/image";
 
 export function FeaturedSlider({ products }: { products: any[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -40,7 +40,8 @@ export function FeaturedSlider({ products }: { products: any[] }) {
         className="flex gap-4 md:gap-8 overflow-x-auto pb-12 snap-x snap-mandatory scroll-smooth px-8 md:px-0 scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {products.map((pc) => (
+        {/* DODANO: index do argumentów mapy */}
+        {products.map((pc, index) => (
           <article 
             key={pc._id} 
             className="snap-center shrink-0 w-[80vw] sm:w-[350px] md:w-[400px] bg-black border border-zinc-800 hover:border-blue-600/50 transition-all group relative flex flex-col"
@@ -48,13 +49,14 @@ export function FeaturedSlider({ products }: { products: any[] }) {
             <div className="aspect-square w-full bg-zinc-900 flex items-center justify-center relative overflow-hidden">
               {pc.image ? (
                 <div className="relative w-full h-full p-6">
-                   {/* Optymalizacja obrazu */}
+                   {/* Optymalizacja obrazu - DODANO priority */}
                    <Image 
                       src={pc.image} 
                       alt={`Komputer gamingowy ${pc.name} - PlayAgain`}
                       fill
                       sizes="(max-width: 768px) 80vw, 400px"
                       className="object-contain group-hover:scale-105 transition-transform duration-500"
+                      priority={index === 0} // <--- TO NAPRAWIA BŁĄD LCP
                    />
                 </div>
               ) : (

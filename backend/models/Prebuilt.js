@@ -3,14 +3,17 @@ const mongoose = require('mongoose');
 const PrebuiltSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String },
-  price: { type: Number, required: true }, // Cena zestawu (może być inna niż suma części)
-  image: { type: String }, // URL do zdjęcia zestawu
+  price: { type: Number, required: true },
+  image: { type: String },
+  
+  // --- ZMIANA TUTAJ ---
+  // Usuwamy 'enum', aby akceptować każdą kategorię z JSON-a
   category: { 
     type: String, 
-    enum: ['Gaming', 'Office', 'Workstation', 'Creator'], 
     default: 'Gaming' 
   },
-  // Tablica referencji do komponentów
+  // --------------------
+
   components: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Component' 

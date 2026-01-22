@@ -159,8 +159,8 @@ export default function PrebuiltDetailPage() {
                  )}
               </div>
               
-              <div className="absolute bottom-6 left-6 bg-black/70 backdrop-blur px-3 py-1 border border-zinc-700 text-xs font-mono text-zinc-300">
-                ID: {product._id.slice(-6).toUpperCase()}
+              <div className="absolute bottom-6 left-6 bg-black/70 backdrop-blur px-3 py-1 border border-zinc-700 text-xs font-mono text-zinc-300 z-100">
+                {product.name.toUpperCase()}
               </div>
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function PrebuiltDetailPage() {
                     {/* PRZYCISK: DO KOSZYKA (STANDARDOWY) */}
                     <button 
                         onClick={handleAddToCart}
-                        className="w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-600 text-white py-4 rounded font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all"
+                        className="w-full bg-blue-600 hover:bg-blue-700 border border-zinc-700 hover:border-zinc-600 text-white py-4 rounded font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all"
                     >
                         <ShoppingBag className="w-5 h-5 text-zinc-400" /> Kup ten zestaw bez zmian
                     </button>

@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const Prebuilt = require('../models/Prebuilt');
 const { Component } = require('../models/Component'); // ✅ POPRAWNIE
-// GET - Pobierz wszystkie zestawy (z wypełnionymi danymi komponentów)
+// GET - Pobierz wszystkie zestawy posortowane cenowo (od najtańszego)
 router.get('/', async (req, res) => {
     try {
         const prebuilts = await Prebuilt.find()
-            .populate('components') // To zamieni same ID na pełne obiekty komponentów
-            .sort({ createdAt: -1 });
+            .populate('components')
+            // ZMIANA TUTAJ: price: 1 oznacza sortowanie rosnące (ASC)
+            .sort({ price: 1 });
+
         res.json(prebuilts);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -96,5 +98,40 @@ router.post('/calculate-price', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+// POST /recalculate-all - Aktualizuj ceny wszystkich zestawów na podstawie aktualnych cen części
+router.post('/recalculate-all', async (req, res) => {
+    try {
+        // 1. Pobierz wszystkie zestawy wraz z komponentami
+        const prebuilts = await Prebuilt.find().populate('components');
 
+        let updatedCount = 0;
+
+        // 2. Iteruj przez każdy zestaw
+        for (const pc of prebuilts) {
+            let newPrice = 0;
+
+            // 3. Sumuj ceny komponentów (tak samo jak w /calculate-price)
+            if (pc.components && pc.components.length > 0) {
+                pc.components.forEach(comp => {
+                    const price = comp.stats?.basePrice > 0
+                        ? comp.stats.basePrice
+                        : (comp.stats?.averagePrice || 0);
+                    newPrice += price;
+                });
+
+                // 4. Aktualizuj cenę i zapisz
+                // Opcjonalnie: Możesz dodać stałą marżę, np. newPrice += 200;
+                pc.price = Math.ceil(newPrice);
+                await pc.save();
+                updatedCount++;
+            }
+        }
+
+        res.json({ message: `Zaktualizowano ceny dla ${updatedCount} zestawów.`, count: updatedCount });
+
+    } catch (err) {
+        console.error("Błąd masowego przeliczania:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
 module.exports = router;

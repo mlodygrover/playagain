@@ -86,7 +86,7 @@ export default async function LandingPage() {
       {/* 1. HERO SECTION */}
       <header className="relative min-h-[85vh] flex flex-col items-center justify-center border-b border-zinc-800 overflow-hidden w-full">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black opacity-60 animate-pulse-slow pointer-events-none" />
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] pointer-events-none" />
+        <div className="absolute inset-0  bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] pointer-events-none" />
 
         <div className="relative z-10 text-center px-4 max-w-6xl mx-auto space-y-6 md:space-y-8 w-full">
           <div className="inline-flex items-center gap-2 px-3 py-1 md:px-4 md:py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-[10px] md:text-xs font-mono uppercase tracking-widest animate-in fade-in slide-in-from-top-4 duration-700">
@@ -165,7 +165,7 @@ export default async function LandingPage() {
 
       {/* --- NOWA SEKCJA SEO: JAK DZIAŁA KONFIGURATOR --- */}
       <section className="py-20 md:py-32 px-4 md:px-6 max-w-[1600px] mx-auto border-b border-zinc-800 bg-black relative">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-20 pointer-events-none" />
+        <div className="absolute inset-0  bg-center opacity-20 pointer-events-none" />
 
         <div className="relative z-10">
           <div className="mb-16 max-w-4xl">
@@ -250,7 +250,7 @@ export default async function LandingPage() {
 
           <div className="relative h-64 sm:h-[400px] lg:h-[500px] w-full bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden group">
             {/* Tutaj też można użyć next/image w przyszłości */}
-            <div className="absolute inset-0 flex items-center justify-center bg-[url('/assembly-bg.jpg')] bg-cover bg-center opacity-50 group-hover:opacity-70 transition-opacity" />
+            <div className="absolute inset-0 flex items-center justify-center bg-cover bg-center opacity-50 group-hover:opacity-70 transition-opacity" />
             <div className="relative z-10 flex flex-col items-center justify-center h-full text-center p-8">
               <Wrench className="w-16 h-16 md:w-24 md:h-24 text-zinc-700 mb-4" />
               <h3 className="text-xl md:text-2xl font-bold text-white">Lab Serwisowy</h3>
