@@ -52,7 +52,7 @@ export default async function LandingPage() {
         "name": "Czy używany komputer gamingowy (refurbished) jest bezpieczny?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Tak, często bezpieczniejszy niż używany sprzęt z aukcji internetowych. W PlayAgain każdy komputer przechodzi rygorystyczne, 24-godzinne testy obciążeniowe. Wymieniamy pasty termoprzewodzące, aktualizujemy BIOS i dajemy pełną, 24-miesięczną gwarancję na cały zestaw."
+          "text": "Tak, często bezpieczniejszy niż używany sprzęt z aukcji internetowych. W PlayAgain każdy komputer przechodzi rygorystyczne, Złożone testy obciążeniowe. Wymieniamy pasty termoprzewodzące, aktualizujemy BIOS i wysyłamy sprawdzony sprzęt."
         }
       },
       {
@@ -200,7 +200,7 @@ export default async function LandingPage() {
               number="04"
               icon={<Hammer className="text-blue-500" />}
               title="Profesjonalny Montaż"
-              desc="Ty konfigurujesz, my składamy. Każdy komputer gamingowy przechodzi 24-godzinne testy obciążeniowe przed wysyłką."
+              desc="Ty konfigurujesz, my składamy. Wszystkie jednostki są dokładnie sprawdzane przed wysyłką."
             />
           </div>
 
@@ -241,9 +241,9 @@ export default async function LandingPage() {
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <FeatureItem icon={<ShieldCheck className="text-blue-500" />} title="Gwarancja 24m" desc="Pełna ochrona jak przy nowym sprzęcie." />
-              <FeatureItem icon={<Recycle className="text-green-500" />} title="Eco-Friendly" desc="Redukcja elektrośmieci o 15kg na zestaw." />
-              <FeatureItem icon={<Cpu className="text-purple-500" />} title="Stress Tests" desc="24h testów obciążeniowych (GPU/CPU)." />
+              <FeatureItem icon={<ShieldCheck className="text-blue-500" />} title="Szukasz kota w worku? Tu niestety go nie znajdziesz." desc="Pełna ochrona jak przy nowym sprzęcie." />
+              <FeatureItem icon={<Recycle className="text-green-500" />} title="Eco-Friendly" desc="Daj drugie życie elektronice!" />
+              <FeatureItem icon={<Cpu className="text-purple-500" />} title="Testy" desc="Jednostki są dokładnie testowane przed wysyłką." />
               <FeatureItem icon={<Zap className="text-yellow-500" />} title="Ready to Play" desc="Windows, sterowniki i BIOS zaktualizowane." />
             </div>
           </div>
@@ -278,7 +278,7 @@ export default async function LandingPage() {
           />
           <FaqItem
             question="Czy używany komputer gamingowy (refurbished) jest bezpieczny?"
-            answer="Tak, często bezpieczniejszy niż używany sprzęt z aukcji internetowych. W PlayAgain każdy komputer przechodzi rygorystyczne, 24-godzinne testy obciążeniowe. Wymieniamy pasty termoprzewodzące, aktualizujemy BIOS i dajemy pełną, 24-miesięczną gwarancję na cały zestaw."
+            answer="Tak, często bezpieczniejszy niż używany sprzęt z aukcji internetowych. W PlayAgain każdy komputer przechodzi rygorystyczne, złożone testy obciążeniowe. Wymieniamy pasty termoprzewodzące, aktualizujemy BIOS i wysyłamy sprawdzony sprzęt"
           />
           <FaqItem
             question="Ile trwa realizacja zamówienia na komputer z konfiguratora?"

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://playagain.store"),
 
   title: "Konfigurator PC 3D | Złóż Tani Komputer Gamingowy z Części Używanych",
-  description: "Pierwszy w Polsce konfigurator używanych komputerów gamingowych. Zbuduj PC w 3D taniej o 40%. Gwarancja 24 miesiące, części refurbished, RTX i Intel/AMD.",
+  description: "Pierwszy w Polsce konfigurator używanych komputerów gamingowych. Zbuduj PC w 3D taniej o 40%. Części odnowione , RTX i Intel/AMD.",
   keywords: [
     "konfigurator komputera",
     "konfigurator pc",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "PlayAgain | Tanie Komputery Gamingowe",
-    description: "Zbuduj swój PC w 3D. Gwarancja 24m. Oszczędź do 40%.",
+    description: "Zbuduj swój PC z odnowionych części. Zagraj ponownie! ",
     images: ["/og-image.jpg"],
   },
 
@@ -86,7 +86,7 @@ const jsonLd = {
   "url": "https://playagain.store",
   "logo": "https://playagain.store/logo.svg",
   "image": "https://playagain.store/og-image.jpg",
-  "description": "Sklep z używanymi komputerami gamingowymi i częściami PC. Konfigurator 3D, gwarancja 24 miesiące, sprzęt refurbished.",
+  "description": "Sklep z używanymi komputerami gamingowymi i częściami PC. Konfigurator 3D, sprzęt odnowiony.",
   "openingHoursSpecification": {
     "@type": "OpeningHoursSpecification",
     "dayOfWeek": [

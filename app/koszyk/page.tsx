@@ -116,7 +116,7 @@ export default function CartPage() {
             </Link>
             
             <p className="text-[10px] text-center text-zinc-600 mt-4">
-              Bezpieczne płatności SSL. Gwarancja 24 miesiące.
+              Bezpieczne płatności SSL. 
             </p>
           </div>
         </div>

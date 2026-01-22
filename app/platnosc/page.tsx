@@ -278,7 +278,7 @@ export default function CheckoutPage() {
 
                         <div className="p-4 border border-blue-900/30 bg-blue-900/10 rounded text-xs text-blue-200/70 leading-relaxed">
                             <span className="font-bold text-blue-400 block mb-1">Gwarancja Satysfakcji</span>
-                            Kupując jako gość również otrzymujesz pełną, 24-miesięczną gwarancję door-to-door oraz wsparcie techniczne.
+                            Kupując jako gość czuj się jak u siebie :)
                         </div>
 
                     </div>

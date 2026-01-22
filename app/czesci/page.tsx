@@ -53,7 +53,7 @@ export default function PartsPage() {
         </h1>
         <p className="text-zinc-400 max-w-2xl font-mono text-sm border-l-2 border-blue-600 pl-4">
           // Przeglądaj certyfikowane komponenty. <br/>
-          // Każda część przeszła 24-godzinne testy obciążeniowe.
+        
         </p>
       </div>
 

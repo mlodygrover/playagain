@@ -133,10 +133,10 @@ export function Footer() {
         {/* STOPKA DOLNA (COPYRIGHT) */}
         <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] md:text-xs text-zinc-600 font-mono uppercase tracking-widest">
           <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-            <p>&copy; {new Date().getFullYear()} PlayAgain & Ketelman Holding.</p>
+            <p>&copy; {new Date().getFullYear()} PlayAgain | Ketelman Holding and Engineering.</p>
             <span className="hidden md:inline text-zinc-800">|</span>
             <div className="flex gap-4">
-              <Link href="/polityka-prywatnosci" className="hover:text-zinc-400 transition-colors">Prywatność</Link>
+              <Link href="/regulamin" className="hover:text-zinc-400 transition-colors">Prywatność</Link>
               <Link href="/regulamin" className="hover:text-zinc-400 transition-colors">Regulamin</Link>
             </div>
           </div>

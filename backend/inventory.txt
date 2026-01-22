@@ -1018,7 +1018,7 @@
     "id": "696e56123d0181844acdb9d5",
     "name": "Montaż i odnowa części",
     "type": "service",
-    "price": 95,
+    "price": 90,
     "socket": null
   }
 ]
