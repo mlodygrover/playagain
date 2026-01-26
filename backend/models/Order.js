@@ -31,6 +31,7 @@ const OrderSchema = new mongoose.Schema({
   status: { type: String, default: 'PENDING' }, // PENDING, PAID, SHIPPED, CANCELLED
   paymentId: { type: String }, // ID transakcji z banku
   
+  trackingLink: { type: String, default: null }, // NOWE POLE
   createdAt: { type: Date, default: Date.now },
 });
 

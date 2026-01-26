@@ -4,7 +4,7 @@ const axios = require('axios');
 const { protectAdmin } = require('../middleware/authMiddleware');
 const verify = require('../middleware/auth');
 const Return = require('../models/Return');
-
+const jwt = require('jsonwebtoken');
 // --- POWIADOMIENIE 1: POTWIERDZENIE ZŁOŻENIA ZAMÓWIENIA (PENDING) ---
 async function sendOrderConfirmation(order) {
   try {
@@ -33,15 +33,16 @@ async function sendOrderConfirmation(order) {
 }
 
 // --- POWIADOMIENIE 2: POTWIERDZENIE PŁATNOŚCI + LINK DO ZWROTU ---
-// --- POWIADOMIENIE 2: POTWIERDZENIE PŁATNOŚCI + LINK DO ZWROTU ---
+// --- POWIADOMIENIE 2: POTWIERDZENIE PŁATNOŚCI + LINKI DO ZAMÓWIENIA I ZWROTU ---
 async function sendPaymentSuccessNotification(order) {
   try {
     const apiKey = process.env.BREVO_API_KEY;
     if (!apiKey) return;
 
-    // JAWNIE pobieramy ID zamówienia jako string
-    // To zapobiegnie braniu ID z tablicy items
     const mainOrderId = order._id.toString();
+
+    // Generujemy oba linki
+    const orderLink = `${process.env.BASE_URL}/zamowienie/${mainOrderId}`;
     const returnLink = `${process.env.BASE_URL}/returns/${mainOrderId}`;
 
     await axios.post('https://api.brevo.com/v3/smtp/email', {
@@ -53,24 +54,31 @@ async function sendPaymentSuccessNotification(order) {
       subject: `✅ Płatność otrzymana! Zamówienie #${mainOrderId.slice(-6)}`,
       htmlContent: `
         <div style="background-color: #000; padding: 40px; font-family: sans-serif; color: #fff; max-width: 600px; margin: auto; border: 1px solid #333;">
-          <h1 style="color: #22c55e; text-transform: uppercase; letter-spacing: 2px;">Zapłacone!</h1>
-          <p style="color: #999; font-size: 16px;">Twoja wpłata została zaksięgowana. Przystępujemy do realizacji zamówienia.</p>
+          <h1 style="color: #22c55e; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;">Zapłacone!</h1>
+          <p style="color: #999; font-size: 16px; line-height: 1.5;">Witaj ${order.customerDetails.firstName}, Twoja wpłata została zaksięgowana. Przystępujemy do realizacji zamówienia.</p>
           
-          <div style="background: #111; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #22c55e;">
-             <p style="margin: 0;">Status: <strong>OPŁACONE</strong></p>
-             <p style="margin: 5px 0 0 0;">Kwota: ${order.totalAmount} PLN</p>
-             <p style="margin: 5px 0 0 0;">Numer: #${mainOrderId}</p>
+          <div style="background: #111; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #22c55e;">
+             <p style="margin: 0; font-size: 14px;">Status: <strong style="color: #22c55e;">OPŁACONE</strong></p>
+             <p style="margin: 5px 0 0 0; font-size: 14px;">Kwota: <strong>${order.totalAmount} PLN</strong></p>
+             <p style="margin: 5px 0 0 0; font-size: 14px;">Numer: <strong>#${mainOrderId}</strong></p>
           </div>
 
-          <p style="color: #666; font-size: 14px; margin-top: 30px;">
-            Masz 14 dni na odstąpienie od umowy. Jeśli chcesz dokonać zwrotu lub zgłosić usterkę, użyj przycisku poniżej:
+          <p style="color: #fff; font-weight: bold; margin-top: 30px; margin-bottom: 15px;">Zarządzaj swoim zamówieniem:</p>
+          
+          <div style="margin-bottom: 30px;">
+            <a href="${orderLink}" style="background-color: #ffffff; color: #000000; padding: 12px 20px; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 12px; display: inline-block; margin-right: 10px; margin-bottom: 10px;">Podgląd zamówienia</a>
+            
+            <a href="${returnLink}" style="background-color: #2563eb; color: #ffffff; padding: 12px 20px; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 12px; display: inline-block;">Zwroty i Reklamacje</a>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #333; margin: 30px 0;">
+          
+          <p style="color: #666; font-size: 13px; line-height: 1.4;">
+            Pamiętaj, że masz 14 dni na odstąpienie od umowy bez podania przyczyny. 
+            Gdy tylko wyślemy Twoją paczkę, otrzymasz kolejną wiadomość z linkiem do śledzenia.
           </p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${returnLink}" style="background-color: #2563eb; color: #ffffff; padding: 15px 25px; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 13px; display: inline-block;">Zarządzaj zwrotem / RMA</a>
-          </div>
 
-          <p style="font-size: 11px; color: #444; text-align: center;">Ten link jest unikalny dla Twojego zamówienia.</p>
+          <p style="font-size: 11px; color: #444; text-align: center; margin-top: 40px;">Wiadomość wygenerowana automatycznie przez PlayAgain Store.</p>
         </div>
       `
     }, {
@@ -81,7 +89,7 @@ async function sendPaymentSuccessNotification(order) {
       }
     });
 
-    console.log(`📧 Mail wysłany poprawnie dla zamówienia: ${mainOrderId}`);
+    console.log(`📧 Mail z linkami wysłany poprawnie dla zamówienia: ${mainOrderId}`);
 
   } catch (error) {
     console.error("❌ Błąd maila o płatności:", error.response?.data || error.message);
@@ -292,13 +300,23 @@ router.get('/all', protectAdmin, async (req, res) => {
 });
 
 // PUT /api/orders/:id/status
+// routes/orders.js
+
+// Zaktualizowany endpoint statusu i linku trackingu
 router.put('/:id/status', protectAdmin, async (req, res) => {
   try {
-    const { status } = req.body;
-    const validStatuses = ['PENDING', 'PAID', 'SHIPPED', 'CANCELLED'];
-    if (!validStatuses.includes(status)) return res.status(400).json({ error: "Nieprawidłowy status" });
+    const { status, trackingLink } = req.body; // Przyjmujemy też trackingLink
 
-    const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (trackingLink !== undefined) updateData.trackingLink = trackingLink;
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
     if (!order) return res.status(404).json({ error: "Nie znaleziono zamówienia" });
 
     res.json(order);

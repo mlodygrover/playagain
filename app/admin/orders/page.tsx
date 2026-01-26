@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  Package, Search, Eye, Truck, CheckCircle, 
+import {
+  Package, Search, Eye, Truck, CheckCircle,
   AlertCircle, XCircle, Calendar, DollarSign, Loader2, X, Trash2 // <--- IMPORT Trash2
 } from "lucide-react";
 
@@ -40,7 +40,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -55,7 +55,7 @@ export default function AdminOrdersPage() {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const data = await res.json();
-      if(Array.isArray(data)) setOrders(data);
+      if (Array.isArray(data)) setOrders(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -65,34 +65,34 @@ export default function AdminOrdersPage() {
 
   // --- NOWA FUNKCJA: USUWANIE ---
   const handleDeleteOrder = async (orderId: string, e?: React.MouseEvent) => {
-    if(e) e.stopPropagation(); // Zapobiega otwarciu modala przy kliknięciu usuwania
-    
-    if(!confirm("⚠️ UWAGA: Czy na pewno chcesz trwale usunąć to zamówienie z bazy danych? Tej operacji nie można cofnąć.")) return;
+    if (e) e.stopPropagation(); // Zapobiega otwarciu modala przy kliknięciu usuwania
+
+    if (!confirm("⚠️ UWAGA: Czy na pewno chcesz trwale usunąć to zamówienie z bazy danych? Tej operacji nie można cofnąć.")) return;
 
     try {
-        const res = await fetch(`${API_URL}/api/orders/${orderId}`, {
-            method: "DELETE",
-            headers: { "Authorization": `Bearer ${token}` }
-        });
+      const res = await fetch(`${API_URL}/api/orders/${orderId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
 
-        if (res.ok) {
-            // Usuń z lokalnego stanu (bez odświeżania strony)
-            setOrders(prev => prev.filter(o => o._id !== orderId));
-            // Jeśli usunięte zamówienie było otwarte w modalu - zamknij go
-            if (selectedOrder?._id === orderId) setSelectedOrder(null);
-            alert("Zamówienie usunięte.");
-        } else {
-            alert("Wystąpił błąd podczas usuwania.");
-        }
+      if (res.ok) {
+        // Usuń z lokalnego stanu (bez odświeżania strony)
+        setOrders(prev => prev.filter(o => o._id !== orderId));
+        // Jeśli usunięte zamówienie było otwarte w modalu - zamknij go
+        if (selectedOrder?._id === orderId) setSelectedOrder(null);
+        alert("Zamówienie usunięte.");
+      } else {
+        alert("Wystąpił błąd podczas usuwania.");
+      }
     } catch (err) {
-        console.error(err);
-        alert("Błąd połączenia z serwerem.");
+      console.error(err);
+      alert("Błąd połączenia z serwerem.");
     }
   };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     // ... (Twoja istniejąca funkcja statusu - bez zmian) ...
-    if(!confirm(`Czy na pewno zmienić status na ${newStatus}?`)) return;
+    if (!confirm(`Czy na pewno zmienić status na ${newStatus}?`)) return;
     setIsUpdating(true);
     try {
       const res = await fetch(`${API_URL}/api/orders/${orderId}/status`, {
@@ -103,11 +103,11 @@ export default function AdminOrdersPage() {
         },
         body: JSON.stringify({ status: newStatus })
       });
-      
+
       if (res.ok) {
         setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: newStatus } : o));
         if (selectedOrder?._id === orderId) {
-            setSelectedOrder((prev: any) => ({ ...prev, status: newStatus }));
+          setSelectedOrder((prev: any) => ({ ...prev, status: newStatus }));
         }
       }
     } catch (err) {
@@ -121,7 +121,7 @@ export default function AdminOrdersPage() {
     const totalRevenue = orders
       .filter(o => o.status === 'PAID' || o.status === 'SHIPPED')
       .reduce((acc, curr) => acc + curr.totalAmount, 0);
-    
+
     return {
       count: orders.length,
       revenue: totalRevenue,
@@ -137,20 +137,39 @@ export default function AdminOrdersPage() {
       order.customerDetails.lastName.toLowerCase().includes(searchLower)
     );
   });
+  const [trackingInput, setTrackingInput] = useState("");
 
-  if (loading) return <div className="flex h-screen items-center justify-center bg-black text-white"><Loader2 className="animate-spin w-8 h-8 text-blue-500"/></div>;
+  // Kiedy otwierasz modal (useEffect lub onClick na eye):
+  // setTrackingInput(order.trackingLink || "");
+
+  const handleUpdateTracking = async () => {
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`${API_URL}/api/orders/${selectedOrder._id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ trackingLink: trackingInput })
+      });
+      if (res.ok) alert("Link zaktualizowany!");
+    } catch (err) { alert("Błąd zapisu"); }
+    finally { setIsUpdating(false); }
+  };
+  if (loading) return <div className="flex h-screen items-center justify-center bg-black text-white"><Loader2 className="animate-spin w-8 h-8 text-blue-500" /></div>;
 
   return (
     <div className="min-h-screen bg-black text-white pt-32 px-4 pb-20">
       <div className="max-w-7xl mx-auto">
-        
+
         {/* HEADER & STATS (bez zmian) */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-black uppercase tracking-tight">Zarządzanie Zamówieniami</h1>
             <p className="text-zinc-500 text-sm">Przeglądaj i aktualizuj statusy zamówień klientów</p>
           </div>
-          
+
           <div className="flex gap-4">
             <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-lg min-w-[140px]">
               <p className="text-[10px] uppercase text-zinc-500 font-bold mb-1">Przychód (Opłacone)</p>
@@ -167,10 +186,10 @@ export default function AdminOrdersPage() {
         <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-t-lg flex flex-wrap gap-4 items-center justify-between">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
-            <input 
+            <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Szukaj po ID, emailu lub nazwisku..." 
+              placeholder="Szukaj po ID, emailu lub nazwisku..."
               className="w-full bg-black border border-zinc-700 pl-10 pr-4 py-2 text-sm text-white rounded outline-none focus:border-blue-500"
             />
           </div>
@@ -201,7 +220,7 @@ export default function AdminOrdersPage() {
                     <div className="text-xs text-zinc-500">{order.customerDetails.email}</div>
                   </td>
                   <td className="p-4 text-zinc-400 flex items-center gap-2">
-                    <Calendar className="w-3 h-3"/> {new Date(order.createdAt).toLocaleDateString()}
+                    <Calendar className="w-3 h-3" /> {new Date(order.createdAt).toLocaleDateString()}
                   </td>
                   <td className="p-4 font-mono font-bold text-white">{order.totalAmount} PLN</td>
                   <td className="p-4">
@@ -209,21 +228,21 @@ export default function AdminOrdersPage() {
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-2">
-                        <button 
-                          onClick={() => setSelectedOrder(order)}
-                          className="bg-blue-600/10 hover:bg-blue-600/30 text-blue-400 px-3 py-1.5 rounded text-xs font-bold uppercase transition-colors inline-flex items-center gap-2"
-                        >
-                          <Eye className="w-3 h-3" /> Szczegóły
-                        </button>
-                        
-                        {/* PRZYCISK USUWANIA */}
-                        <button 
-                          onClick={(e) => handleDeleteOrder(order._id, e)}
-                          title="Usuń trwale"
-                          className="bg-red-600/10 hover:bg-red-600/30 text-red-500 p-1.5 rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="bg-blue-600/10 hover:bg-blue-600/30 text-blue-400 px-3 py-1.5 rounded text-xs font-bold uppercase transition-colors inline-flex items-center gap-2"
+                      >
+                        <Eye className="w-3 h-3" /> Szczegóły
+                      </button>
+
+                      {/* PRZYCISK USUWANIA */}
+                      <button
+                        onClick={(e) => handleDeleteOrder(order._id, e)}
+                        title="Usuń trwale"
+                        className="bg-red-600/10 hover:bg-red-600/30 text-red-500 p-1.5 rounded transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -239,7 +258,7 @@ export default function AdminOrdersPage() {
         {selectedOrder && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
             <div className="bg-zinc-900 border border-zinc-700 w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-              
+
               <div className="bg-black border-b border-zinc-800 p-6 flex justify-between items-center">
                 <div>
                   <h2 className="text-xl font-bold text-white flex items-center gap-3">
@@ -251,14 +270,14 @@ export default function AdminOrdersPage() {
                   </p>
                 </div>
                 <div className="flex gap-4 items-center">
-                    {/* Przycisk usuwania w modalu */}
-                    <button 
-                        onClick={() => handleDeleteOrder(selectedOrder._id)}
-                        className="text-red-500 hover:text-red-400 text-xs font-bold uppercase flex items-center gap-1"
-                    >
-                        <Trash2 className="w-4 h-4" /> Usuń
-                    </button>
-                    <button onClick={() => setSelectedOrder(null)} className="text-zinc-500 hover:text-white"><X className="w-6 h-6"/></button>
+                  {/* Przycisk usuwania w modalu */}
+                  <button
+                    onClick={() => handleDeleteOrder(selectedOrder._id)}
+                    className="text-red-500 hover:text-red-400 text-xs font-bold uppercase flex items-center gap-1"
+                  >
+                    <Trash2 className="w-4 h-4" /> Usuń
+                  </button>
+                  <button onClick={() => setSelectedOrder(null)} className="text-zinc-500 hover:text-white"><X className="w-6 h-6" /></button>
                 </div>
               </div>
 
@@ -266,12 +285,12 @@ export default function AdminOrdersPage() {
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 max-h-[70vh] overflow-y-auto">
                 {/* Kolumna 1: Klient */}
                 <div>
-                  <h3 className="text-xs font-bold uppercase text-zinc-500 mb-3 flex items-center gap-2"><Truck className="w-4 h-4"/> Dane Wysyłkowe</h3>
+                  <h3 className="text-xs font-bold uppercase text-zinc-500 mb-3 flex items-center gap-2"><Truck className="w-4 h-4" /> Dane Wysyłkowe</h3>
                   <div className="bg-zinc-950/50 p-4 rounded border border-zinc-800 text-sm space-y-1 text-zinc-300">
                     <p className="font-bold text-white text-base mb-2">{selectedOrder.customerDetails.firstName} {selectedOrder.customerDetails.lastName}</p>
                     <p>{selectedOrder.customerDetails.email}</p>
                     <p>{selectedOrder.customerDetails.phone}</p>
-                    <hr className="border-zinc-800 my-2"/>
+                    <hr className="border-zinc-800 my-2" />
                     <p>{selectedOrder.customerDetails.address}</p>
                     <p>{selectedOrder.customerDetails.zipCode} {selectedOrder.customerDetails.city}</p>
                   </div>
@@ -285,11 +304,10 @@ export default function AdminOrdersPage() {
                           key={status}
                           disabled={isUpdating || selectedOrder.status === status}
                           onClick={() => handleStatusChange(selectedOrder._id, status)}
-                          className={`px-3 py-2 rounded text-[10px] font-bold uppercase border transition-all ${
-                            selectedOrder.status === status 
-                              ? "bg-zinc-800 border-zinc-600 text-white cursor-default opacity-50" 
-                              : "bg-black border-zinc-800 text-zinc-400 hover:border-blue-500 hover:text-blue-500"
-                          }`}
+                          className={`px-3 py-2 rounded text-[10px] font-bold uppercase border transition-all ${selectedOrder.status === status
+                            ? "bg-zinc-800 border-zinc-600 text-white cursor-default opacity-50"
+                            : "bg-black border-zinc-800 text-zinc-400 hover:border-blue-500 hover:text-blue-500"
+                            }`}
                         >
                           {status}
                         </button>
@@ -297,10 +315,29 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
                 </div>
-
+                <div className="mt-8 pt-6 border-t border-zinc-800">
+                  <h3 className="text-[10px] font-bold uppercase text-zinc-500 mb-3 flex items-center gap-2">
+                    <Truck className="w-3 h-3" /> Link do śledzenia przesyłki
+                  </h3>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={trackingInput}
+                      onChange={(e) => setTrackingInput(e.target.value)}
+                      placeholder="np. https://inpost.pl/sledzenie-paczki?number=..."
+                      className="flex-1 bg-black border border-zinc-800 p-2 text-xs text-white rounded outline-none focus:border-blue-600"
+                    />
+                    <button
+                      onClick={handleUpdateTracking}
+                      className="bg-blue-600 text-white text-[10px] font-bold px-4 py-2 uppercase hover:bg-blue-500 transition-all"
+                    >
+                      Zapisz
+                    </button>
+                  </div>
+                </div>
                 {/* Kolumna 2: Produkty */}
                 <div>
-                  <h3 className="text-xs font-bold uppercase text-zinc-500 mb-3 flex items-center gap-2"><Package className="w-4 h-4"/> Zawartość Koszyka</h3>
+                  <h3 className="text-xs font-bold uppercase text-zinc-500 mb-3 flex items-center gap-2"><Package className="w-4 h-4" /> Zawartość Koszyka</h3>
                   <div className="space-y-2">
                     {selectedOrder.items.map((item: any, idx: number) => (
                       <div key={idx} className="bg-zinc-950 border border-zinc-800 p-3 rounded flex justify-between items-start">
