@@ -39,36 +39,38 @@ async function sendPaymentSuccessNotification(order) {
     const apiKey = process.env.BREVO_API_KEY;
     if (!apiKey) return;
 
-    // Link używa teraz ID ZAMÓWIENIA
-    const returnLink = `${process.env.BASE_URL}/returns/${order._id}`;
+    // JAWNIE pobieramy ID zamówienia jako string
+    // To zapobiegnie braniu ID z tablicy items
+    const mainOrderId = order._id.toString();
+    const returnLink = `${process.env.BASE_URL}/returns/${mainOrderId}`;
 
-    // UWAGA: Upewniamy się, że wszystkie pola są stringami i nie są puste
     await axios.post('https://api.brevo.com/v3/smtp/email', {
       sender: { name: "PlayAgain Store", email: process.env.EMAIL_FROM || "no-reply@playagain.store" },
       to: [{
         email: order.customerDetails.email,
-        name: `${order.customerDetails.firstName} ${order.customerDetails.lastName}`
+        name: `${order.customerDetails.firstName}`
       }],
-      subject: `✅ Płatność otrzymana! Zamówienie #${order._id.toString().slice(-6)}`,
+      subject: `✅ Płatność otrzymana! Zamówienie #${mainOrderId.slice(-6)}`,
       htmlContent: `
         <div style="background-color: #000; padding: 40px; font-family: sans-serif; color: #fff; max-width: 600px; margin: auto; border: 1px solid #333;">
           <h1 style="color: #22c55e; text-transform: uppercase; letter-spacing: 2px;">Zapłacone!</h1>
-          <p style="color: #999; font-size: 16px;">Witaj ${order.customerDetails.firstName}, Twoja wpłata została zaksięgowana. Przystępujemy do realizacji zamówienia.</p>
+          <p style="color: #999; font-size: 16px;">Twoja wpłata została zaksięgowana. Przystępujemy do realizacji zamówienia.</p>
           
           <div style="background: #111; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #22c55e;">
              <p style="margin: 0;">Status: <strong>OPŁACONE</strong></p>
              <p style="margin: 5px 0 0 0;">Kwota: ${order.totalAmount} PLN</p>
+             <p style="margin: 5px 0 0 0;">Numer: #${mainOrderId}</p>
           </div>
 
           <p style="color: #666; font-size: 14px; margin-top: 30px;">
-            Pamiętaj, że masz 14 dni na odstąpienie od umowy bez podania przyczyny. Jeśli chcesz dokonać zwrotu, możesz to zrobić klikając w poniższy przycisk:
+            Masz 14 dni na odstąpienie od umowy. Jeśli chcesz dokonać zwrotu lub zgłosić usterkę, użyj przycisku poniżej:
           </p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${returnLink}" style="background-color: #2563eb; color: #ffffff; padding: 15px 25px; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 13px; display: inline-block;">Zarządzaj zwrotem / RMA</a>
           </div>
 
-          <p style="font-size: 11px; color: #444; text-align: center;">ID zamówienia: ${order._id}</p>
+          <p style="font-size: 11px; color: #444; text-align: center;">Ten link jest unikalny dla Twojego zamówienia.</p>
         </div>
       `
     }, {
@@ -79,15 +81,10 @@ async function sendPaymentSuccessNotification(order) {
       }
     });
 
-    console.log(`📧 Mail o płatności wysłany do klienta: ${order.customerDetails.email}`);
+    console.log(`📧 Mail wysłany poprawnie dla zamówienia: ${mainOrderId}`);
 
   } catch (error) {
-    console.error("❌ Błąd maila o płatności:");
-    if (error.response) {
-      console.error("Szczegóły Brevo:", JSON.stringify(error.response.data));
-    } else {
-      console.error(error.message);
-    }
+    console.error("❌ Błąd maila o płatności:", error.response?.data || error.message);
   }
 }
 // --- FUNKCJA POMOCNICZA: POWIADOMIENIE ADMINA PRZEZ API BREVO ---
@@ -321,7 +318,8 @@ router.delete('/:id', protectAdmin, async (req, res) => {
   }
 });
 // GET /api/orders/:id - Pobieranie pojedynczego zamówienia
-router.get('/:id', verify, async (req, res) => {
+// ZMIENIONY ENDPOINT: Usunęliśmy 'verify' z parametrów, aby goście mogli tu wejść
+router.get('/:id', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
 
@@ -329,12 +327,35 @@ router.get('/:id', verify, async (req, res) => {
       return res.status(404).json({ error: "Nie znaleziono zamówienia." });
     }
 
-    // Zabezpieczenie: Sprawdź, czy zamówienie należy do użytkownika lub czy użytkownik jest adminem
-    if (order.user && order.user.toString() !== req.user.id && !req.user.isAdmin) {
-      return res.status(403).json({ error: "Brak uprawnień do podglądu tego zamówienia." });
+    // --- LOGIKA SMART AUTH ---
+
+    // Jeśli zamówienie ma przypisanego użytkownika (nie jest zamówieniem gościa)
+    if (order.user) {
+      const authHeader = req.header('Authorization');
+      const token = authHeader?.replace('Bearer ', '');
+
+      if (!token) {
+        return res.status(401).json({ error: "To zamówienie jest przypisane do konta. Zaloguj się, aby je zobaczyć." });
+      }
+
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Sprawdzamy czy zalogowany to właściciel lub admin
+        const isOwner = decoded.id === order.user.toString();
+        const isAdmin = decoded.isAdmin;
+
+        if (!isOwner && !isAdmin) {
+          return res.status(403).json({ error: "Brak uprawnień do podglądu tego zamówienia." });
+        }
+      } catch (err) {
+        return res.status(401).json({ error: "Sesja wygasła lub token jest nieprawidłowy." });
+      }
     }
 
+    // Jeśli zamówienie NIE ma przypisanego usera (gość) LUB autoryzacja powyżej przeszła:
     res.json(order);
+
   } catch (err) {
     console.error("Błąd pobierania zamówienia:", err);
     res.status(500).json({ error: "Błąd serwera podczas pobierania zamówienia." });
