@@ -33,6 +33,7 @@ async function sendOrderConfirmation(order) {
 }
 
 // --- POWIADOMIENIE 2: POTWIERDZENIE PŁATNOŚCI + LINK DO ZWROTU ---
+// --- POWIADOMIENIE 2: POTWIERDZENIE PŁATNOŚCI + LINK DO ZWROTU ---
 async function sendPaymentSuccessNotification(order) {
   try {
     const apiKey = process.env.BREVO_API_KEY;
@@ -41,17 +42,53 @@ async function sendPaymentSuccessNotification(order) {
     // Link używa teraz ID ZAMÓWIENIA
     const returnLink = `${process.env.BASE_URL}/returns/${order._id}`;
 
+    // UWAGA: Upewniamy się, że wszystkie pola są stringami i nie są puste
     await axios.post('https://api.brevo.com/v3/smtp/email', {
-      // ... reszta kodu maila ...
+      sender: { name: "PlayAgain Store", email: process.env.EMAIL_FROM || "no-reply@playagain.store" },
+      to: [{
+        email: order.customerDetails.email,
+        name: `${order.customerDetails.firstName} ${order.customerDetails.lastName}`
+      }],
+      subject: `✅ Płatność otrzymana! Zamówienie #${order._id.toString().slice(-6)}`,
       htmlContent: `
-        // ... 
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${returnLink}" style="...">Zarządzaj zwrotem zamówienia #${order._id.toString().slice(-6)}</a>
+        <div style="background-color: #000; padding: 40px; font-family: sans-serif; color: #fff; max-width: 600px; margin: auto; border: 1px solid #333;">
+          <h1 style="color: #22c55e; text-transform: uppercase; letter-spacing: 2px;">Zapłacone!</h1>
+          <p style="color: #999; font-size: 16px;">Witaj ${order.customerDetails.firstName}, Twoja wpłata została zaksięgowana. Przystępujemy do realizacji zamówienia.</p>
+          
+          <div style="background: #111; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #22c55e;">
+             <p style="margin: 0;">Status: <strong>OPŁACONE</strong></p>
+             <p style="margin: 5px 0 0 0;">Kwota: ${order.totalAmount} PLN</p>
+          </div>
+
+          <p style="color: #666; font-size: 14px; margin-top: 30px;">
+            Pamiętaj, że masz 14 dni na odstąpienie od umowy bez podania przyczyny. Jeśli chcesz dokonać zwrotu, możesz to zrobić klikając w poniższy przycisk:
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${returnLink}" style="background-color: #2563eb; color: #ffffff; padding: 15px 25px; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 13px; display: inline-block;">Zarządzaj zwrotem / RMA</a>
+          </div>
+
+          <p style="font-size: 11px; color: #444; text-align: center;">ID zamówienia: ${order._id}</p>
         </div>
-        // ...
       `
-    }, { headers: { 'api-key': apiKey, 'Content-Type': 'application/json' } });
-  } catch (error) { console.error("Błąd maila:", error.message); }
+    }, {
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+
+    console.log(`📧 Mail o płatności wysłany do klienta: ${order.customerDetails.email}`);
+
+  } catch (error) {
+    console.error("❌ Błąd maila o płatności:");
+    if (error.response) {
+      console.error("Szczegóły Brevo:", JSON.stringify(error.response.data));
+    } else {
+      console.error(error.message);
+    }
+  }
 }
 // --- FUNKCJA POMOCNICZA: POWIADOMIENIE ADMINA PRZEZ API BREVO ---
 async function sendAdminNotification(order) {
