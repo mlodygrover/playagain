@@ -3,7 +3,56 @@ const Order = require('../models/Order');
 const axios = require('axios');
 const { protectAdmin } = require('../middleware/authMiddleware');
 const verify = require('../middleware/auth');
+const Return = require('../models/Return');
 
+// --- POWIADOMIENIE 1: POTWIERDZENIE ZŁOŻENIA ZAMÓWIENIA (PENDING) ---
+async function sendOrderConfirmation(order) {
+  try {
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) return;
+
+    await axios.post('https://api.brevo.com/v3/smtp/email', {
+      sender: { name: "PlayAgain Store", email: process.env.EMAIL_FROM || "no-reply@playagain.store" },
+      to: [{ email: order.customerDetails.email, name: order.customerDetails.firstName }],
+      subject: `🎮 Twoje zamówienie #${order._id.toString().slice(-6)} zostało przyjęte!`,
+      htmlContent: `
+        <div style="background-color: #000; padding: 40px; font-family: sans-serif; color: #fff; max-width: 600px; margin: auto; border: 1px solid #333;">
+          <h1 style="color: #2563eb; text-transform: uppercase; letter-spacing: 2px;">Przyjęliśmy zamówienie!</h1>
+          <p style="color: #999; font-size: 16px;">Witaj ${order.customerDetails.firstName}, dziękujemy za zaufanie. Twoje zamówienie oczekuje na płatność.</p>
+          <div style="background: #111; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Kwota do zapłaty:</strong> ${order.totalAmount} PLN</p>
+            <p style="margin: 5px 0;"><strong>Numer zamówienia:</strong> #${order._id}</p>
+          </div>
+          <p style="font-size: 12px; color: #555;">Jeśli płatność nie została dokończona, możesz to zrobić w zakładce profilu lub przez link w przeglądarce.</p>
+          <hr style="border: 0; border-top: 1px solid #333; margin: 30px 0;">
+          <p style="text-align: center; color: #2563eb; font-weight: bold;">PlayAgain Store - Level Up Your Gear</p>
+        </div>
+      `
+    }, { headers: { 'api-key': apiKey, 'Content-Type': 'application/json' } });
+  } catch (error) { console.error("Błąd maila potwierdzającego:", error.message); }
+}
+
+// --- POWIADOMIENIE 2: POTWIERDZENIE PŁATNOŚCI + LINK DO ZWROTU ---
+async function sendPaymentSuccessNotification(order) {
+  try {
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) return;
+
+    // Link używa teraz ID ZAMÓWIENIA
+    const returnLink = `${process.env.BASE_URL}/returns/${order._id}`;
+
+    await axios.post('https://api.brevo.com/v3/smtp/email', {
+      // ... reszta kodu maila ...
+      htmlContent: `
+        // ... 
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${returnLink}" style="...">Zarządzaj zwrotem zamówienia #${order._id.toString().slice(-6)}</a>
+        </div>
+        // ...
+      `
+    }, { headers: { 'api-key': apiKey, 'Content-Type': 'application/json' } });
+  } catch (error) { console.error("Błąd maila:", error.message); }
+}
 // --- FUNKCJA POMOCNICZA: POWIADOMIENIE ADMINA PRZEZ API BREVO ---
 async function sendAdminNotification(order) {
   try {
@@ -19,10 +68,10 @@ async function sendAdminNotification(order) {
     const senderName = "PlayAgain System";
 
     const response = await axios.post('https://api.brevo.com/v3/smtp/email', {
-        sender: { name: senderName, email: senderEmail },
-        to: [{ email: "wiczjan@gmail.com", name: "Administrator" }],
-        subject: `💰 Nowe opłacone zamówienie #${order._id.toString().slice(-6)}`,
-        htmlContent: `
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: "wiczjan@gmail.com", name: "Administrator" }],
+      subject: `💰 Nowe opłacone zamówienie #${order._id.toString().slice(-6)}`,
+      htmlContent: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
             <h2 style="color: #2563eb;">Otrzymano nową płatność!</h2>
             <p><strong>Numer zamówienia:</strong> ${order._id}</p>
@@ -35,11 +84,11 @@ async function sendAdminNotification(order) {
           </div>
         `
     }, {
-        headers: {
-            'api-key': apiKey,
-            'Content-Type': 'application/json',
-            'accept': 'application/json'
-        }
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      }
     });
 
     console.log(`📧 Admin powiadomiony. ID wiadomości: ${response.data.messageId}`);
@@ -47,10 +96,10 @@ async function sendAdminNotification(order) {
   } catch (error) {
     console.error("❌ Błąd wysyłania emaila do admina (API):");
     if (error.response) {
-        console.error("Status:", error.response.status);
-        console.error("Dane:", JSON.stringify(error.response.data, null, 2));
+      console.error("Status:", error.response.status);
+      console.error("Dane:", JSON.stringify(error.response.data, null, 2));
     } else {
-        console.error(error.message);
+      console.error(error.message);
     }
   }
 }
@@ -69,7 +118,23 @@ async function getTpayToken() {
   }
 }
 
-// 1. UTWÓRZ ZAMÓWIENIE I TRANSAKCJĘ TPAY
+// FUNKCJA POMOCNICZA DO TWORZENIA ZWROTU
+// POPRAWIONA FUNKCJA W orders.js
+async function createInitialReturn(orderId, userId) {
+  try {
+    const newReturn = new Return({
+      order: orderId,
+      user: userId || null, // Teraz zezwalamy na null (gość)
+      status: 'NONE'
+    });
+    await newReturn.save();
+    console.log(`📦 Utworzono model zwrotu dla ${userId ? 'Użytkownika' : 'Gościa'}`);
+  } catch (err) {
+    console.error("❌ Błąd zwrotu:", err.message);
+  }
+}
+
+// MODYFIKACJA ROUTE POST / (Tworzenie zamówienia)
 router.post('/', async (req, res) => {
   try {
     const { customerDetails, items, totalAmount, userId } = req.body;
@@ -82,6 +147,12 @@ router.post('/', async (req, res) => {
       status: 'PENDING'
     });
     const savedOrder = await newOrder.save();
+
+    // --- POPRAWKA: Tworzymy zwrot dla KAŻDEGO zamówienia (User i Gość) ---
+    await createInitialReturn(savedOrder._id, userId || null);
+    // --------------------------------------------------------------------
+    // WYWOŁANIE MAILA POTWIERDZAJĄCEGO
+    await sendOrderConfirmation(savedOrder);
 
     const accessToken = await getTpayToken();
 
@@ -147,7 +218,8 @@ router.post('/webhook/payment-update', async (req, res) => {
           await order.save();
 
           console.log(`✅ Zamówienie ${order._id} zostało opłacone.`);
-          
+
+          await sendPaymentSuccessNotification(order);
           // Wysyłka maila do admina przez API Brevo
           await sendAdminNotification(order);
 
@@ -211,5 +283,24 @@ router.delete('/:id', protectAdmin, async (req, res) => {
     res.status(500).json({ error: "Błąd serwera podczas usuwania." });
   }
 });
+// GET /api/orders/:id - Pobieranie pojedynczego zamówienia
+router.get('/:id', verify, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
 
+    if (!order) {
+      return res.status(404).json({ error: "Nie znaleziono zamówienia." });
+    }
+
+    // Zabezpieczenie: Sprawdź, czy zamówienie należy do użytkownika lub czy użytkownik jest adminem
+    if (order.user && order.user.toString() !== req.user.id && !req.user.isAdmin) {
+      return res.status(403).json({ error: "Brak uprawnień do podglądu tego zamówienia." });
+    }
+
+    res.json(order);
+  } catch (err) {
+    console.error("Błąd pobierania zamówienia:", err);
+    res.status(500).json({ error: "Błąd serwera podczas pobierania zamówienia." });
+  }
+});
 module.exports = router;

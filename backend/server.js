@@ -13,6 +13,7 @@ const chatRoutes = require('./routes/chatRoutes'); // <--- IMPORT
 const app = express();
 const prebuiltsRoutes = require('./routes/prebuilts');
 
+const returnsRoute = require('./routes/returns');
 
 // --- MIDDLEWARE ---
 app.use(cors());
@@ -28,6 +29,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.use('/api/admin', adminRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/orders', ordersRoute);
+app.use('/api/returns', returnsRoute);
 app.use('/api/users', usersRoute);
 app.use('/api/components', componentsRoute);
 app.use('/api/ebay-test', require('./routes/ebayTest'));

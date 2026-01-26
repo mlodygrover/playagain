@@ -4,10 +4,11 @@ import React, { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { 
-  Cpu, ShoppingBag, Users, BarChart3, 
-  Settings, ShieldAlert, ArrowRight, Database, 
-  AlertTriangle, Monitor // <--- 1. DODANO IKONĘ MONITOR
+import {
+  Cpu, ShoppingBag, Users, BarChart3,
+  Settings, ShieldAlert, ArrowRight, Database,
+  AlertTriangle, Monitor, // <--- 1. DODANO IKONĘ MONITOR
+  RotateCcw
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -17,18 +18,18 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!loading) {
       if (!user || !isAdmin) {
-        router.push("/"); 
+        router.push("/");
       }
     }
   }, [user, isAdmin, loading, router]);
 
   if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-zinc-500">Ładowanie panelu...</div>;
-  if (!isAdmin) return null; 
+  if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen bg-black text-white pt-32 px-4 pb-20">
       <div className="max-w-6xl mx-auto">
-        
+
         {/* NAGŁÓWEK */}
         <div className="mb-12 border-b border-zinc-800 pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
@@ -37,14 +38,14 @@ export default function AdminDashboard() {
               Panel Administratora
             </h1>
             <p className="text-zinc-500 mt-2 text-lg">
-              Witaj, <span className="text-white font-bold">{user?.firstName || user?.email}</span>. 
+              Witaj, <span className="text-white font-bold">{user?.firstName || user?.email}</span>.
               Przejmij kontrolę nad sklepem.
             </p>
           </div>
           <div className="text-right hidden md:block">
             <p className="text-xs font-mono text-zinc-600 uppercase">System Status</p>
             <p className="text-green-500 font-bold flex items-center gap-2 justify-end">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"/> Online
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Online
             </p>
           </div>
         </div>
@@ -53,7 +54,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
 
           {/* 1. BAZA CZĘŚCI */}
-          <DashboardCard 
+          <DashboardCard
             href="/admin/components"
             title="Baza Części (Components)"
             description="Zarządzaj procesorami, kartami graficznymi i innymi podzespołami. Importuj JSON, edytuj ceny i specyfikacje."
@@ -63,7 +64,7 @@ export default function AdminDashboard() {
           />
 
           {/* --- 2. NOWOŚĆ: GOTOWE ZESTAWY --- */}
-          <DashboardCard 
+          <DashboardCard
             href="/admin/prebuilts"
             title="Gotowe Zestawy (Prebuilts)"
             description="Twórz i edytuj gotowe komputery gamingowe. Przypisuj części z bazy, dodawaj zdjęcia i ustalaj ceny promocyjne."
@@ -73,8 +74,8 @@ export default function AdminDashboard() {
           />
 
           {/* 3. ZAMÓWIENIA */}
-          <DashboardCard 
-            href="/admin/orders" 
+          <DashboardCard
+            href="/admin/orders"
             title="Zamówienia"
             description="Przeglądaj napływające zamówienia, zmieniaj statusy realizacji i sprawdzaj płatności Tpay."
             icon={<ShoppingBag className="w-8 h-8 text-green-500" />}
@@ -82,8 +83,8 @@ export default function AdminDashboard() {
           />
 
           {/* 4. UŻYTKOWNICY */}
-          <DashboardCard 
-            href="/admin/users" 
+          <DashboardCard
+            href="/admin/users"
             title="Użytkownicy"
             description="Lista zarejestrowanych klientów. Zarządzanie rolami, blokowanie kont i podgląd historii."
             icon={<Users className="w-8 h-8 text-purple-500" />}
@@ -91,7 +92,7 @@ export default function AdminDashboard() {
           />
 
           {/* 5. KONFIGURACJA */}
-          <DashboardCard 
+          <DashboardCard
             href="#"
             title="Ustawienia Sklepu"
             description="Globalne ustawienia marży, konfiguracja API (Allegro, Tpay) i powiadomień mailowych."
@@ -102,22 +103,30 @@ export default function AdminDashboard() {
 
           {/* 6. RAPORTY */}
           <div className="bg-zinc-900/20 border border-zinc-800 rounded-xl p-6 flex flex-col justify-center items-center text-center opacity-50 border-dashed">
-             <BarChart3 className="w-12 h-12 text-zinc-700 mb-4" />
-             <h3 className="text-xl font-bold uppercase text-zinc-500">Statystyki Sprzedaży</h3>
-             <p className="text-zinc-600 text-sm mt-2">Dostępne po zebraniu pierwszych 100 zamówień.</p>
+            <BarChart3 className="w-12 h-12 text-zinc-700 mb-4" />
+            <h3 className="text-xl font-bold uppercase text-zinc-500">Statystyki Sprzedaży</h3>
+            <p className="text-zinc-600 text-sm mt-2">Dostępne po zebraniu pierwszych 100 zamówień.</p>
           </div>
-
+          {/* 7. ZWROTY (NOWOŚĆ) */}
+          <DashboardCard
+            href="/admin/returns"
+            title="Obsługa Zwrotów"
+            description="Zarządzaj zgłoszonymi zwrotami. Zmieniaj statusy, weryfikuj uzasadnienia i dodawaj notatki administracyjne."
+            icon={<RotateCcw className="w-8 h-8 text-orange-500" />}
+            color="purple" // Pamiętaj o dodaniu obsługi koloru 'orange' w DashboardCard
+            badge="RMA"
+          />
         </div>
 
         {/* --- STATUS --- */}
         <div className="bg-red-950/10 border border-red-900/30 p-6 rounded-xl flex items-start gap-4">
-            <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
-            <div>
-                <h4 className="text-red-400 font-bold uppercase text-sm mb-1">Status Systemu</h4>
-                <p className="text-zinc-400 text-sm">
-                    Pamiętaj, że zmiany w <strong>Bazie Części</strong> oraz <strong>Gotowych Zestawach</strong> są widoczne dla klientów natychmiastowo.
-                </p>
-            </div>
+          <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
+          <div>
+            <h4 className="text-red-400 font-bold uppercase text-sm mb-1">Status Systemu</h4>
+            <p className="text-zinc-400 text-sm">
+              Pamiętaj, że zmiany w <strong>Bazie Części</strong> oraz <strong>Gotowych Zestawach</strong> są widoczne dla klientów natychmiastowo.
+            </p>
+          </div>
         </div>
 
       </div>
@@ -127,31 +136,31 @@ export default function AdminDashboard() {
 
 // --- KOMPONENT KAFELKA ---
 interface DashboardCardProps {
-    href: string;
-    title: string;
-    description: string;
-    icon: React.ReactNode;
-    color: 'blue' | 'green' | 'purple' | 'gray' | 'yellow';
-    badge?: string;
-    disabled?: boolean;
+  href: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  color: 'blue' | 'green' | 'purple' | 'gray' | 'yellow';
+  badge?: string;
+  disabled?: boolean;
 }
 
 const DashboardCard = ({ href, title, description, icon, color, badge, disabled }: DashboardCardProps) => {
-  
+
   // Zaktualizowałem styl yellow, żeby miał też cień (shadow) tak jak inne
   const colorStyles = {
-    blue:   "group-hover:border-blue-500/50 group-hover:bg-blue-900/10 group-hover:shadow-[0_0_30px_-10px_rgba(59,130,246,0.3)]",
-    green:  "group-hover:border-green-500/50 group-hover:bg-green-900/10 group-hover:shadow-[0_0_30px_-10px_rgba(34,197,94,0.3)]",
+    blue: "group-hover:border-blue-500/50 group-hover:bg-blue-900/10 group-hover:shadow-[0_0_30px_-10px_rgba(59,130,246,0.3)]",
+    green: "group-hover:border-green-500/50 group-hover:bg-green-900/10 group-hover:shadow-[0_0_30px_-10px_rgba(34,197,94,0.3)]",
     purple: "group-hover:border-purple-500/50 group-hover:bg-purple-900/10 group-hover:shadow-[0_0_30px_-10px_rgba(168,85,247,0.3)]",
     yellow: "group-hover:border-yellow-500/50 group-hover:bg-yellow-900/10 group-hover:shadow-[0_0_30px_-10px_rgba(234,179,8,0.3)]",
-    gray:   "group-hover:border-zinc-500/50 group-hover:bg-zinc-800/50",
+    gray: "group-hover:border-zinc-500/50 group-hover:bg-zinc-800/50",
   };
 
   const Wrapper = disabled ? 'div' : Link;
 
   return (
-    <Wrapper 
-      href={href} 
+    <Wrapper
+      href={href}
       className={`
         relative block p-6 bg-zinc-900/40 border border-zinc-800 rounded-xl transition-all duration-300 group overflow-hidden
         ${disabled ? 'opacity-50 cursor-not-allowed' : colorStyles[color]}
@@ -161,24 +170,24 @@ const DashboardCard = ({ href, title, description, icon, color, badge, disabled 
         <div className="p-3 bg-black border border-zinc-800 rounded-lg shadow-lg">
           {icon}
         </div>
-        
+
         {badge && (
-            <span className="bg-zinc-800 text-white text-[10px] uppercase font-bold px-2 py-1 rounded border border-zinc-700">
-                {badge}
-            </span>
+          <span className="bg-zinc-800 text-white text-[10px] uppercase font-bold px-2 py-1 rounded border border-zinc-700">
+            {badge}
+          </span>
         )}
-        
+
         {!disabled && !badge && (
-            <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-white transition-colors -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 duration-300" />
+          <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-white transition-colors -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 duration-300" />
         )}
       </div>
 
       <div className="relative z-10">
         <h3 className="text-xl font-black uppercase mb-2 text-zinc-200 group-hover:text-white transition-colors tracking-tight">
-            {title}
+          {title}
         </h3>
         <p className="text-sm text-zinc-500 leading-relaxed font-medium">
-            {description}
+          {description}
         </p>
       </div>
 
