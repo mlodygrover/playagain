@@ -236,7 +236,27 @@ export default function ReturnPage() {
                 </div>
                 <div className="bg-zinc-900/50 border border-zinc-800 p-6 space-y-4">
                     <h4 className="text-xs font-black uppercase text-red-600 flex items-center gap-2 tracking-widest"><AlertTriangle className="w-4 h-4" /> Informacje prawne</h4>
-                    <p className="text-[11px] text-zinc-500 leading-relaxed font-sans">Towar musi zostać odesłany w ciągu 14 dni od zgłoszenia na adres: <strong>Jan Wiczyński, Poznań, ul. Sofoklesa 32</strong>.</p>
+                    <div className="text-[11px] text-zinc-500 leading-relaxed font-sans space-y-3">
+                        <p>
+                            Towar musi zostać odesłany w ciągu <strong>14 dni</strong> od daty zgłoszenia chęci zwrotu na adres:
+                            <strong className="text-zinc-300"> Jan Wiczyński, Poznań, ul. Sofoklesa 32</strong>.
+                        </p>
+
+                        <ul className="list-disc pl-4 space-y-1 text-zinc-500">
+                            <li>
+                                <strong className="text-zinc-400 uppercase text-[9px]">Stan towaru:</strong> Produkt musi zostać zwrócony w stanie niezmienionym (brak śladów użytkowania, nienaruszone plomby gwarancyjne).
+                            </li>
+                            <li>
+                                <strong className="text-zinc-400 uppercase text-[9px]">Odpowiedzialność:</strong> Konsument ponosi odpowiedzialność za zmniejszenie wartości rzeczy będące wynikiem korzystania z niej w sposób wykraczający poza konieczny do stwierdzenia charakteru, cech i funkcjonowania rzeczy. W takim przypadku kwota zwrotu zostanie pomniejszona o koszty przywrócenia towaru do stanu pierwotnego.
+                            </li>
+                            <li>
+                                <strong className="text-zinc-400 uppercase text-[9px]">Koszty wysyłki:</strong> Bezpośredni koszt zwrotu towaru (wysyłka do sprzedawcy) ponosi <strong className="text-zinc-400">Kupujący</strong>.
+                            </li>
+                            <li>
+                                <strong className="text-zinc-400 uppercase text-[9px]">Zabezpieczenie:</strong> Prosimy o staranne zapakowanie przesyłki, aby uniknąć uszkodzeń w transporcie.
+                            </li>
+                        </ul>
+                    </div>
                     <label className="flex items-start gap-4 cursor-pointer group pt-2">
                         <input
                             type="checkbox"
